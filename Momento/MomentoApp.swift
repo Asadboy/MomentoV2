@@ -13,6 +13,7 @@ struct MomentoApp: App {
         WindowGroup {
             // This is your app’s entry point: loads the main screen
             ContentView()
+                .preferredColorScheme(.dark)
         }
     }
 }

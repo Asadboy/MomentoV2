@@ -42,7 +42,21 @@ struct AddEventSheet: View {
                     }
                 }
             }
-            .navigationTitle("New Event")
+            .scrollContentBackground(.hidden) // Hide default form background
+            .background(
+                // Dark background matching main view
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.05, green: 0.05, blue: 0.1),
+                        Color(red: 0.08, green: 0.06, blue: 0.12)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            )
+            .navigationTitle("New Momento")
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onCancel)

@@ -8,7 +8,6 @@
 //  This is a reusable, sleek event card design that displays event information.
 
 import SwiftUI
-import UIKit
 
 /// A sleek, modern card component for displaying an Event in the list
 /// Designed with a card-based layout with subtle shadows and rounded corners
@@ -75,7 +74,7 @@ struct EventRow: View {
                     .offset(x: 18, y: -18)
                     .background(
                         Circle()
-                            .fill(Color(UIColor.systemBackground))
+                            .fill(Color(red: 0.12, green: 0.1, blue: 0.16)) // Match card background
                             .frame(width: 24, height: 24)
                     )
             }
@@ -86,7 +85,7 @@ struct EventRow: View {
                 HStack(spacing: 6) {
                     Text(event.title)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(Color(white: 0.9)) // Light grey for better readability
                     
                     // Live indicator dot (only shown when live)
                     if isLive {
@@ -99,7 +98,7 @@ struct EventRow: View {
                 // Status/subtitle
                 Text(subtitle)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(isLive ? royalPurple : .secondary)
+                    .foregroundColor(isLive ? royalPurple : Color(white: 0.7)) // Light grey, purple when live
                     .monospacedDigit()
                 
                 // Badges row - members and photos taken
@@ -111,12 +110,12 @@ struct EventRow: View {
                         Text("\(event.memberCount)")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(white: 0.75)) // Light grey for better readability
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(
                         Capsule()
-                            .fill(Color.secondary.opacity(0.12))
+                            .fill(Color.white.opacity(0.1))
                     )
                     
                     // Photos taken badge
@@ -141,13 +140,17 @@ struct EventRow: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 18)
-                .fill(Color(uiColor: .systemBackground))
-                .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 2)
+                .fill(
+                    // Dark card background with subtle purple tint
+                    Color(red: 0.12, green: 0.1, blue: 0.16)
+                )
+                .shadow(color: Color.black.opacity(0.5), radius: 12, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 1)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18)
                 .stroke(
-                    isLive ? royalPurple.opacity(0.5) : Color.primary.opacity(0.1),
+                    isLive ? royalPurple.opacity(0.6) : Color.white.opacity(0.08),
                     lineWidth: isLive ? 1.5 : 0.5
                 )
         )

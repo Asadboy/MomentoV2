@@ -47,17 +47,32 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            // List of events using modular EventRow component
+            // List of momentos using modular EventRow component
             List {
                 ForEach(events) { event in
                     EventRow(event: event, now: now)
                         .listRowSeparator(.hidden) // Hide default separators for card design
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowBackground(Color.clear) // Transparent row background
                 }
                 .onDelete(perform: deleteEvents)
             }
             .listStyle(.plain) // Plain style works better with custom card design
+            .scrollContentBackground(.hidden) // Hide default list background
+            .background(
+                // Rich dark background with subtle gradient
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.05, green: 0.05, blue: 0.1), // Deep dark blue-black
+                        Color(red: 0.08, green: 0.06, blue: 0.12)  // Slightly lighter dark purple-black
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            )
             .navigationTitle("Momentos")
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
