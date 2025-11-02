@@ -1,0 +1,39 @@
+//
+//  Event.swift
+//  Momento
+//
+//  Created by Asad on 02/11/2025.
+//
+//  MODULAR ARCHITECTURE: Data model
+//  This file defines the Event data structure and sample data generation.
+//  Keeping data models separate ensures clear separation of concerns.
+
+import Foundation
+
+/// Represents an event in the app (acts like a disposable camera)
+/// Conforms to Identifiable for SwiftUI list usage and Hashable for comparison
+struct Event: Identifiable, Hashable {
+    let id: String = UUID().uuidString
+    var title: String
+    var coverEmoji: String
+    var releaseAt: Date
+    var memberCount: Int
+    var photosTaken: Int  // Number of photos taken in this disposable camera event
+}
+
+/// Generates sample events for preview/testing purposes
+/// - Parameter now: Current date to base sample events on
+/// - Returns: Array of sample Event objects
+func makeFakeEvents(now: Date = .now) -> [Event] {
+    [
+        Event(title: "Joe's 26th",  coverEmoji: "🎂",
+              releaseAt: Calendar.current.date(byAdding: .hour, value: 24, to: now)!,
+              memberCount: 12, photosTaken: 8),
+        Event(title: "NYE House Party", coverEmoji: "🎉",
+              releaseAt: Calendar.current.date(byAdding: .minute, value: 90, to: now)!,
+              memberCount: 28, photosTaken: 23),
+        Event(title: "Asad's Sopranos Party", coverEmoji: "🧺",
+              releaseAt: Calendar.current.date(byAdding: .day, value: 2, to: now)!,
+              memberCount: 7, photosTaken: 5)
+    ]
+}
