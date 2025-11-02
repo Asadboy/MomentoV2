@@ -37,7 +37,9 @@ class EventManager: ObservableObject {
             title: trimmedTitle,
             coverEmoji: emoji,
             releaseAt: releaseAt,
-            memberCount: memberCount ?? Int.random(in: 2...30) // Random member count between 2-30
+            memberCount: memberCount ?? Int.random(in: 2...30), // Random member count between 2-30
+            photosTaken: 0, // Start with 0 photos
+            joinCode: nil // No join code for manually created events
         )
         events.append(event)
     }

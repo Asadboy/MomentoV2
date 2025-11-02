@@ -7,16 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C34888DB2EB75FEF003094CB /* MomentoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888DA2EB75FEF003094CB /* MomentoApp.swift */; };
-		C34888DD2EB75FEF003094CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888DC2EB75FEF003094CB /* ContentView.swift */; };
-		C34888DF2EB75FF2003094CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34888DE2EB75FF2003094CB /* Assets.xcassets */; };
-		C34888E22EB75FF2003094CB /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34888E12EB75FF2003094CB /* Preview Assets.xcassets */; };
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
-		C34889052EB77BA1003094CB /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889042EB77BA1003094CB /* Event.swift */; };
-		C34889072EB7A0C7003094CB /* AddEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889062EB7A0C7003094CB /* AddEventSheet.swift */; };
-		C34889092EB7A1DE003094CB /* EventRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889082EB7A1DE003094CB /* EventRow.swift */; };
+		C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */; };
+		C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890D2EB7B3F2003094CB /* CameraView.swift */; };
+		C348891F2EB7CCF2003094CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C348891E2EB7CCF1003094CB /* Assets.xcassets */; };
+		C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890F2EB7B4F3003094CB /* PhotoCaptureSheet.swift */; };
+		C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889112EB7C5F4003094CB /* MomentoApp.swift */; };
+		C34889122EB7C6F5003094CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889132EB7C6F5003094CB /* ContentView.swift */; };
+		C34889142EB7C7F6003094CB /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889152EB7C7F6003094CB /* Event.swift */; };
+		C34889162EB7C8F7003094CB /* EventRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889172EB7C8F7003094CB /* EventRow.swift */; };
+		C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889192EB7C9F8003094CB /* AddEventSheet.swift */; };
+		C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891B2EB7CAF9003094CB /* TimeFormatter.swift */; };
+		C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891D2EB7CBF0003094CB /* EventManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,18 +42,21 @@
 
 /* Begin PBXFileReference section */
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C34888DA2EB75FEF003094CB /* MomentoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoApp.swift; sourceTree = "<group>"; };
-		C34888DC2EB75FEF003094CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		C34888DE2EB75FF2003094CB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C34888E12EB75FF2003094CB /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C34888E72EB75FF2003094CB /* MomentoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888EB2EB75FF2003094CB /* MomentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoTests.swift; sourceTree = "<group>"; };
 		C34888F12EB75FF2003094CB /* MomentoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888F52EB75FF2003094CB /* MomentoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITests.swift; sourceTree = "<group>"; };
 		C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		C34889042EB77BA1003094CB /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
-		C34889062EB7A0C7003094CB /* AddEventSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventSheet.swift; sourceTree = "<group>"; };
-		C34889082EB7A1DE003094CB /* EventRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRow.swift; sourceTree = "<group>"; };
+		C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinEventSheet.swift; sourceTree = "<group>"; };
+		C348890D2EB7B3F2003094CB /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		C348890F2EB7B4F3003094CB /* PhotoCaptureSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCaptureSheet.swift; sourceTree = "<group>"; };
+		C34889112EB7C5F4003094CB /* MomentoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoApp.swift; sourceTree = "<group>"; };
+		C34889132EB7C6F5003094CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C34889152EB7C7F6003094CB /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
+		C34889172EB7C8F7003094CB /* EventRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRow.swift; sourceTree = "<group>"; };
+		C34889192EB7C9F8003094CB /* AddEventSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventSheet.swift; sourceTree = "<group>"; };
+		C348891B2EB7CAF9003094CB /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
+		C348891D2EB7CBF0003094CB /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,10 +87,11 @@
 		C34888CE2EB75FEE003094CB = {
 			isa = PBXGroup;
 			children = (
-				C34888D92EB75FEF003094CB /* Momento */,
+				C348890C2EB7BEAD003094CB /* Momento */,
 				C34888EA2EB75FF2003094CB /* MomentoTests */,
 				C34888F42EB75FF2003094CB /* MomentoUITests */,
 				C34888D82EB75FEF003094CB /* Products */,
+				C348890B2EB7BE60003094CB /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -95,28 +103,6 @@
 				C34888F12EB75FF2003094CB /* MomentoUITests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		C34888D92EB75FEF003094CB /* Momento */ = {
-			isa = PBXGroup;
-			children = (
-				C34888DA2EB75FEF003094CB /* MomentoApp.swift */,
-				C34888DC2EB75FEF003094CB /* ContentView.swift */,
-				C34889082EB7A1DE003094CB /* EventRow.swift */,
-				C34889062EB7A0C7003094CB /* AddEventSheet.swift */,
-				C34889042EB77BA1003094CB /* Event.swift */,
-				C34888DE2EB75FF2003094CB /* Assets.xcassets */,
-				C34888E02EB75FF2003094CB /* Preview Content */,
-			);
-			path = Momento;
-			sourceTree = "<group>";
-		};
-		C34888E02EB75FF2003094CB /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				C34888E12EB75FF2003094CB /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
 			sourceTree = "<group>";
 		};
 		C34888EA2EB75FF2003094CB /* MomentoTests */ = {
@@ -134,6 +120,31 @@
 				C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */,
 			);
 			path = MomentoUITests;
+			sourceTree = "<group>";
+		};
+		C348890C2EB7BEAD003094CB /* Momento */ = {
+			isa = PBXGroup;
+			children = (
+				C34889112EB7C5F4003094CB /* MomentoApp.swift */,
+				C34889132EB7C6F5003094CB /* ContentView.swift */,
+				C34889152EB7C7F6003094CB /* Event.swift */,
+				C34889172EB7C8F7003094CB /* EventRow.swift */,
+				C34889192EB7C9F8003094CB /* AddEventSheet.swift */,
+				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
+				C348890D2EB7B3F2003094CB /* CameraView.swift */,
+				C348890F2EB7B4F3003094CB /* PhotoCaptureSheet.swift */,
+				C348891B2EB7CAF9003094CB /* TimeFormatter.swift */,
+				C348891D2EB7CBF0003094CB /* EventManager.swift */,
+				C348891E2EB7CCF1003094CB /* Assets.xcassets */,
+			);
+			path = Momento;
+			sourceTree = "<group>";
+		};
+		C348890B2EB7BE60003094CB /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,8 +251,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C34888E22EB75FF2003094CB /* Preview Assets.xcassets in Resources */,
-				C34888DF2EB75FF2003094CB /* Assets.xcassets in Resources */,
+				C348891F2EB7CCF2003094CB /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,11 +276,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C34888DD2EB75FEF003094CB /* ContentView.swift in Sources */,
-				C34889052EB77BA1003094CB /* Event.swift in Sources */,
-				C34889092EB7A1DE003094CB /* EventRow.swift in Sources */,
-				C34889072EB7A0C7003094CB /* AddEventSheet.swift in Sources */,
-				C34888DB2EB75FEF003094CB /* MomentoApp.swift in Sources */,
+				C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */,
+				C34889122EB7C6F5003094CB /* ContentView.swift in Sources */,
+				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
+				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
+				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
+				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
+				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
+				C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */,
+				C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */,
+				C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -442,6 +457,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -471,6 +487,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

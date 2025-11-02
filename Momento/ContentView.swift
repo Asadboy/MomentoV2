@@ -9,6 +9,7 @@
 //  Delegates UI rendering to modular components (EventRow, AddEventSheet).
 
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     // MARK: - State Management
@@ -23,6 +24,22 @@ struct ContentView: View {
     
     /// Controls whether the add event sheet is presented
     @State private var showAddSheet = false
+    
+    // MARK: - Join Event Sheet State
+    
+    /// Controls whether the join event sheet is presented
+    @State private var showJoinSheet = false
+    
+    // MARK: - Photo Capture State
+    
+    /// Controls whether the photo capture sheet is presented
+    @State private var showPhotoCapture = false
+    
+    /// Currently selected event for photo capture
+    @State private var selectedEventForPhoto: Event?
+    
+    /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
+    @State private var eventPhotos: [String: [EventPhoto]] = [:]
     
     /// Form state for new event creation
     @State private var newTitle = ""
@@ -54,6 +71,12 @@ struct ContentView: View {
                         .listRowSeparator(.hidden) // Hide default separators for card design
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .listRowBackground(Color.clear) // Transparent row background
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            // Open camera for taking photos at this event
+                            selectedEventForPhoto = event
+                            showPhotoCapture = true
+                        }
                 }
                 .onDelete(perform: deleteEvents)
             }
@@ -71,9 +94,20 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
             )
-            .navigationTitle("Momentos")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Momentos")
+                        .foregroundColor(.white)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showJoinSheet = true
+                    } label: {
+                        Label("Join Event", systemImage: "qrcode.viewfinder")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         prepareAddDefaults()
@@ -98,6 +132,26 @@ struct ContentView: View {
                         showAddSheet = false
                     }
                 )
+            }
+            // Present join event sheet
+            .sheet(isPresented: $showJoinSheet) {
+                JoinEventSheet(isPresented: $showJoinSheet) { joinedEvent in
+                    joinEvent(joinedEvent)
+                }
+            }
+            // Present photo capture sheet
+            .sheet(isPresented: $showPhotoCapture) {
+                Group {
+                    if let event = selectedEventForPhoto {
+                        PhotoCaptureSheet(
+                            isPresented: $showPhotoCapture,
+                            event: event,
+                            onPhotoCaptured: { image, event in
+                                handlePhotoCaptured(image, for: event)
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -129,6 +183,37 @@ struct ContentView: View {
     /// Deletes momentos at specified indices
     private func deleteEvents(at offsets: IndexSet) {
         events.remove(atOffsets: offsets)
+    }
+    
+    /// Joins a new event (adds it to the events list)
+    /// - Parameter event: The event to join
+    private func joinEvent(_ event: Event) {
+        // UI-only: Add the joined event to the list
+        // In production, this would validate the join code with a backend API
+        events.append(event)
+    }
+    
+    /// Handles a captured photo for an event
+    /// - Parameters:
+    ///   - image: The captured photo
+    ///   - event: The event the photo was taken for
+    private func handlePhotoCaptured(_ image: UIImage, for event: Event) {
+        // Create photo object
+        let photo = EventPhoto(image: image)
+        
+        // Add photo to storage
+        if eventPhotos[event.id] == nil {
+            eventPhotos[event.id] = []
+        }
+        eventPhotos[event.id]?.append(photo)
+        
+        // Update event's photosTaken count
+        if let index = events.firstIndex(where: { $0.id == event.id }) {
+            events[index].photosTaken += 1
+        }
+        
+        // In production, this would upload the photo to a backend API
+        print("Photo captured for \(event.title). Total photos: \(eventPhotos[event.id]?.count ?? 0)")
     }
 }
 
