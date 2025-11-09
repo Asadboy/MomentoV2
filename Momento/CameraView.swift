@@ -55,6 +55,9 @@ struct CameraView: View {
                 VStack(spacing: 20) {
                     // Capture button
                     Button {
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.prepare()
+                        generator.impactOccurred()
                         cameraController.capturePhoto()
                     } label: {
                         ZStack {

@@ -11,15 +11,41 @@
 import Foundation
 import UIKit
 
+/// Persisted metadata that accompanies each stored photo
+struct PhotoMetadata: Codable {
+    let photoID: String
+    let eventID: String
+    let capturedAt: Date
+    var capturedBy: String?
+    var isRevealed: Bool
+}
+
 /// Represents a photo taken at an event
 struct EventPhoto: Identifiable {
-    let id: String = UUID().uuidString
-    let image: UIImage
-    let takenAt: Date
+    let id: String
+    let eventID: String
+    let fileURL: URL
+    let capturedAt: Date
+    var isRevealed: Bool
+    var capturedBy: String?
+    var image: UIImage?
     
-    init(image: UIImage, takenAt: Date = .now) {
+    init(
+        id: String = UUID().uuidString,
+        eventID: String,
+        fileURL: URL,
+        capturedAt: Date = .now,
+        isRevealed: Bool = false,
+        capturedBy: String? = nil,
+        image: UIImage? = nil
+    ) {
+        self.id = id
+        self.eventID = eventID
+        self.fileURL = fileURL
+        self.capturedAt = capturedAt
+        self.isRevealed = isRevealed
+        self.capturedBy = capturedBy
         self.image = image
-        self.takenAt = takenAt
     }
 }
 

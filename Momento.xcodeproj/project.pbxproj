@@ -12,7 +12,6 @@
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
 		C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */; };
 		C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890D2EB7B3F2003094CB /* CameraView.swift */; };
-		C348891F2EB7CCF2003094CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C348891E2EB7CCF1003094CB /* Assets.xcassets */; };
 		C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890F2EB7B4F3003094CB /* PhotoCaptureSheet.swift */; };
 		C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889112EB7C5F4003094CB /* MomentoApp.swift */; };
 		C34889122EB7C6F5003094CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889132EB7C6F5003094CB /* ContentView.swift */; };
@@ -21,6 +20,9 @@
 		C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889192EB7C9F8003094CB /* AddEventSheet.swift */; };
 		C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891B2EB7CAF9003094CB /* TimeFormatter.swift */; };
 		C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891D2EB7CBF0003094CB /* EventManager.swift */; };
+		C348891F2EB7CCF2003094CB /* (null) in Resources */ = {isa = PBXBuildFile; };
+		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
+		C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,8 @@
 		C34889192EB7C9F8003094CB /* AddEventSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventSheet.swift; sourceTree = "<group>"; };
 		C348891B2EB7CAF9003094CB /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		C348891D2EB7CBF0003094CB /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
+		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
+		C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugEventGalleryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,9 +126,18 @@
 			path = MomentoUITests;
 			sourceTree = "<group>";
 		};
+		C348890B2EB7BE60003094CB /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		C348890C2EB7BEAD003094CB /* Momento */ = {
 			isa = PBXGroup;
 			children = (
+				C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */,
+				C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */,
 				C34889112EB7C5F4003094CB /* MomentoApp.swift */,
 				C34889132EB7C6F5003094CB /* ContentView.swift */,
 				C34889152EB7C7F6003094CB /* Event.swift */,
@@ -135,16 +148,8 @@
 				C348890F2EB7B4F3003094CB /* PhotoCaptureSheet.swift */,
 				C348891B2EB7CAF9003094CB /* TimeFormatter.swift */,
 				C348891D2EB7CBF0003094CB /* EventManager.swift */,
-				C348891E2EB7CCF1003094CB /* Assets.xcassets */,
 			);
 			path = Momento;
-			sourceTree = "<group>";
-		};
-		C348890B2EB7BE60003094CB /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -251,7 +256,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C348891F2EB7CCF2003094CB /* Assets.xcassets in Resources */,
+				C348891F2EB7CCF2003094CB /* (null) in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -282,9 +287,11 @@
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
+				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
 				C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */,
 				C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */,
+				C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */,
 				C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -452,18 +459,18 @@
 				DEVELOPMENT_TEAM = 8X5TV69524;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Momento;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asad.Momento;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -482,18 +489,18 @@
 				DEVELOPMENT_TEAM = 8X5TV69524;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Momento;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asad.Momento;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -512,7 +519,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MomentoTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asad.MomentoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -532,7 +539,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MomentoTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asad.MomentoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -550,7 +557,7 @@
 				DEVELOPMENT_TEAM = 8X5TV69524;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MomentoUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asad.MomentoUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -568,7 +575,7 @@
 				DEVELOPMENT_TEAM = 8X5TV69524;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MomentoUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.asad.MomentoUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

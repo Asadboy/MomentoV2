@@ -41,6 +41,9 @@ struct ContentView: View {
     /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
     @State private var eventPhotos: [String: [EventPhoto]] = [:]
     
+    /// Event whose debug gallery is currently presented
+    @State private var eventForDebugGallery: Event?
+    
     /// Form state for new event creation
     @State private var newTitle = ""
     @State private var newReleaseAt = Date().addingTimeInterval(24 * 3600) // Default: 24 hours from now
@@ -76,6 +79,13 @@ struct ContentView: View {
                             // Open camera for taking photos at this event
                             selectedEventForPhoto = event
                             showPhotoCapture = true
+                        }
+                        .contextMenu {
+                            Button {
+                                eventForDebugGallery = event
+                            } label: {
+                                Label("View Debug Photos", systemImage: "photo.stack")
+                            }
                         }
                 }
                 .onDelete(perform: deleteEvents)
@@ -153,6 +163,19 @@ struct ContentView: View {
                     }
                 }
             }
+            .sheet(item: $eventForDebugGallery) { event in
+                let photosBinding = Binding<[EventPhoto]>(
+                    get: { eventPhotos[event.id] ?? [] },
+                    set: { eventPhotos[event.id] = $0 }
+                )
+                
+                DebugEventGalleryView(
+                    event: event,
+                    photos: photosBinding,
+                    onReveal: { revealPhoto($0, for: event) },
+                    onDismiss: { eventForDebugGallery = nil }
+                )
+            }
         }
     }
 
@@ -198,22 +221,44 @@ struct ContentView: View {
     ///   - image: The captured photo
     ///   - event: The event the photo was taken for
     private func handlePhotoCaptured(_ image: UIImage, for event: Event) {
-        // Create photo object
-        let photo = EventPhoto(image: image)
-        
-        // Add photo to storage
-        if eventPhotos[event.id] == nil {
-            eventPhotos[event.id] = []
+        do {
+            var savedPhoto = try PhotoStorageManager.shared.save(image: image, for: event)
+            savedPhoto.image = image
+            
+            // Add photo to storage
+            if eventPhotos[event.id] == nil {
+                eventPhotos[event.id] = []
+            }
+            eventPhotos[event.id]?.append(savedPhoto)
+            
+            // Update event's photosTaken count
+            if let index = events.firstIndex(where: { $0.id == event.id }) {
+                events[index].photosTaken += 1
+            }
+            
+            // In production, this would upload the photo to a backend API
+            print("Photo captured for \(event.title). Total photos: \(eventPhotos[event.id]?.count ?? 0)")
+        } catch {
+            print("Failed to save photo: \(error)")
         }
-        eventPhotos[event.id]?.append(photo)
-        
-        // Update event's photosTaken count
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            events[index].photosTaken += 1
+    }
+    
+    /// Reveals a photo and updates metadata/state
+    private func revealPhoto(_ photo: EventPhoto, for event: Event) {
+        do {
+            try PhotoStorageManager.shared.updateRevealStatus(for: photo, isRevealed: true)
+            
+            guard let index = eventPhotos[event.id]?.firstIndex(where: { $0.id == photo.id }) else {
+                return
+            }
+            
+            // Load image from disk, then update state
+            let image = PhotoStorageManager.shared.loadImage(for: photo)
+            eventPhotos[event.id]?[index].isRevealed = true
+            eventPhotos[event.id]?[index].image = image
+        } catch {
+            print("Failed to reveal photo: \(error)")
         }
-        
-        // In production, this would upload the photo to a backend API
-        print("Photo captured for \(event.title). Total photos: \(eventPhotos[event.id]?.count ?? 0)")
     }
 }
 
