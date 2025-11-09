@@ -44,6 +44,9 @@ struct ContentView: View {
     /// Event whose debug gallery is currently presented
     @State private var eventForDebugGallery: Event?
     
+    /// Event whose invite sheet is currently presented
+    @State private var eventForInvite: Event?
+    
     /// Form state for new event creation
     @State private var newTitle = ""
     @State private var newReleaseAt = Date().addingTimeInterval(24 * 3600) // Default: 24 hours from now
@@ -70,23 +73,35 @@ struct ContentView: View {
             // List of momentos using modular EventRow component
             List {
                 ForEach(events) { event in
-                    EventRow(event: event, now: now)
-                        .listRowSeparator(.hidden) // Hide default separators for card design
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                        .listRowBackground(Color.clear) // Transparent row background
-                        .contentShape(Rectangle())
-                        .onTapGesture {
+                    PremiumEventCard(
+                        event: event,
+                        now: now,
+                        onTap: {
                             // Open camera for taking photos at this event
                             selectedEventForPhoto = event
                             showPhotoCapture = true
+                        },
+                        onLongPress: {
+                            // Show invite/share sheet
+                            showInviteSheet(for: event)
                         }
-                        .contextMenu {
-                            Button {
-                                eventForDebugGallery = event
-                            } label: {
-                                Label("View Debug Photos", systemImage: "photo.stack")
-                            }
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    .contextMenu {
+                        Button {
+                            showInviteSheet(for: event)
+                        } label: {
+                            Label("Invite Friends", systemImage: "person.badge.plus")
                         }
+                        
+                        Button {
+                            eventForDebugGallery = event
+                        } label: {
+                            Label("View Debug Photos", systemImage: "photo.stack")
+                        }
+                    }
                 }
                 .onDelete(perform: deleteEvents)
             }
@@ -176,6 +191,9 @@ struct ContentView: View {
                     onDismiss: { eventForDebugGallery = nil }
                 )
             }
+            .sheet(item: $eventForInvite) { event in
+                InviteSheet(event: event, onDismiss: { eventForInvite = nil })
+            }
         }
     }
 
@@ -259,6 +277,11 @@ struct ContentView: View {
         } catch {
             print("Failed to reveal photo: \(error)")
         }
+    }
+    
+    /// Shows the invite sheet for an event
+    private func showInviteSheet(for event: Event) {
+        eventForInvite = event
     }
 }
 

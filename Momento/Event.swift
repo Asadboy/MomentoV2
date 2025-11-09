@@ -70,14 +70,19 @@ struct Event: Identifiable, Hashable {
 /// - Returns: Array of sample Event objects
 func makeFakeEvents(now: Date = .now) -> [Event] {
     [
-        Event(title: "Joe's 26th",  coverEmoji: "🎂",
-              releaseAt: Calendar.current.date(byAdding: .hour, value: 24, to: now)!,
-              memberCount: 12, photosTaken: 8, joinCode: "JOE26"),
-        Event(title: "NYE House Party", coverEmoji: "🎉",
-              releaseAt: Calendar.current.date(byAdding: .minute, value: 90, to: now)!,
+        // Countdown state - releases in 12 hours
+        Event(title: "Joe's 26th 🎂",  coverEmoji: "",
+              releaseAt: Calendar.current.date(byAdding: .hour, value: 12, to: now)!,
+              memberCount: 12, photosTaken: 0, joinCode: "JOE26"),
+        
+        // Live state - started 30 minutes ago
+        Event(title: "NYE House Party 🎉", coverEmoji: "",
+              releaseAt: Calendar.current.date(byAdding: .minute, value: -30, to: now)!,
               memberCount: 28, photosTaken: 23, joinCode: "NYE2025"),
-        Event(title: "Asad's Sopranos Party", coverEmoji: "🧺",
-              releaseAt: Calendar.current.date(byAdding: .day, value: 2, to: now)!,
-              memberCount: 7, photosTaken: 5, joinCode: "SOPRANO")
+        
+        // Revealed state - released 25 hours ago (past the 24h window)
+        Event(title: "Asad's Sopranos Party 🧺", coverEmoji: "",
+              releaseAt: Calendar.current.date(byAdding: .hour, value: -25, to: now)!,
+              memberCount: 7, photosTaken: 15, joinCode: "SOPRANO")
     ]
 }

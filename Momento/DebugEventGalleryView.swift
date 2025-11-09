@@ -74,16 +74,15 @@ private struct DebugPhotoCard: View {
         if let cached = photo.image {
             return cached
         }
-        if photo.isRevealed {
-            return PhotoStorageManager.shared.loadImage(for: photo)
-        }
-        return nil
+        // Always try to load image for the greyed-out preview
+        return PhotoStorageManager.shared.loadImage(for: photo)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             ZStack {
-                if photo.isRevealed, let image = displayImage {
+                if let image = displayImage {
+                    // Show image with opacity based on reveal state
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
@@ -91,11 +90,34 @@ private struct DebugPhotoCard: View {
                         .frame(height: 240)
                         .clipped()
                         .cornerRadius(18)
+                        .opacity(photo.isRevealed ? 1.0 : 0.3)
                         .overlay(
                             RoundedRectangle(cornerRadius: 18)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                .stroke(
+                                    photo.isRevealed ? Color.white.opacity(0.2) : Color.white.opacity(0.1),
+                                    lineWidth: 1
+                                )
+                        )
+                        .overlay(
+                            // Lock icon for unrevealed photos
+                            Group {
+                                if !photo.isRevealed {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "lock.fill")
+                                            .font(.system(size: 32, weight: .semibold))
+                                            .foregroundColor(.white)
+                                            .shadow(color: .black.opacity(0.5), radius: 8)
+                                        
+                                        Text("Tap to reveal")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(.white)
+                                            .shadow(color: .black.opacity(0.5), radius: 4)
+                                    }
+                                }
+                            }
                         )
                 } else {
+                    // Fallback if image can't be loaded
                     RoundedRectangle(cornerRadius: 18)
                         .fill(
                             LinearGradient(
@@ -110,19 +132,27 @@ private struct DebugPhotoCard: View {
                         .frame(height: 240)
                         .overlay(
                             VStack(spacing: 12) {
-                                Image(systemName: "eye.slash")
+                                Image(systemName: "photo")
                                     .font(.system(size: 28, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .foregroundColor(.white.opacity(0.5))
                                 
-                                Text("Hidden until reveal")
+                                Text("Image unavailable")
                                     .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .foregroundColor(.white.opacity(0.5))
                             }
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 18)
                                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
                         )
+                }
+            }
+            .onTapGesture {
+                if !photo.isRevealed {
+                    // Haptic feedback on reveal
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+                    onReveal(photo)
                 }
             }
             
