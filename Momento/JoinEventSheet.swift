@@ -27,8 +27,14 @@ struct JoinEventSheet: View {
     
     // MARK: - State Management
     
+    /// Supabase manager instance
+    @StateObject private var supabaseManager = SupabaseManager.shared
+    
     /// Currently selected join method
     @State private var selectedMethod: JoinMethod = .qrCode
+    
+    /// Loading state for join attempt
+    @State private var isJoining = false
     
     /// Code entry field for code-based joining
     @State private var enteredCode: String = ""
@@ -218,12 +224,19 @@ struct JoinEventSheet: View {
                         .padding(.horizontal)
                 }
                 
-                Button("Join Event") {
+                Button {
                     handleCodeEntry()
+                } label: {
+                    if isJoining {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    } else {
+                        Text("Join Event")
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(royalPurple)
-                .disabled(enteredCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(enteredCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isJoining)
             }
             .padding(.horizontal)
             
@@ -273,12 +286,19 @@ struct JoinEventSheet: View {
                         .padding(.horizontal)
                 }
                 
-                Button("Join Event") {
+                Button {
                     handleLinkEntry()
+                } label: {
+                    if isJoining {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    } else {
+                        Text("Join Event")
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(royalPurple)
-                .disabled(enteredLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(enteredLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isJoining)
             }
             .padding(.horizontal)
             
@@ -353,24 +373,29 @@ struct JoinEventSheet: View {
     /// Attempts to join an event with the given code
     private func joinEventWithCode(_ code: String) {
         errorMessage = nil
+        isJoining = true
         
-        // UI-only: Generate a fake event for demonstration
-        // In production, this would make an API call to validate and fetch the event
-        let joinedEvent = Event(
-            title: "Joined Event (\(code))",
-            coverEmoji: "??",
-            releaseAt: Date().addingTimeInterval(24 * 3600), // 24 hours from now
-            memberCount: Int.random(in: 5...30),
-            photosTaken: 0,
-            joinCode: code
-        )
-        
-        // Call the join callback
-        onJoin(joinedEvent)
-        
-        // Close the sheet
-        qrScanner.stopScanning()
-        isPresented = false
+        Task {
+            do {
+                let eventModel = try await supabaseManager.joinEvent(code: code)
+                let joinedEvent = Event(fromSupabase: eventModel)
+                
+                await MainActor.run {
+                    // Call the join callback
+                    onJoin(joinedEvent)
+                    
+                    // Close the sheet
+                    qrScanner.stopScanning()
+                    isPresented = false
+                    isJoining = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to join event: \(error.localizedDescription)"
+                    isJoining = false
+                }
+            }
+        }
     }
 }
 

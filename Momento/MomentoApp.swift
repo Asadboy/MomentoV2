@@ -11,8 +11,8 @@ import SwiftUI
 struct MomentoApp: App {
     var body: some Scene {
         WindowGroup {
-            // This is your app’s entry point: loads the main screen
-            ContentView()
+            // This is your app's entry point: loads the main screen
+            AuthenticationRootView()
                 .preferredColorScheme(.dark)
         }
     }

@@ -23,6 +23,19 @@
 		C348891F2EB7CCF2003094CB /* (null) in Resources */ = {isa = PBXBuildFile; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
 		C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */; };
+		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
+		C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */; };
+		C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7682EC0E45B004B23B1 /* Auth */; };
+		C3ACE76B2EC0E45B004B23B1 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE76A2EC0E45B004B23B1 /* Functions */; };
+		C3ACE76D2EC0E45B004B23B1 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE76C2EC0E45B004B23B1 /* PostgREST */; };
+		C3ACE76F2EC0E45B004B23B1 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE76E2EC0E45B004B23B1 /* Realtime */; };
+		C3ACE7712EC0E45B004B23B1 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7702EC0E45B004B23B1 /* Storage */; };
+		C3ACE7742EC0F096004B23B1 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7722EC0F096004B23B1 /* SignInView.swift */; };
+		C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7732EC0F096004B23B1 /* AuthenticationRootView.swift */; };
+		C3ACE7772EC0F101004B23B1 /* OfflineSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7762EC0F101004B23B1 /* OfflineSyncManager.swift */; };
+		C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */; };
+		C3ACE77B2EC0F190004B23B1 /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */; };
+		C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE77D2EC0F920004B23B1 /* Supabase */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +74,13 @@
 		C348891D2EB7CBF0003094CB /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
 		C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugEventGalleryView.swift; sourceTree = "<group>"; };
+		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
+		C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InviteSheet.swift; sourceTree = "<group>"; };
+		C3ACE7722EC0F096004B23B1 /* SignInView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		C3ACE7732EC0F096004B23B1 /* AuthenticationRootView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthenticationRootView.swift; sourceTree = "<group>"; };
+		C3ACE7762EC0F101004B23B1 /* OfflineSyncManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OfflineSyncManager.swift; path = Services/OfflineSyncManager.swift; sourceTree = "<group>"; };
+		C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SupabaseConfig.swift; path = Config/SupabaseConfig.swift; sourceTree = "<group>"; };
+		C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SupabaseManager.swift; path = Services/SupabaseManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +88,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3ACE76D2EC0E45B004B23B1 /* PostgREST in Frameworks */,
+				C3ACE76B2EC0E45B004B23B1 /* Functions in Frameworks */,
+				C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */,
+				C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */,
+				C3ACE7712EC0E45B004B23B1 /* Storage in Frameworks */,
+				C3ACE76F2EC0E45B004B23B1 /* Realtime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +122,7 @@
 				C34888F42EB75FF2003094CB /* MomentoUITests */,
 				C34888D82EB75FEF003094CB /* Products */,
 				C348890B2EB7BE60003094CB /* Recovered References */,
+				C3ACE77C2EC0F920004B23B1 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -136,6 +163,13 @@
 		C348890C2EB7BEAD003094CB /* Momento */ = {
 			isa = PBXGroup;
 			children = (
+				C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */,
+				C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */,
+				C3ACE7762EC0F101004B23B1 /* OfflineSyncManager.swift */,
+				C3ACE7732EC0F096004B23B1 /* AuthenticationRootView.swift */,
+				C3ACE7722EC0F096004B23B1 /* SignInView.swift */,
+				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
+				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
 				C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */,
 				C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */,
 				C34889112EB7C5F4003094CB /* MomentoApp.swift */,
@@ -150,6 +184,13 @@
 				C348891D2EB7CBF0003094CB /* EventManager.swift */,
 			);
 			path = Momento;
+			sourceTree = "<group>";
+		};
+		C3ACE77C2EC0F920004B23B1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -168,6 +209,14 @@
 			dependencies = (
 			);
 			name = Momento;
+			packageProductDependencies = (
+				C3ACE7682EC0E45B004B23B1 /* Auth */,
+				C3ACE76A2EC0E45B004B23B1 /* Functions */,
+				C3ACE76C2EC0E45B004B23B1 /* PostgREST */,
+				C3ACE76E2EC0E45B004B23B1 /* Realtime */,
+				C3ACE7702EC0E45B004B23B1 /* Storage */,
+				C3ACE77D2EC0F920004B23B1 /* Supabase */,
+			);
 			productName = Momento;
 			productReference = C34888D72EB75FEF003094CB /* Momento.app */;
 			productType = "com.apple.product-type.application";
@@ -240,6 +289,9 @@
 				Base,
 			);
 			mainGroup = C34888CE2EB75FEE003094CB;
+			packageReferences = (
+				C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			productRefGroup = C34888D82EB75FEF003094CB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -282,17 +334,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */,
+				C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */,
 				C34889122EB7C6F5003094CB /* ContentView.swift in Sources */,
+				C3ACE77B2EC0F190004B23B1 /* SupabaseManager.swift in Sources */,
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
+				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
 				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
+				C3ACE7742EC0F096004B23B1 /* SignInView.swift in Sources */,
+				C3ACE7772EC0F101004B23B1 /* OfflineSyncManager.swift in Sources */,
 				C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */,
+				C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */,
 				C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */,
 				C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */,
 				C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */,
+				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -624,6 +683,50 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C3ACE7682EC0E45B004B23B1 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		C3ACE76A2EC0E45B004B23B1 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		C3ACE76C2EC0E45B004B23B1 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		C3ACE76E2EC0E45B004B23B1 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		C3ACE7702EC0E45B004B23B1 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		C3ACE77D2EC0F920004B23B1 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C34888CF2EB75FEE003094CB /* Project object */;
 }
