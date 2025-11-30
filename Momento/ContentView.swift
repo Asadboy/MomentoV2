@@ -83,12 +83,29 @@ struct ContentView: View {
         in: .common
     ).autoconnect()
 
+    // MARK: - Background
+    
+    private var backgroundGradient: some View {
+        LinearGradient(
+            colors: [
+                Color(red: 0.05, green: 0.05, blue: 0.1),
+                Color(red: 0.08, green: 0.06, blue: 0.12)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+
     // MARK: - Body
     
     var body: some View {
         NavigationStack {
-            // List of momentos using modular EventRow component
             ZStack {
+                // Full-screen background
+                backgroundGradient
+                
+                // Content
                 if isLoadingEvents {
                     ProgressView("Loading your momentos...")
                         .tint(.white)
@@ -110,52 +127,39 @@ struct ContentView: View {
                 } else {
                     List {
                         ForEach(events) { event in
-                    PremiumEventCard(
-                        event: event,
-                        now: now,
-                        onTap: {
-                            handleEventTap(event)
-                        },
-                        onLongPress: {
-                            // Show invite/share sheet
-                            showInviteSheet(for: event)
-                        }
-                    )
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.clear)
-                    .contextMenu {
-                        Button {
-                            showInviteSheet(for: event)
-                        } label: {
-                            Label("Invite Friends", systemImage: "person.badge.plus")
-                        }
-                        
-                        Button {
-                            eventForDebugGallery = event
-                        } label: {
-                            Label("View Debug Photos", systemImage: "photo.stack")
-                        }
-                    }
+                            PremiumEventCard(
+                                event: event,
+                                now: now,
+                                onTap: {
+                                    handleEventTap(event)
+                                },
+                                onLongPress: {
+                                    showInviteSheet(for: event)
+                                }
+                            )
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .contextMenu {
+                                Button {
+                                    showInviteSheet(for: event)
+                                } label: {
+                                    Label("Invite Friends", systemImage: "person.badge.plus")
+                                }
+                                
+                                Button {
+                                    eventForDebugGallery = event
+                                } label: {
+                                    Label("View Debug Photos", systemImage: "photo.stack")
+                                }
+                            }
                         }
                         .onDelete(perform: deleteEvents)
                     }
-                    .listStyle(.plain) // Plain style works better with custom card design
-                    .scrollContentBackground(.hidden) // Hide default list background
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
-            .background(
-                // Rich dark background with subtle gradient
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.1), // Deep dark blue-black
-                        Color(red: 0.08, green: 0.06, blue: 0.12)  // Slightly lighter dark purple-black
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-            )
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Momentos")
@@ -167,29 +171,30 @@ struct ContentView: View {
                     Button {
                         showJoinSheet = true
                     } label: {
-                        Label("Join Event", systemImage: "qrcode.viewfinder")
+                        Image(systemName: "qrcode.viewfinder")
+                            .font(.system(size: 20, weight: .medium))
                     }
+                    .tint(.white)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         prepareAddDefaults()
                         showAddSheet = true
                     } label: {
-                        Label("Add Momento", systemImage: "plus")
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .medium))
                     }
+                    .tint(.white)
                 }
             }
-            // Update current time every second for countdown timers
+            .toolbarBackground(.hidden, for: .navigationBar)
             .onReceive(timer) { now = $0 }
-            // Load events from Supabase on appear
             .task {
                 await loadEvents()
             }
-            // Refresh when returning from background
             .refreshable {
                 await loadEvents()
             }
-            // Present add event sheet using modular AddEventSheet component
             .sheet(isPresented: $showAddSheet) {
                 AddEventSheet(
                     title: $newTitle,
@@ -203,13 +208,11 @@ struct ContentView: View {
                     }
                 )
             }
-            // Present join event sheet
             .sheet(isPresented: $showJoinSheet) {
                 JoinEventSheet(isPresented: $showJoinSheet) { joinedEvent in
                     joinEvent(joinedEvent)
                 }
             }
-            // Present photo capture sheet
             .sheet(isPresented: $showPhotoCapture) {
                 Group {
                     if let event = selectedEventForPhoto {
@@ -239,7 +242,6 @@ struct ContentView: View {
             .sheet(item: $eventForInvite) { event in
                 InviteSheet(event: event, onDismiss: { eventForInvite = nil })
             }
-            // Present reveal view (full screen for immersive experience)
             .fullScreenCover(isPresented: $showRevealView) {
                 if let event = selectedEventForReveal {
                     RevealView(event: event)
