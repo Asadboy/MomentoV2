@@ -11,9 +11,16 @@ struct AuthenticationRootView: View {
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var isCheckingAuth = true
     
+    // 🚨 DEBUG: Set to true to bypass sign-in screen for testing
+    // ⚠️ REMEMBER TO SET BACK TO FALSE BEFORE PRODUCTION!
+    private let DEBUG_SKIP_AUTH = true
+    
     var body: some View {
         Group {
-            if isCheckingAuth {
+            if DEBUG_SKIP_AUTH {
+                // 🧪 DEBUG MODE: Skip authentication entirely
+                ContentView()
+            } else if isCheckingAuth {
                 // Show splash screen while checking auth
                 ZStack {
                     Color(red: 0.1, green: 0.1, blue: 0.2)

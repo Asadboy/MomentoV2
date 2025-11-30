@@ -47,6 +47,14 @@ struct ContentView: View {
     /// Currently selected event for photo capture
     @State private var selectedEventForPhoto: Event?
     
+    // MARK: - Reveal State
+    
+    /// Controls whether the reveal view is presented
+    @State private var showRevealView = false
+    
+    /// Currently selected event for reveal
+    @State private var selectedEventForReveal: Event?
+    
     /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
     @State private var eventPhotos: [String: [EventPhoto]] = [:]
     
@@ -106,9 +114,7 @@ struct ContentView: View {
                         event: event,
                         now: now,
                         onTap: {
-                            // Open camera for taking photos at this event
-                            selectedEventForPhoto = event
-                            showPhotoCapture = true
+                            handleEventTap(event)
                         },
                         onLongPress: {
                             // Show invite/share sheet
@@ -233,10 +239,42 @@ struct ContentView: View {
             .sheet(item: $eventForInvite) { event in
                 InviteSheet(event: event, onDismiss: { eventForInvite = nil })
             }
+            // Present reveal view (full screen for immersive experience)
+            .fullScreenCover(isPresented: $showRevealView) {
+                if let event = selectedEventForReveal {
+                    RevealView(event: event)
+                        .environmentObject(supabaseManager)
+                }
+            }
         }
     }
 
     // MARK: - Actions
+    
+    /// Handle event card tap - routes to camera or reveal based on state
+    private func handleEventTap(_ event: Event) {
+        // Check if event is ready to reveal (24h+ after release)
+        let hoursSinceRelease = now.timeIntervalSince(event.releaseAt) / 3600
+        let isReadyToReveal = hoursSinceRelease >= 24 && !event.isRevealed
+        
+        if isReadyToReveal {
+            // Navigate to reveal experience
+            HapticsManager.shared.unlock()
+            selectedEventForReveal = event
+            showRevealView = true
+        } else if hoursSinceRelease >= 0 && hoursSinceRelease < 24 {
+            // Event is live - open camera
+            selectedEventForPhoto = event
+            showPhotoCapture = true
+        } else {
+            // Event is in countdown or already revealed - could open gallery
+            if event.isRevealed {
+                // Open reveal view to see photos again
+                selectedEventForReveal = event
+                showRevealView = true
+            }
+        }
+    }
     
     /// Load events from Supabase
     private func loadEvents() async {

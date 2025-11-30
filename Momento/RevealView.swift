@@ -1,0 +1,560 @@
+//
+//  RevealView.swift
+//  Momento
+//
+//  Full-screen photo reveal experience - The Momento Magic ✨
+//
+
+import SwiftUI
+import Supabase
+
+struct RevealView: View {
+    let event: Event
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var supabaseManager: SupabaseManager
+    
+    @State private var photos: [PhotoData] = []
+    @State private var currentIndex = 0
+    @State private var revealedIndices: Set<Int> = []
+    @State private var isLoading = true
+    @State private var showConfetti = false
+    @State private var allRevealed = false
+    @State private var canGoNext = false
+    @State private var showReactionPicker = false
+    @State private var photoReactions: [String: [String: String]] = [:] // [photoId: [userId: emoji]]
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    Color.black,
+                    Color.purple.opacity(0.3),
+                    Color.blue.opacity(0.2),
+                    Color.black
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            if isLoading {
+                loadingView
+            } else if photos.isEmpty {
+                emptyView
+            } else {
+                VStack(spacing: 0) {
+                    // Header
+                    headerView
+                        .padding()
+                    
+                    // Progress indicator
+                    progressView
+                        .padding(.horizontal)
+                    
+                    // Main card area
+                    TabView(selection: $currentIndex) {
+                        ForEach(Array(photos.enumerated()), id: \.offset) { index, photo in
+                            VStack(spacing: 16) {
+                                PhotoRevealCard(
+                                    photoURL: photo.url,
+                                    photographerName: photo.photographerName ?? "Unknown",
+                                    capturedAt: photo.capturedAt,
+                                    isRevealed: revealedIndices.contains(index),
+                                    onReveal: {
+                                        handlePhotoRevealed(at: index)
+                                    }
+                                )
+                                
+                                // Show reactions if photo is revealed
+                                if revealedIndices.contains(index) {
+                                    VStack(spacing: 12) {
+                                        // Display existing reactions
+                                        if let reactions = photoReactions[photo.id], !reactions.isEmpty {
+                                            EmojiReactionDisplay(reactions: reactions)
+                                        }
+                                        
+                                        // Reaction picker
+                                        if showReactionPicker && currentIndex == index {
+                                            EmojiReactionPicker { emoji in
+                                                addReaction(emoji, to: photo.id)
+                                            }
+                                            .transition(.scale.combined(with: .opacity))
+                                        } else {
+                                            Button(action: {
+                                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                    showReactionPicker.toggle()
+                                                }
+                                            }) {
+                                                HStack(spacing: 8) {
+                                                    Image(systemName: "face.smiling")
+                                                        .font(.system(size: 16))
+                                                    Text("Add Reaction")
+                                                        .font(.subheadline)
+                                                        .fontWeight(.medium)
+                                                }
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .padding(.horizontal, 20)
+                                                .padding(.vertical, 10)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(Color.white.opacity(0.1))
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .tag(index)
+                        }
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .onChange(of: currentIndex) {
+                        // Hide reaction picker when changing photos
+                        showReactionPicker = false
+                    }
+                    
+                    // Navigation controls
+                    navigationControls
+                        .padding()
+                }
+            }
+            
+            // Confetti overlay
+            if showConfetti {
+                ConfettiView()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+            
+            // Completion overlay
+            if allRevealed {
+                completionOverlay
+            }
+        }
+        .task {
+            await loadPhotos()
+        }
+    }
+    
+    // MARK: - Subviews
+    
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.5)
+                .tint(.white)
+            
+            Text("Preparing your Momentos...")
+                .font(.headline)
+                .foregroundColor(.white)
+        }
+    }
+    
+    private var emptyView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "photo.on.rectangle.angled")
+                .font(.system(size: 80))
+                .foregroundColor(.white.opacity(0.6))
+            
+            Text("No Photos Yet")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            Text("Photos will appear here once uploaded")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button("Close") {
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top)
+        }
+    }
+    
+    private var headerView: some View {
+        HStack {
+            Button(action: {
+                HapticsManager.shared.buttonPress()
+                dismiss()
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 4) {
+                Text(event.title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Text("\(photos.count) Momentos")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            
+            Spacer()
+            
+            // Skip all button
+            if !allRevealed {
+                Button("Skip All") {
+                    skipToEnd()
+                }
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+            }
+        }
+    }
+    
+    private var progressView: some View {
+        VStack(spacing: 8) {
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.2))
+                        .frame(height: 8)
+                    
+                    // Progress
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.cyan, Color.blue, Color.purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(
+                            width: geometry.size.width * CGFloat(revealedIndices.count) / CGFloat(max(photos.count, 1)),
+                            height: 8
+                        )
+                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: revealedIndices.count)
+                }
+            }
+            .frame(height: 8)
+            
+            // Counter
+            Text("Photo \(currentIndex + 1) of \(photos.count)")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+        }
+    }
+    
+    private var navigationControls: some View {
+        HStack(spacing: 40) {
+            // Previous button
+            Button(action: {
+                goToPrevious()
+            }) {
+                Image(systemName: "chevron.left.circle.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(currentIndex > 0 ? .white : .white.opacity(0.3))
+            }
+            .disabled(currentIndex == 0)
+            
+            Spacer()
+            
+            // Next button
+            Button(action: {
+                goToNext()
+            }) {
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(canGoNext && currentIndex < photos.count - 1 ? .white : .white.opacity(0.3))
+            }
+            .disabled(!canGoNext || currentIndex >= photos.count - 1)
+        }
+        .padding(.horizontal, 40)
+    }
+    
+    private var completionOverlay: some View {
+        ZStack {
+            // Semi-transparent background
+            Color.black.opacity(0.8)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                // Success icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.purple, Color.blue, Color.cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                    
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 80))
+                        .foregroundColor(.white)
+                }
+                .shadow(color: .purple.opacity(0.5), radius: 20)
+                
+                VStack(spacing: 12) {
+                    Text("All Momentos Revealed!")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Text("You've seen all \(photos.count) photos from this event")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                }
+                
+                Button(action: {
+                    HapticsManager.shared.buttonPress()
+                    dismiss()
+                }) {
+                    Text("View Gallery")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            LinearGradient(
+                                colors: [Color.purple, Color.blue],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(15)
+                }
+                .padding(.horizontal, 40)
+                .padding(.top, 20)
+            }
+            .padding()
+        }
+    }
+    
+    // MARK: - Actions
+    
+    private func loadPhotos() async {
+        isLoading = true
+        
+        do {
+            // Fetch photos for this event
+            let fetchedPhotos = try await supabaseManager.getPhotos(for: event.id)
+            
+            await MainActor.run {
+                self.photos = fetchedPhotos
+                self.isLoading = false
+                
+                // Play entrance haptic
+                if !fetchedPhotos.isEmpty {
+                    HapticsManager.shared.unlock()
+                }
+            }
+        } catch {
+            print("❌ Error loading photos: \(error)")
+            await MainActor.run {
+                self.isLoading = false
+            }
+        }
+    }
+    
+    private func handlePhotoRevealed(at index: Int) {
+        // Mark as revealed
+        revealedIndices.insert(index)
+        
+        // Play reveal haptic
+        HapticsManager.shared.photoReveal()
+        
+        // Enable next button
+        canGoNext = true
+        
+        // Check if all photos revealed
+        if revealedIndices.count == photos.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                completeReveal()
+            }
+        }
+    }
+    
+    private func goToNext() {
+        guard currentIndex < photos.count - 1 else { return }
+        
+        HapticsManager.shared.light()
+        withAnimation {
+            currentIndex += 1
+            canGoNext = revealedIndices.contains(currentIndex)
+        }
+    }
+    
+    private func goToPrevious() {
+        guard currentIndex > 0 else { return }
+        
+        HapticsManager.shared.light()
+        withAnimation {
+            currentIndex -= 1
+            canGoNext = true // Can always go forward to already revealed photos
+        }
+    }
+    
+    private func skipToEnd() {
+        HapticsManager.shared.medium()
+        
+        // Reveal all photos
+        for index in 0..<photos.count {
+            revealedIndices.insert(index)
+        }
+        
+        // Go to last photo
+        withAnimation {
+            currentIndex = photos.count - 1
+            canGoNext = true
+        }
+        
+        // Show completion
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            completeReveal()
+        }
+    }
+    
+    private func completeReveal() {
+        // Play celebration haptic
+        HapticsManager.shared.celebration()
+        
+        // Show confetti
+        withAnimation {
+            showConfetti = true
+        }
+        
+        // Show completion overlay after confetti starts
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation {
+                allRevealed = true
+            }
+        }
+        
+        // Hide confetti after a bit
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation {
+                showConfetti = false
+            }
+        }
+    }
+    
+    private func addReaction(_ emoji: String, to photoId: String) {
+        // Get current user ID (for now, use a placeholder)
+        let userId = supabaseManager.currentUser?.id.uuidString ?? "anonymous"
+        
+        // Update local state
+        if photoReactions[photoId] == nil {
+            photoReactions[photoId] = [:]
+        }
+        photoReactions[photoId]?[userId] = emoji
+        
+        // Hide picker after selection
+        withAnimation {
+            showReactionPicker = false
+        }
+        
+        // TODO: Sync to Supabase
+        // For now, reactions are local only
+        // Will persist to database once we add the update method
+        
+        print("✨ Added reaction \(emoji) to photo \(photoId)")
+    }
+}
+
+// MARK: - Confetti View
+
+struct ConfettiView: View {
+    @State private var animate = false
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                ForEach(0..<50, id: \.self) { index in
+                    ConfettiPiece(
+                        geometry: geometry,
+                        index: index,
+                        animate: $animate
+                    )
+                }
+            }
+        }
+        .onAppear {
+            animate = true
+        }
+    }
+}
+
+struct ConfettiPiece: View {
+    let geometry: GeometryProxy
+    let index: Int
+    @Binding var animate: Bool
+    
+    @State private var yOffset: CGFloat = 0
+    @State private var rotation: Double = 0
+    @State private var opacity: Double = 1.0
+    
+    private let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .pink, .orange, .cyan]
+    private let size: CGFloat = 10
+    
+    var body: some View {
+        Rectangle()
+            .fill(colors[index % colors.count])
+            .frame(width: size, height: size)
+            .rotationEffect(.degrees(rotation))
+            .opacity(opacity)
+            .position(
+                x: CGFloat.random(in: 0...geometry.size.width),
+                y: yOffset
+            )
+            .onAppear {
+                // Random starting position
+                yOffset = -50
+                
+                // Animate falling
+                withAnimation(
+                    .linear(duration: Double.random(in: 2...4))
+                ) {
+                    yOffset = geometry.size.height + 50
+                }
+                
+                // Animate rotation
+                withAnimation(
+                    .linear(duration: Double.random(in: 1...3))
+                    .repeatForever(autoreverses: false)
+                ) {
+                    rotation = 360
+                }
+                
+                // Fade out near bottom
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.linear(duration: 1.0)) {
+                        opacity = 0
+                    }
+                }
+            }
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    RevealView(event: Event(
+        id: UUID().uuidString,
+        title: "Beach Party 2025",
+        coverEmoji: "🏖️",
+        releaseAt: Date().addingTimeInterval(24 * 3600),
+        memberCount: 5,
+        photosTaken: 12,
+        joinCode: "ABC123",
+        isRevealed: true
+    ))
+    .environmentObject(SupabaseManager.shared)
+}
+

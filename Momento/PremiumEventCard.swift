@@ -25,7 +25,8 @@ struct PremiumEventCard: View {
     private enum EventState {
         case countdown
         case live
-        case revealed
+        case readyToReveal  // NEW: 24h+ passed, ready for reveal experience
+        case revealed       // After user has seen reveal
     }
     
     private var eventState: EventState {
@@ -36,7 +37,9 @@ struct PremiumEventCard: View {
         // Check if 24 hours have passed since release
         let hoursSinceRelease = now.timeIntervalSince(event.releaseAt) / 3600
         if hoursSinceRelease >= 24 {
-            return .revealed
+            // If event is marked as revealed, show revealed state
+            // Otherwise show ready to reveal (the exciting state!)
+            return event.isRevealed ? .revealed : .readyToReveal
         }
         return .live
     }
@@ -138,9 +141,25 @@ struct PremiumEventCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
-                    eventState == .live ? royalPurple.opacity(0.5) : Color.white.opacity(0.06),
-                    lineWidth: eventState == .live ? 2 : 1
+                    eventState == .readyToReveal ? 
+                        LinearGradient(
+                            colors: [Color.purple, Color.blue, Color.cyan],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ) : 
+                        LinearGradient(
+                            colors: [eventState == .live ? royalPurple.opacity(0.5) : Color.white.opacity(0.06)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                    lineWidth: eventState == .readyToReveal ? 3 : (eventState == .live ? 2 : 1)
                 )
+        )
+        .shadow(
+            color: eventState == .readyToReveal ? Color.purple.opacity(0.6) : Color.clear,
+            radius: eventState == .readyToReveal ? 20 : 0,
+            x: 0,
+            y: 0
         )
         .contentShape(Rectangle())
         .onTapGesture {
@@ -163,6 +182,8 @@ struct PremiumEventCard: View {
             countdownIndicator
         case .live:
             cameraButton
+        case .readyToReveal:
+            revealButton
         case .revealed:
             galleryButton
         }
@@ -259,6 +280,57 @@ struct PremiumEventCard: View {
         }
     }
     
+    private var revealButton: some View {
+        ZStack {
+            // Pulsing glow effect
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.purple.opacity(0.6),
+                            Color.blue.opacity(0.4),
+                            Color.cyan.opacity(0.3)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .scaleEffect(cameraScale)
+                .blur(radius: 8)
+                .animation(
+                    Animation.easeInOut(duration: 1.2)
+                        .repeatForever(autoreverses: true),
+                    value: cameraScale
+                )
+            
+            // Inner circle
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.purple.opacity(0.8),
+                            Color.blue.opacity(0.6)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            VStack(spacing: 2) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                Text("Reveal")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+        }
+        .onAppear {
+            cameraScale = 1.15
+        }
+    }
+    
     private var galleryButton: some View {
         ZStack {
             Circle()
@@ -319,6 +391,15 @@ struct PremiumEventCard: View {
                     .font(.system(size: 13, weight: .medium))
             }
             .foregroundColor(royalPurple)
+            
+        case .readyToReveal:
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 11, weight: .medium))
+                Text("Ready to reveal! ✨ Tap now")
+                    .font(.system(size: 13, weight: .bold))
+            }
+            .foregroundColor(Color.cyan)
             
         case .revealed:
             HStack(spacing: 6) {
