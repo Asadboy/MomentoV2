@@ -14,6 +14,19 @@ struct MomentoApp: App {
             // This is your app's entry point: loads the main screen
             AuthenticationRootView()
                 .preferredColorScheme(.dark)
+                .onOpenURL { url in
+                    // Handle OAuth callback from Google/Apple Sign In
+                    handleOAuthCallback(url)
+                }
+        }
+    }
+    
+    /// Handle OAuth callback URLs (e.g., momento://auth/callback)
+    private func handleOAuthCallback(_ url: URL) {
+        print("📱 Received OAuth callback: \(url)")
+        
+        Task {
+            await SupabaseManager.shared.handleOAuthCallback(url: url)
         }
     }
 }

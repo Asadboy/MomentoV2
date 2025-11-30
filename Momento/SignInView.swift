@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import AuthenticationServices
 import CryptoKit
 
@@ -14,6 +15,7 @@ struct SignInView: View {
     @State private var isSigningIn = false
     @State private var errorMessage: String?
     @State private var currentNonce: String?
+    @State private var webAuthSession: ASWebAuthenticationSession?
     
     var body: some View {
         ZStack {
@@ -51,6 +53,27 @@ struct SignInView: View {
                 
                 // Sign In Buttons
                 VStack(spacing: 16) {
+                    // Google Sign In (Primary - working!)
+                    Button {
+                        signInWithGoogle()
+                    } label: {
+                        HStack(spacing: 12) {
+                            // Google "G" logo
+                            Image(systemName: "g.circle.fill")
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundColor(.blue)
+                            
+                            Text("Sign in with Google")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color.white)
+                        .foregroundColor(.black)
+                        .cornerRadius(12)
+                    }
+                    .disabled(isSigningIn)
+                    
                     // Apple Sign In
                     SignInWithAppleButton(.signIn) { request in
                         let nonce = randomNonceString()
@@ -63,27 +86,8 @@ struct SignInView: View {
                     .signInWithAppleButtonStyle(.white)
                     .frame(height: 50)
                     .cornerRadius(12)
-                    
-                    // Google Sign In (placeholder for now)
-                    Button {
-                        // TODO: Implement Google Sign In
-                        errorMessage = "Google Sign In coming soon!"
-                    } label: {
-                        HStack {
-                            Image(systemName: "globe")
-                                .font(.system(size: 20, weight: .semibold))
-                            
-                            Text("Sign in with Google")
-                                .font(.system(size: 17, weight: .semibold))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(12)
-                    }
-                    .disabled(true)
-                    .opacity(0.5)
+                    .disabled(isSigningIn)
+                    .opacity(0.5) // Disabled until Apple Developer account approved
                     
                     // Email Sign In (optional)
                     Button {
@@ -150,9 +154,85 @@ struct SignInView: View {
                 Color.black.opacity(0.5)
                     .ignoresSafeArea()
                 
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                    
+                    Text("Signing in...")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            }
+        }
+    }
+    
+    // MARK: - Google Sign In
+    
+    private func signInWithGoogle() {
+        isSigningIn = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                // Get the OAuth URL from Supabase
+                let url = try await supabaseManager.client.auth.getOAuthSignInURL(
+                    provider: .google,
+                    redirectTo: URL(string: "momento://auth/callback")
+                )
+                
+                await MainActor.run {
+                    // Create and present ASWebAuthenticationSession
+                    let session = ASWebAuthenticationSession(
+                        url: url,
+                        callbackURLScheme: "momento"
+                    ) { callbackURL, error in
+                        Task { @MainActor in
+                            if let error = error {
+                                // User cancelled or error
+                                if (error as NSError).code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                                    print("ℹ️ User cancelled Google sign in")
+                                } else {
+                                    errorMessage = "Sign in failed: \(error.localizedDescription)"
+                                }
+                                isSigningIn = false
+                                return
+                            }
+                            
+                            guard let callbackURL = callbackURL else {
+                                errorMessage = "No callback received"
+                                isSigningIn = false
+                                return
+                            }
+                            
+                            // Handle the OAuth callback
+                            do {
+                                try await supabaseManager.client.auth.session(from: callbackURL)
+                                await supabaseManager.checkSession()
+                                print("✅ Google sign in successful!")
+                            } catch {
+                                errorMessage = "Failed to complete sign in: \(error.localizedDescription)"
+                            }
+                            
+                            isSigningIn = false
+                        }
+                    }
+                    
+                    session.presentationContextProvider = WebAuthPresentationContext.shared
+                    session.prefersEphemeralWebBrowserSession = false
+                    
+                    if !session.start() {
+                        errorMessage = "Failed to start authentication"
+                        isSigningIn = false
+                    }
+                    
+                    webAuthSession = session
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to start Google sign in: \(error.localizedDescription)"
+                    isSigningIn = false
+                }
             }
         }
     }
@@ -223,6 +303,22 @@ private func sha256(_ input: String) -> String {
     }.joined()
     
     return hashString
+}
+
+// MARK: - Web Auth Presentation Context
+
+/// Provides the presentation anchor for ASWebAuthenticationSession
+class WebAuthPresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
+    static let shared = WebAuthPresentationContext()
+    
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        // Get the key window from the connected scenes
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return ASPresentationAnchor()
+        }
+        return window
+    }
 }
 
 // MARK: - Preview

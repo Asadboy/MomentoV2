@@ -13,7 +13,7 @@ struct AuthenticationRootView: View {
     
     // 🚨 DEBUG: Set to true to bypass sign-in screen for testing
     // ⚠️ REMEMBER TO SET BACK TO FALSE BEFORE PRODUCTION!
-    private let DEBUG_SKIP_AUTH = true
+    private let DEBUG_SKIP_AUTH = false
     
     var body: some View {
         Group {

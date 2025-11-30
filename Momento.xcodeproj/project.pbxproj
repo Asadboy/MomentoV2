@@ -25,6 +25,7 @@
 		C34A395F2EDC55360059FA89 /* RevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395C2EDC55360059FA89 /* RevealView.swift */; };
 		C34A39602EDC55360059FA89 /* EmojiReactionPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */; };
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
+		C34A39692EDC96DA0059FA89 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C34A39682EDC96D90059FA89 /* Info.plist */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
 		C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */; };
 		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
@@ -80,6 +81,7 @@
 		C34A395C2EDC55360059FA89 /* RevealView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RevealView.swift; sourceTree = "<group>"; };
 		C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmojiReactionPicker.swift; sourceTree = "<group>"; };
 		C34A39632EDC55DB0059FA89 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
+		C34A39682EDC96D90059FA89 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
 		C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugEventGalleryView.swift; sourceTree = "<group>"; };
 		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 		C348890C2EB7BEAD003094CB /* Momento */ = {
 			isa = PBXGroup;
 			children = (
+				C34A39682EDC96D90059FA89 /* Info.plist */,
 				C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */,
 				C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */,
 				C34A395C2EDC55360059FA89 /* RevealView.swift */,
@@ -320,7 +323,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C348891F2EB7CCF2003094CB /* (null) in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,6 +536,7 @@
 				DEVELOPMENT_TEAM = 8X5TV69524;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Momento/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -564,6 +567,7 @@
 				DEVELOPMENT_TEAM = 8X5TV69524;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Momento/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

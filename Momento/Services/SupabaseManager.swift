@@ -24,10 +24,15 @@ class SupabaseManager: ObservableObject {
             fatalError("Supabase not configured! Check SupabaseConfig.swift")
         }
         
-        // Initialize Supabase client
+        // Initialize Supabase client with OAuth redirect
         client = SupabaseClient(
             supabaseURL: URL(string: SupabaseConfig.supabaseURL)!,
-            supabaseKey: SupabaseConfig.supabaseAnonKey
+            supabaseKey: SupabaseConfig.supabaseAnonKey,
+            options: SupabaseClientOptions(
+                auth: SupabaseClientOptions.AuthOptions(
+                    redirectToURL: URL(string: "momento://auth/callback")
+                )
+            )
         )
         
         // Check for existing session
@@ -101,6 +106,17 @@ class SupabaseManager: ObservableObject {
         try await createProfileIfNeeded(user: session.user)
         
         return session.user
+    }
+    
+    /// Handle OAuth callback URL (called from MomentoApp)
+    func handleOAuthCallback(url: URL) async {
+        do {
+            try await client.auth.session(from: url)
+            await checkSession()
+            print("✅ OAuth callback handled successfully")
+        } catch {
+            print("❌ OAuth callback error: \(error)")
+        }
     }
     
     /// Sign in with email and password

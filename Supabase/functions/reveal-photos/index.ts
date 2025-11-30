@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         .select()
       
       if (updateError) {
-        console.error('❌ Error updating events:', updateError)
+        console.error('❌ Error updating events:', updateError)image.png
         throw updateError
       }
       
