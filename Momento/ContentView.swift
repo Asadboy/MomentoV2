@@ -68,6 +68,9 @@ struct ContentView: View {
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     
+    /// Debounce for loading events
+    @State private var isRefreshing = false
+    
     
     
     // MARK: - Timer
@@ -164,8 +167,19 @@ struct ContentView: View {
                         .fontWeight(.bold)
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showJoinSheet = true
+                    Menu {
+                        Button {
+                            showJoinSheet = true
+                        } label: {
+                            Label("Join Event", systemImage: "qrcode.viewfinder")
+                        }
+                        
+                        // Debug option to clear upload queue
+                        Button(role: .destructive) {
+                            syncManager.clearQueue()
+                        } label: {
+                            Label("Clear Upload Queue", systemImage: "trash")
+                        }
                     } label: {
                         Image(systemName: "qrcode.viewfinder")
                             .font(.system(size: 20, weight: .medium))
@@ -189,6 +203,13 @@ struct ContentView: View {
             }
             .refreshable {
                 await loadEvents()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                // Refresh events when app comes back to foreground (slight delay to let uploads settle)
+                Task {
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
+                    await loadEvents()
+                }
             }
             .fullScreenCover(isPresented: $showAddSheet) {
                 CreateMomentoFlow { createdEvent in
@@ -289,9 +310,18 @@ struct ContentView: View {
         }
     }
     
-    /// Load events from Supabase
+    /// Load events from Supabase (debounced to prevent duplicate requests)
     private func loadEvents() async {
-        isLoadingEvents = true
+        // Prevent duplicate refresh calls from cancelling each other
+        guard !isRefreshing else {
+            print("⏳ Already refreshing, skipping duplicate call")
+            return
+        }
+        
+        await MainActor.run {
+            isRefreshing = true
+            isLoadingEvents = events.isEmpty // Only show loading if no events yet
+        }
         
         do {
             let eventModels = try await supabaseManager.getMyEvents()
@@ -299,11 +329,14 @@ struct ContentView: View {
             await MainActor.run {
                 events = eventModels.map { Event(fromSupabase: $0) }
                 isLoadingEvents = false
+                isRefreshing = false
             }
+            print("✅ Loaded \(eventModels.count) events")
         } catch {
             print("Failed to load events: \(error)")
             await MainActor.run {
                 isLoadingEvents = false
+                isRefreshing = false
             }
         }
     }

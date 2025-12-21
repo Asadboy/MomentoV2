@@ -46,9 +46,11 @@ class OfflineSyncManager: ObservableObject {
     
     @Published var queue: [QueuedPhoto] = []
     @Published var isUploading = false
+    @Published var activeUploads = 0
     
     private let supabaseManager = SupabaseManager.shared
     private let maxRetries = 3
+    private let maxConcurrentUploads = 3  // Upload 3 photos at once
     private let queueFileName = "upload_queue.json"
     
     private var cancellables = Set<AnyCancellable>()
@@ -60,9 +62,9 @@ class OfflineSyncManager: ObservableObject {
     
     // MARK: - Queue Management
     
-    /// Add a photo to the upload queue
+    /// Add a photo to the upload queue and start uploading immediately
     func queuePhoto(image: UIImage, eventId: UUID) throws -> QueuedPhoto {
-        // Save image to local storage
+        // Save image to local storage (compressed & resized)
         let photoId = UUID()
         let fileURL = try saveImageToLocal(image, photoId: photoId)
         
@@ -78,26 +80,51 @@ class OfflineSyncManager: ObservableObject {
         queue.append(queuedPhoto)
         saveQueue()
         
-        // Try to upload immediately if online
-        Task {
-            await processQueue()
+        // Fire-and-forget: Upload THIS photo immediately (don't wait for queue)
+        Task.detached(priority: .userInitiated) {
+            await self.uploadQueuedPhoto(queuedPhoto)
+            await MainActor.run {
+                self.cleanupCompletedUploads()
+            }
         }
         
         return queuedPhoto
     }
     
-    /// Process all pending photos in the queue
+    /// Process all pending photos in the queue (parallel uploads)
     func processQueue() async {
-        guard !isUploading else { return }
+        let pendingPhotos = queue.filter { $0.status == .pending || $0.status == .failed }
+        
+        if pendingPhotos.isEmpty {
+            print("📭 No pending photos to upload")
+            return
+        }
+        
+        print("📤 Processing \(pendingPhotos.count) pending photo(s) with \(maxConcurrentUploads) concurrent uploads...")
         
         await MainActor.run {
             isUploading = true
         }
         
-        let pendingPhotos = queue.filter { $0.status == .pending || $0.status == .failed }
-        
-        for photo in pendingPhotos {
-            await uploadQueuedPhoto(photo)
+        // Upload in parallel batches
+        await withTaskGroup(of: Void.self) { group in
+            var activeCount = 0
+            
+            for photo in pendingPhotos {
+                // Wait if we have too many active uploads
+                if activeCount >= maxConcurrentUploads {
+                    await group.next()
+                    activeCount -= 1
+                }
+                
+                activeCount += 1
+                group.addTask {
+                    await self.uploadQueuedPhoto(photo)
+                }
+            }
+            
+            // Wait for all remaining uploads
+            await group.waitForAll()
         }
         
         await MainActor.run {
@@ -114,38 +141,47 @@ class OfflineSyncManager: ObservableObject {
             return
         }
         
+        // Skip if already uploading or completed
+        if queue[index].status == .uploading || queue[index].status == .completed {
+            return
+        }
+        
         // Check retry limit
         if photo.retryCount >= maxRetries {
             await MainActor.run {
-                queue[index].status = .failed
-                queue[index].errorMessage = "Max retries exceeded"
-                saveQueue()
+                if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
+                    queue[idx].status = .failed
+                    queue[idx].errorMessage = "Max retries exceeded"
+                    saveQueue()
+                }
             }
             return
         }
         
         // Update status to uploading
         await MainActor.run {
-            queue[index].status = .uploading
-            queue[index].lastAttemptAt = Date()
-            saveQueue()
+            if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
+                queue[idx].status = .uploading
+                queue[idx].lastAttemptAt = Date()
+                activeUploads += 1
+                saveQueue()
+            }
         }
         
         do {
-            // Load image from disk
-            guard let imageData = try? Data(contentsOf: photo.localFileURL),
-                  let image = UIImage(data: imageData),
-                  let jpegData = image.jpegData(compressionQuality: 0.8) else {
+            // Load already-compressed image data directly
+            guard let imageData = try? Data(contentsOf: photo.localFileURL) else {
                 throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load image"])
             }
             
-            // Upload to Supabase
-            _ = try await supabaseManager.uploadPhoto(image: jpegData, eventId: photo.eventId)
+            // Upload to Supabase (already compressed, don't re-compress)
+            _ = try await supabaseManager.uploadPhoto(image: imageData, eventId: photo.eventId)
             
             // Mark as completed
             await MainActor.run {
                 if let updatedIndex = queue.firstIndex(where: { $0.id == photo.id }) {
                     queue[updatedIndex].status = .completed
+                    activeUploads = max(0, activeUploads - 1)
                     saveQueue()
                 }
             }
@@ -153,7 +189,7 @@ class OfflineSyncManager: ObservableObject {
             // Delete local file
             try? FileManager.default.removeItem(at: photo.localFileURL)
             
-            print("✅ Photo uploaded successfully: \(photo.id)")
+            print("✅ Photo \(photo.id.uuidString.prefix(8)) uploaded!")
             
         } catch {
             // Mark as failed, increment retry count
@@ -162,11 +198,12 @@ class OfflineSyncManager: ObservableObject {
                     queue[updatedIndex].status = .failed
                     queue[updatedIndex].retryCount += 1
                     queue[updatedIndex].errorMessage = error.localizedDescription
+                    activeUploads = max(0, activeUploads - 1)
                     saveQueue()
                 }
             }
             
-            print("❌ Failed to upload photo: \(error.localizedDescription)")
+            print("❌ Upload failed: \(error.localizedDescription)")
         }
     }
     
@@ -193,9 +230,13 @@ class OfflineSyncManager: ObservableObject {
     
     // MARK: - Local Storage
     
-    /// Save image to local storage
+    /// Save image to local storage (compressed and resized for fast upload)
     private func saveImageToLocal(_ image: UIImage, photoId: UUID) throws -> URL {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+        // Resize image to max 1200px on longest side (like Snapchat/Instagram)
+        let resizedImage = resizeImage(image, maxDimension: 1200)
+        
+        // Compress to 0.5 quality (~150-300KB instead of 2MB+)
+        guard let imageData = resizedImage.jpegData(compressionQuality: 0.5) else {
             throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG"])
         }
         
@@ -208,7 +249,28 @@ class OfflineSyncManager: ObservableObject {
         let fileURL = queueDirectory.appendingPathComponent("\(photoId.uuidString).jpg")
         try imageData.write(to: fileURL)
         
+        print("📸 Saved photo: \(imageData.count / 1024)KB (was \(image.jpegData(compressionQuality: 1.0)?.count ?? 0 / 1024)KB)")
+        
         return fileURL
+    }
+    
+    /// Resize image to max dimension while maintaining aspect ratio
+    private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        let maxSide = max(size.width, size.height)
+        
+        // If already small enough, return original
+        if maxSide <= maxDimension {
+            return image
+        }
+        
+        let scale = maxDimension / maxSide
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
     
     /// Save queue to disk
@@ -239,12 +301,28 @@ class OfflineSyncManager: ObservableObject {
             let data = try Data(contentsOf: queueFileURL)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            queue = try decoder.decode([QueuedPhoto].self, from: data)
+            var loadedQueue = try decoder.decode([QueuedPhoto].self, from: data)
             
             // Reset uploading status to pending (in case app crashed during upload)
-            for index in queue.indices where queue[index].status == .uploading {
-                queue[index].status = .pending
+            for index in loadedQueue.indices where loadedQueue[index].status == .uploading {
+                loadedQueue[index].status = .pending
             }
+            
+            // Remove items where local file no longer exists (stale queue entries)
+            let validQueue = loadedQueue.filter { photo in
+                let exists = FileManager.default.fileExists(atPath: photo.localFileURL.path)
+                if !exists {
+                    print("🗑️ Removing stale queue entry (file missing): \(photo.id)")
+                }
+                return exists
+            }
+            
+            if validQueue.count != loadedQueue.count {
+                print("🧹 Cleaned up \(loadedQueue.count - validQueue.count) stale queue entries")
+            }
+            
+            queue = validQueue
+            saveQueue() // Save the cleaned queue
         } catch {
             print("Failed to load queue: \(error)")
         }
@@ -270,6 +348,18 @@ class OfflineSyncManager: ObservableObject {
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .sink { [weak self] _ in
                 guard let self = self else { return }
+                print("📱 App became active - processing upload queue...")
+                print("   Pending: \(self.pendingCount), Failed: \(self.failedCount)")
+                Task {
+                    await self.processQueue()
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Also process when entering foreground (catches more cases)
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
                 Task {
                     await self.processQueue()
                 }
@@ -289,6 +379,20 @@ class OfflineSyncManager: ObservableObject {
     
     var completedCount: Int {
         queue.filter { $0.status == .completed }.count
+    }
+    
+    /// Clear the entire upload queue (for debugging/testing)
+    func clearQueue() {
+        print("🗑️ Clearing entire upload queue (\(queue.count) items)")
+        queue.removeAll()
+        saveQueue()
+        
+        // Also delete the queue directory
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let queueDirectory = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
+        try? FileManager.default.removeItem(at: queueDirectory)
+        
+        print("✅ Upload queue cleared")
     }
 }
 

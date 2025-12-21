@@ -456,29 +456,19 @@ class SupabaseManager: ObservableObject {
         let photoId = UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
         
-        print("📤 [uploadPhoto] Starting upload...")
-        print("   Event: \(eventId)")
-        print("   Photo ID: \(photoId)")
-        print("   File: \(fileName)")
-        print("   Size: \(image.count) bytes")
+        print("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8))...")
         
         // Upload to storage
-        do {
-            _ = try await client.storage
-                .from("momento-photos")
-                .upload(
-                    fileName,
-                    data: image,
-                    options: FileOptions(
-                        contentType: "image/jpeg",
-                        upsert: false
-                    )
+        _ = try await client.storage
+            .from("momento-photos")
+            .upload(
+                fileName,
+                data: image,
+                options: FileOptions(
+                    contentType: "image/jpeg",
+                    upsert: false
                 )
-            print("✅ [uploadPhoto] Storage upload successful")
-        } catch {
-            print("❌ [uploadPhoto] Storage upload failed: \(error)")
-            throw error
-        }
+            )
         
         // Create photo record with storage path
         let photo = PhotoModel(
@@ -492,19 +482,11 @@ class SupabaseManager: ObservableObject {
             uploadStatus: "uploaded"
         )
         
-        do {
-            try await client
-                .from("photos")
-                .insert(photo)
-                .execute()
-            print("✅ [uploadPhoto] Database record created")
-        } catch {
-            print("❌ [uploadPhoto] Database insert failed: \(error)")
-            // TODO: Consider deleting the storage file if DB insert fails
-            throw error
-        }
+        try await client
+            .from("photos")
+            .insert(photo)
+            .execute()
         
-        print("✅ Photo uploaded successfully to event: \(eventId)")
         return photo
     }
     
