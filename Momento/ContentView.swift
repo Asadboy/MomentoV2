@@ -245,28 +245,47 @@ struct ContentView: View {
 
     // MARK: - Actions
     
-    /// Handle event card tap - routes to camera or reveal based on state
+    /// Handle event card tap - routes to camera, processing info, or reveal based on state
     private func handleEventTap(_ event: Event) {
-        // Check if event is ready to reveal (24h+ after release)
-        let hoursSinceRelease = now.timeIntervalSince(event.releaseAt) / 3600
-        let isReadyToReveal = hoursSinceRelease >= 24 && !event.isRevealed
-        
-        if isReadyToReveal {
-            // Navigate to reveal experience
+        switch event.currentState(at: now) {
+        case .upcoming:
+            // Event hasn't started yet - show info message
+            errorMessage = "This momento starts in \(formatTimeUntil(event.startsAt))"
+            showErrorAlert = true
+            
+        case .live:
+            // Event is live - open camera for photo capture
+            selectedEventForPhoto = event
+            showPhotoCapture = true
+            
+        case .processing:
+            // Photos are developing - show countdown to reveal
+            errorMessage = "Photos are developing! They'll be ready in \(formatTimeUntil(event.releaseAt))"
+            showErrorAlert = true
+            
+        case .revealed:
+            // Photos are ready - open reveal view
             HapticsManager.shared.unlock()
             selectedEventForReveal = event
             showRevealView = true
-        } else if hoursSinceRelease >= 0 && hoursSinceRelease < 24 {
-            // Event is live - open camera
-            selectedEventForPhoto = event
-            showPhotoCapture = true
+        }
+    }
+    
+    /// Format time remaining until a date
+    private func formatTimeUntil(_ date: Date) -> String {
+        let seconds = max(0, Int(date.timeIntervalSince(now)))
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        
+        if hours >= 24 {
+            let days = hours / 24
+            return days == 1 ? "1 day" : "\(days) days"
+        } else if hours > 0 {
+            return hours == 1 ? "about 1 hour" : "about \(hours) hours"
+        } else if minutes > 0 {
+            return minutes == 1 ? "1 minute" : "\(minutes) minutes"
         } else {
-            // Event is in countdown or already revealed - could open gallery
-            if event.isRevealed {
-                // Open reveal view to see photos again
-                selectedEventForReveal = event
-                showRevealView = true
-            }
+            return "less than a minute"
         }
     }
     

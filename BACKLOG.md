@@ -19,15 +19,22 @@
 - [x] Basic event cards UI
 
 ### In Progress 🔄
-- [ ] New Create Momento wizard (multi-step flow)
-- [ ] Start time & end time for events
-- [ ] Share flow (QR code, join code, share link)
+- [ ] Full end-to-end photo upload test (40 people beta)
+
+### Done ✅ (Dec 21)
+- [x] New Create Momento wizard (multi-step flow)
+- [x] Start time & end time for events  
+- [x] Share flow (QR code, join code, share link)
+- [x] Event state handling (upcoming → live → processing → revealed)
+- [x] Camera enhancements (front/back toggle, flash, multi-capture)
+- [x] Shutter animation + "Saved!" feedback
+- [x] Processing state UI ("Developing in X time")
+- [x] Removed 5-photo limit for beta
 
 ### To Do 📋
-- [ ] Photo reveal experience (24h after event ends)
-- [ ] Event state handling (countdown → live → ended → reveal)
-- [ ] Pull-to-refresh events list
-- [ ] Basic error handling UI
+- [ ] Photo reveal experience polish
+- [ ] Pull-to-refresh events list (exists but needs testing)
+- [ ] Verify all photos upload to Supabase storage
 
 ---
 
@@ -104,6 +111,24 @@
 
 - [ ] CoreGraphics NaN errors in console (non-blocking)
 - [ ] Keyboard constraint warnings (non-blocking)
+- [x] Event time showing +1 day (timezone issue) - Fixed with proper startsAt/endsAt
+
+---
+
+## Beta Test Checklist (Jan Beta) ✅
+
+### Before Beta
+- [ ] Run verification SQL in Supabase (check storage bucket + event columns)
+- [ ] Test create event → appears in Supabase `events` table
+- [ ] Test take photo → appears in Supabase `photos` table AND storage bucket
+- [ ] Test with airplane mode → photos queue locally → upload when back online
+- [ ] Test with 10+ photos in one event
+- [ ] Verify all device types (front camera, back camera)
+
+### During Beta
+- [ ] Monitor Supabase logs for errors
+- [ ] Check storage bucket size
+- [ ] Watch for any RLS policy errors
 
 ---
 

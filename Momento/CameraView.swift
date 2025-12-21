@@ -18,6 +18,10 @@ struct CameraView: View {
     let onPhotoCaptured: (UIImage) -> Void  // Callback when photo is captured
     let onDismiss: () -> Void  // Callback to dismiss camera
     
+    @State private var showShutterFlash = false
+    @State private var photoCount = 0
+    @State private var showSavedIndicator = false
+    
     // MARK: - Constants
     
     /// Royal purple accent color
@@ -31,54 +35,115 @@ struct CameraView: View {
             CameraPreviewView(cameraController: cameraController)
                 .ignoresSafeArea()
             
+            // Shutter flash effect
+            if showShutterFlash {
+                Color.white
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+            
             // UI overlay
             VStack {
-                // Top bar with close button
+                // Top bar
                 HStack {
+                    // Close button
                     Button {
                         cameraController.stopSession()
                         onDismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 32))
+                        Image(systemName: "xmark")
+                            .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
-                            .background(Circle().fill(Color.black.opacity(0.3)))
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.black.opacity(0.4)))
                     }
-                    .padding()
                     
                     Spacer()
+                    
+                    // Photo count indicator
+                    if photoCount > 0 {
+                        HStack(spacing: 6) {
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 14))
+                            Text("\(photoCount)")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.black.opacity(0.4)))
+                    }
+                    
+                    Spacer()
+                    
+                    // Flash toggle
+                    Button {
+                        cameraController.toggleFlash()
+                    } label: {
+                        Image(systemName: cameraController.isFlashOn ? "bolt.fill" : "bolt.slash.fill")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(cameraController.isFlashOn ? .yellow : .white)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.black.opacity(0.4)))
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                
+                Spacer()
+                
+                // "Saved" indicator that appears briefly
+                if showSavedIndicator {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Saved!")
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Capsule().fill(Color.black.opacity(0.7)))
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 
                 Spacer()
                 
                 // Bottom controls
-                VStack(spacing: 20) {
+                HStack(alignment: .center, spacing: 60) {
+                    // Placeholder for symmetry
+                    Circle()
+                        .fill(Color.clear)
+                        .frame(width: 44, height: 44)
+                    
                     // Capture button
                     Button {
-                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                        generator.prepare()
-                        generator.impactOccurred()
-                        cameraController.capturePhoto()
+                        captureWithFeedback()
                     } label: {
                         ZStack {
                             Circle()
                                 .fill(Color.white)
-                                .frame(width: 70, height: 70)
+                                .frame(width: 80, height: 80)
                             
                             Circle()
-                                .stroke(Color.black, lineWidth: 3)
-                                .frame(width: 64, height: 64)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 4)
+                                .frame(width: 90, height: 90)
                         }
                     }
                     .disabled(!cameraController.isSessionRunning)
                     
-                    // Instructions
-                    Text("Tap to capture")
-                        .font(.caption)
-                        .foregroundColor(.white)
-                        .padding(.bottom, 8)
+                    // Camera flip button
+                    Button {
+                        cameraController.switchCamera()
+                    } label: {
+                        Image(systemName: "camera.rotate.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.black.opacity(0.4)))
+                    }
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 50)
             }
         }
         .background(Color.black)
@@ -89,12 +154,42 @@ struct CameraView: View {
             cameraController.stopSession()
         }
         .onChange(of: cameraController.capturedImage) { _, newValue in
-            // Handle captured photo
             if let image = newValue {
                 onPhotoCaptured(image)
                 cameraController.clearCapturedImage()
+                photoCount += 1
+                
+                // Show saved indicator briefly
+                withAnimation(.easeOut(duration: 0.2)) {
+                    showSavedIndicator = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    withAnimation(.easeIn(duration: 0.3)) {
+                        showSavedIndicator = false
+                    }
+                }
             }
         }
+    }
+    
+    private func captureWithFeedback() {
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        // Shutter flash animation
+        withAnimation(.easeOut(duration: 0.05)) {
+            showShutterFlash = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeIn(duration: 0.15)) {
+                showShutterFlash = false
+            }
+        }
+        
+        // Capture photo
+        cameraController.capturePhoto()
     }
 }
 
@@ -156,6 +251,8 @@ class CameraController: NSObject, ObservableObject {
     @Published var isSessionRunning: Bool = false
     @Published var hasPermission: Bool = false
     @Published var errorMessage: String?
+    @Published var isFlashOn: Bool = false
+    @Published var isUsingFrontCamera: Bool = false
     
     var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
@@ -199,8 +296,9 @@ class CameraController: NSObject, ObservableObject {
         let session = AVCaptureSession()
         session.sessionPreset = .photo
         
-        // Get video device (back camera preferred)
-        guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) ??
+        // Get video device based on current camera preference
+        let position: AVCaptureDevice.Position = isUsingFrontCamera ? .front : .back
+        guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) ??
                 AVCaptureDevice.default(for: .video) else {
             DispatchQueue.main.async {
                 self.errorMessage = "Camera not available"
@@ -242,6 +340,42 @@ class CameraController: NSObject, ObservableObject {
         }
         
         captureSession = session
+    }
+    
+    /// Switch between front and back camera
+    func switchCamera() {
+        guard let session = captureSession, let currentInput = videoDeviceInput else { return }
+        
+        // Toggle camera
+        isUsingFrontCamera.toggle()
+        let newPosition: AVCaptureDevice.Position = isUsingFrontCamera ? .front : .back
+        
+        guard let newDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newPosition) else {
+            return
+        }
+        
+        do {
+            let newInput = try AVCaptureDeviceInput(device: newDevice)
+            
+            session.beginConfiguration()
+            session.removeInput(currentInput)
+            
+            if session.canAddInput(newInput) {
+                session.addInput(newInput)
+                videoDeviceInput = newInput
+            } else {
+                session.addInput(currentInput) // Restore original if failed
+            }
+            
+            session.commitConfiguration()
+        } catch {
+            print("Error switching camera: \(error)")
+        }
+    }
+    
+    /// Toggle flash mode
+    func toggleFlash() {
+        isFlashOn.toggle()
     }
     
     /// Starts the camera session
@@ -298,8 +432,14 @@ class CameraController: NSObject, ObservableObject {
         }
         
         // Configure photo settings
-        // Use default settings - photos will be captured in the best available format
         let settings = AVCapturePhotoSettings()
+        
+        // Set flash mode based on user preference
+        if photoOutput.supportedFlashModes.contains(.on) && isFlashOn {
+            settings.flashMode = .on
+        } else if photoOutput.supportedFlashModes.contains(.off) {
+            settings.flashMode = .off
+        }
         
         // Capture photo
         photoOutput.capturePhoto(with: settings, delegate: self)

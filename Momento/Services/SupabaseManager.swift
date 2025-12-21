@@ -445,37 +445,40 @@ class SupabaseManager: ObservableObject {
     /// Upload a photo to an event
     func uploadPhoto(image: Data, eventId: UUID) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
+            print("❌ [uploadPhoto] User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
         
-        // Check 5-photo limit
-        let userPhotos: [PhotoModel] = try await client
-            .from("photos")
-            .select()
-            .eq("event_id", value: eventId.uuidString)
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-            .value
-        
-        if userPhotos.count >= 5 {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "You can only upload 5 photos per event"])
-        }
+        // Photo limit check - disabled for beta testing
+        // TODO: Re-enable with premium tier check after beta
         
         // Generate unique filename
         let photoId = UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
         
+        print("📤 [uploadPhoto] Starting upload...")
+        print("   Event: \(eventId)")
+        print("   Photo ID: \(photoId)")
+        print("   File: \(fileName)")
+        print("   Size: \(image.count) bytes")
+        
         // Upload to storage
-        _ = try await client.storage
-            .from("momento-photos")
-            .upload(
-                fileName,
-                data: image,
-                options: FileOptions(
-                    contentType: "image/jpeg",
-                    upsert: false
+        do {
+            _ = try await client.storage
+                .from("momento-photos")
+                .upload(
+                    fileName,
+                    data: image,
+                    options: FileOptions(
+                        contentType: "image/jpeg",
+                        upsert: false
+                    )
                 )
-            )
+            print("✅ [uploadPhoto] Storage upload successful")
+        } catch {
+            print("❌ [uploadPhoto] Storage upload failed: \(error)")
+            throw error
+        }
         
         // Create photo record with storage path
         let photo = PhotoModel(
@@ -489,12 +492,19 @@ class SupabaseManager: ObservableObject {
             uploadStatus: "uploaded"
         )
         
-        try await client
-            .from("photos")
-            .insert(photo)
-            .execute()
+        do {
+            try await client
+                .from("photos")
+                .insert(photo)
+                .execute()
+            print("✅ [uploadPhoto] Database record created")
+        } catch {
+            print("❌ [uploadPhoto] Database insert failed: \(error)")
+            // TODO: Consider deleting the storage file if DB insert fails
+            throw error
+        }
         
-        print("✅ Photo uploaded to event: \(eventId)")
+        print("✅ Photo uploaded successfully to event: \(eventId)")
         return photo
     }
     

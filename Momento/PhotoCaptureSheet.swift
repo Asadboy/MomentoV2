@@ -111,15 +111,13 @@ struct PhotoCaptureSheet: View {
     
     // MARK: - Actions
     
-    /// Handles captured photo
+    /// Handles captured photo - stays open for multi-capture
     private func handlePhotoCaptured(_ image: UIImage) {
         // Call callback with photo and event
         onPhotoCaptured(image, event)
         
-        // Dismiss sheet after short delay to show photo was captured
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isPresented = false
-        }
+        // Don't dismiss - allow user to take multiple photos
+        // User must tap X to close camera
     }
 }
 

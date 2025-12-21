@@ -17,31 +17,30 @@ struct PremiumEventCard: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
     
-    @State private var showExpandedTime = false
     @State private var cameraScale: CGFloat = 1.0
     
     // MARK: - Event State
     
     private enum EventState {
-        case countdown
-        case live
-        case readyToReveal  // NEW: 24h+ passed, ready for reveal experience
+        case upcoming       // Before startsAt - countdown to event start
+        case live           // Between startsAt and endsAt - can take photos
+        case processing     // Between endsAt and releaseAt - "developing" photos
+        case readyToReveal  // After releaseAt - ready for reveal experience
         case revealed       // After user has seen reveal
     }
     
     private var eventState: EventState {
-        let remaining = secondsUntil(event.releaseAt, from: now)
-        if remaining > 0 {
-            return .countdown
-        }
-        // Check if 24 hours have passed since release
-        let hoursSinceRelease = now.timeIntervalSince(event.releaseAt) / 3600
-        if hoursSinceRelease >= 24 {
-            // If event is marked as revealed, show revealed state
-            // Otherwise show ready to reveal (the exciting state!)
+        // Use the Event's proper state logic
+        switch event.currentState(at: now) {
+        case .upcoming:
+            return .upcoming
+        case .live:
+            return .live
+        case .processing:
+            return .processing
+        case .revealed:
             return event.isRevealed ? .revealed : .readyToReveal
         }
-        return .live
     }
     
     // MARK: - Computed Properties
@@ -50,22 +49,41 @@ struct PremiumEventCard: View {
         max(0, Int(date.timeIntervalSince(reference)))
     }
     
-    private var remainingSeconds: Int {
+    /// Seconds until event starts (for upcoming state)
+    private var secondsUntilStart: Int {
+        secondsUntil(event.startsAt, from: now)
+    }
+    
+    /// Seconds until event ends (for live state)
+    private var secondsUntilEnd: Int {
+        secondsUntil(event.endsAt, from: now)
+    }
+    
+    /// Seconds until photos are revealed (for processing state)
+    private var secondsUntilReveal: Int {
         secondsUntil(event.releaseAt, from: now)
     }
     
     private var progress: Double {
-        // Assume 24 hour countdown for progress calculation
-        let totalSeconds = 24.0 * 3600.0
-        let remaining = Double(remainingSeconds)
-        return 1.0 - (remaining / totalSeconds)
-    }
-    
-    private func formatTime(_ seconds: Int) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        return String(format: "%02d:%02d:%02d", h, m, s)
+        switch eventState {
+        case .upcoming:
+            // Progress toward event start (assume event was created 24h before start)
+            let totalSeconds = 24.0 * 3600.0
+            let remaining = Double(secondsUntilStart)
+            return max(0, 1.0 - (remaining / totalSeconds))
+        case .live:
+            // Progress through the event
+            let totalSeconds = event.endsAt.timeIntervalSince(event.startsAt)
+            let elapsed = now.timeIntervalSince(event.startsAt)
+            return totalSeconds > 0 ? min(1.0, elapsed / totalSeconds) : 0
+        case .processing:
+            // Progress toward reveal
+            let totalSeconds = event.releaseAt.timeIntervalSince(event.endsAt)
+            let elapsed = now.timeIntervalSince(event.endsAt)
+            return totalSeconds > 0 ? min(1.0, elapsed / totalSeconds) : 0
+        default:
+            return 1.0
+        }
     }
     
     private func formatCompactTime(_ seconds: Int) -> String {
@@ -86,6 +104,52 @@ struct PremiumEventCard: View {
     
     private var cardBackground: Color {
         Color(red: 0.12, green: 0.1, blue: 0.16)
+    }
+    
+    private var cardBorderGradient: LinearGradient {
+        switch eventState {
+        case .readyToReveal:
+            return LinearGradient(
+                colors: [Color.purple, Color.blue, Color.cyan],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .live:
+            return LinearGradient(
+                colors: [Color.green.opacity(0.6), Color.green.opacity(0.3)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .processing:
+            return LinearGradient(
+                colors: [Color.orange.opacity(0.4), Color.yellow.opacity(0.2)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        default:
+            return LinearGradient(
+                colors: [Color.white.opacity(0.06)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+    
+    private var cardBorderWidth: CGFloat {
+        switch eventState {
+        case .readyToReveal: return 3
+        case .live: return 2
+        case .processing: return 1.5
+        default: return 1
+        }
+    }
+    
+    private var cardGlowColor: Color {
+        switch eventState {
+        case .readyToReveal: return Color.purple.opacity(0.6)
+        case .live: return Color.green.opacity(0.3)
+        default: return Color.clear
+        }
     }
     
     // MARK: - Body
@@ -141,23 +205,13 @@ struct PremiumEventCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
-                    eventState == .readyToReveal ? 
-                        LinearGradient(
-                            colors: [Color.purple, Color.blue, Color.cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ) : 
-                        LinearGradient(
-                            colors: [eventState == .live ? royalPurple.opacity(0.5) : Color.white.opacity(0.06)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                    lineWidth: eventState == .readyToReveal ? 3 : (eventState == .live ? 2 : 1)
+                    cardBorderGradient,
+                    lineWidth: cardBorderWidth
                 )
         )
         .shadow(
-            color: eventState == .readyToReveal ? Color.purple.opacity(0.6) : Color.clear,
-            radius: eventState == .readyToReveal ? 20 : 0,
+            color: cardGlowColor,
+            radius: eventState == .readyToReveal ? 20 : (eventState == .live ? 12 : 0),
             x: 0,
             y: 0
         )
@@ -178,10 +232,12 @@ struct PremiumEventCard: View {
     @ViewBuilder
     private var stateIndicator: some View {
         switch eventState {
-        case .countdown:
-            countdownIndicator
+        case .upcoming:
+            upcomingIndicator
         case .live:
             cameraButton
+        case .processing:
+            processingIndicator
         case .readyToReveal:
             revealButton
         case .revealed:
@@ -189,7 +245,7 @@ struct PremiumEventCard: View {
         }
     }
     
-    private var countdownIndicator: some View {
+    private var upcomingIndicator: some View {
         ZStack {
             // Background circle
             Circle()
@@ -216,23 +272,50 @@ struct PremiumEventCard: View {
             
             // Time display
             VStack(spacing: 2) {
-                if showExpandedTime {
-                    Text(formatTime(remainingSeconds))
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundColor(royalPurple)
-                } else {
-                    Text(formatCompactTime(remainingSeconds))
-                        .font(.system(size: 14, weight: .bold, design: .monospaced))
-                        .foregroundColor(royalPurple)
-                }
-            }
-        }
-        .onTapGesture {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                showExpandedTime.toggle()
+                Text(formatCompactTime(secondsUntilStart))
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(royalPurple)
             }
         }
     }
+    
+    private var processingIndicator: some View {
+        ZStack {
+            // Animated developing effect
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.orange.opacity(0.3),
+                            Color.yellow.opacity(0.15)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .scaleEffect(cameraScale)
+                .animation(
+                    Animation.easeInOut(duration: 2.0)
+                        .repeatForever(autoreverses: true),
+                    value: cameraScale
+                )
+            
+            // Film icon
+            VStack(spacing: 4) {
+                Image(systemName: "film.stack")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.orange)
+                
+                Text(formatCompactTime(secondsUntilReveal))
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(.orange.opacity(0.8))
+            }
+        }
+        .onAppear {
+            cameraScale = 1.08
+        }
+    }
+    
     
     private var cameraButton: some View {
         ZStack {
@@ -357,27 +440,27 @@ struct PremiumEventCard: View {
         }
     }
     
-    private var countdownSubtitle: String {
-        let hours = remainingSeconds / 3600
+    private func formatCountdown(_ seconds: Int) -> String {
+        let hours = seconds / 3600
         if hours >= 24 {
             let days = hours / 24
-            return days == 1 ? "Starts in 1 day" : "Starts in \(days) days"
+            return days == 1 ? "1 day" : "\(days) days"
         } else if hours > 0 {
-            return hours == 1 ? "Starts in 1 hour" : "Starts in \(hours) hours"
+            return hours == 1 ? "1 hour" : "\(hours) hours"
         } else {
-            let minutes = remainingSeconds / 60
-            return minutes <= 1 ? "Starting soon" : "Starts in \(minutes) minutes"
+            let minutes = seconds / 60
+            return minutes <= 1 ? "soon" : "\(minutes) min"
         }
     }
     
     @ViewBuilder
     private var stateSubtitle: some View {
         switch eventState {
-        case .countdown:
+        case .upcoming:
             HStack(spacing: 6) {
                 Image(systemName: "clock.fill")
                     .font(.system(size: 11, weight: .medium))
-                Text(countdownSubtitle)
+                Text("Starts in \(formatCountdown(secondsUntilStart))")
                     .font(.system(size: 13, weight: .medium))
             }
             .foregroundColor(.white.opacity(0.6))
@@ -385,18 +468,27 @@ struct PremiumEventCard: View {
         case .live:
             HStack(spacing: 6) {
                 Circle()
-                    .fill(royalPurple)
+                    .fill(Color.green)
                     .frame(width: 6, height: 6)
-                Text("Live now - Tap to capture")
+                Text("Live now • Tap to capture")
+                    .font(.system(size: 13, weight: .semibold))
+            }
+            .foregroundColor(.green)
+            
+        case .processing:
+            HStack(spacing: 6) {
+                Image(systemName: "film")
+                    .font(.system(size: 11, weight: .medium))
+                Text("Developing • \(formatCountdown(secondsUntilReveal))")
                     .font(.system(size: 13, weight: .medium))
             }
-            .foregroundColor(royalPurple)
+            .foregroundColor(.orange)
             
         case .readyToReveal:
             HStack(spacing: 6) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 11, weight: .medium))
-                Text("Ready to reveal! ✨ Tap now")
+                Text("Ready to reveal!")
                     .font(.system(size: 13, weight: .bold))
             }
             .foregroundColor(Color.cyan)
