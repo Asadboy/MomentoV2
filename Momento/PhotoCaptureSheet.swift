@@ -124,12 +124,15 @@ struct PhotoCaptureSheet: View {
 }
 
 #Preview {
-    PhotoCaptureSheet(
+    let now = Date()
+    return PhotoCaptureSheet(
         isPresented: .constant(true),
         event: Event(
             title: "Test Event",
-            coverEmoji: "??",
-            releaseAt: .now,
+            coverEmoji: "\u{1F4F8}",
+            startsAt: now,
+            endsAt: now.addingTimeInterval(6 * 3600),
+            releaseAt: now.addingTimeInterval(24 * 3600),
             memberCount: 10,
             photosTaken: 5,
             joinCode: "TEST"

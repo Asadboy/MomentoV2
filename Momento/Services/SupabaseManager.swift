@@ -240,23 +240,46 @@ class SupabaseManager: ObservableObject {
     
     // MARK: - Event Management
     
-    /// Create a new event
-    func createEvent(title: String, releaseAt: Date, joinCode: String) async throws -> EventModel {
+    /// Create a new event with start/end times
+    /// - Parameters:
+    ///   - title: Event name
+    ///   - startsAt: When the event begins (photos can be taken)
+    ///   - endsAt: When photo-taking stops
+    ///   - joinCode: Unique code for joining
+    /// - Returns: The created EventModel
+    func createEvent(title: String, startsAt: Date, endsAt: Date, joinCode: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
+            print("[createEvent] Error: User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
+        
+        // Calculate reveal time: same day as endsAt at 8pm, or 24h after if event ends late
+        let calendar = Calendar.current
+        var revealComponents = calendar.dateComponents([.year, .month, .day], from: endsAt)
+        revealComponents.hour = 20 // 8pm
+        revealComponents.minute = 0
+        var releaseAt = calendar.date(from: revealComponents) ?? endsAt.addingTimeInterval(24 * 3600)
+        
+        // If event ends after 8pm, reveal next day at 8pm
+        if endsAt > releaseAt {
+            releaseAt = releaseAt.addingTimeInterval(24 * 3600)
+        }
+        
+        print("[createEvent] Creating: \(title)")
+        print("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")
         
         let event = EventModel(
             id: UUID(),
             title: title,
             creatorId: userId,
             joinCode: joinCode,
+            startsAt: startsAt,
+            endsAt: endsAt,
             releaseAt: releaseAt,
             isRevealed: false,
             memberCount: 1,
             photoCount: 0,
-            createdAt: Date(),
-            updatedAt: Date()
+            createdAt: Date()
         )
         
         try await client
@@ -264,14 +287,16 @@ class SupabaseManager: ObservableObject {
             .insert(event)
             .execute()
         
+        print("[createEvent] Event saved, adding creator as member...")
+        
         // Auto-join the creator
         let member = EventMember(
             id: UUID(),
             eventId: event.id,
             userId: userId,
-            isCreator: true,
-            hasContributed: false,
-            joinedAt: Date()
+            joinedAt: Date(),
+            invitedBy: nil,
+            role: "creator"
         )
         
         try await client
@@ -279,7 +304,7 @@ class SupabaseManager: ObservableObject {
             .insert(member)
             .execute()
         
-        print("✅ Event created: \(title) with code: \(joinCode)")
+        print("[createEvent] Success: \(title) with code \(joinCode)")
         return event
     }
     
@@ -320,9 +345,9 @@ class SupabaseManager: ObservableObject {
             id: UUID(),
             eventId: event.id,
             userId: userId,
-            isCreator: false,
-            hasContributed: false,
-            joinedAt: Date()
+            joinedAt: Date(),
+            invitedBy: nil,
+            role: "member"
         )
         
         try await client
@@ -452,19 +477,16 @@ class SupabaseManager: ObservableObject {
                 )
             )
         
-        // Get public URL (even though bucket is private, we need the path)
-        let storageUrl = try client.storage
-            .from("momento-photos")
-            .getPublicURL(path: fileName)
-        
-        // Create photo record
+        // Create photo record with storage path
         let photo = PhotoModel(
             id: photoId,
             eventId: eventId,
             userId: userId,
-            storageUrl: storageUrl.absoluteString,
-            isFlagged: false,
-            uploadedAt: Date()
+            storagePath: fileName,
+            capturedAt: Date(),
+            capturedByUsername: nil,
+            isRevealed: false,
+            uploadStatus: "uploaded"
         )
         
         try await client
@@ -482,7 +504,7 @@ class SupabaseManager: ObservableObject {
             .from("photos")
             .select()
             .eq("event_id", value: eventId.uuidString)
-            .order("uploaded_at", ascending: false)
+            .order("captured_at", ascending: false)
             .execute()
             .value
         
@@ -549,11 +571,11 @@ class SupabaseManager: ObservableObject {
         print("✅ Photo deleted")
     }
     
-    /// Flag a photo for moderation
+    /// Flag a photo for moderation (updates upload_status)
     func flagPhoto(id: UUID) async throws {
         try await client
             .from("photos")
-            .update(["is_flagged": true])
+            .update(["upload_status": "flagged"])
             .eq("id", value: id.uuidString)
             .execute()
         
@@ -607,24 +629,26 @@ struct EventModel: Codable, Identifiable {
     let title: String
     let creatorId: UUID
     let joinCode: String
-    let releaseAt: Date
+    let startsAt: Date      // When event goes live (photos can be taken)
+    let endsAt: Date        // When photo-taking stops
+    let releaseAt: Date     // When photos are revealed (typically 24h after endsAt)
     var isRevealed: Bool
     var memberCount: Int
     var photoCount: Int
     let createdAt: Date
-    var updatedAt: Date
     
     enum CodingKeys: String, CodingKey {
         case id
         case title
         case creatorId = "creator_id"
         case joinCode = "join_code"
+        case startsAt = "starts_at"
+        case endsAt = "ends_at"
         case releaseAt = "release_at"
         case isRevealed = "is_revealed"
         case memberCount = "member_count"
         case photoCount = "photo_count"
         case createdAt = "created_at"
-        case updatedAt = "updated_at"
     }
 }
 
@@ -632,17 +656,17 @@ struct EventMember: Codable, Identifiable {
     let id: UUID
     let eventId: UUID
     let userId: UUID
-    var isCreator: Bool
-    var hasContributed: Bool
     let joinedAt: Date
+    var invitedBy: UUID?
+    var role: String
     
     enum CodingKeys: String, CodingKey {
         case id
         case eventId = "event_id"
         case userId = "user_id"
-        case isCreator = "is_creator"
-        case hasContributed = "has_contributed"
         case joinedAt = "joined_at"
+        case invitedBy = "invited_by"
+        case role
     }
 }
 
@@ -650,17 +674,21 @@ struct PhotoModel: Codable, Identifiable {
     let id: UUID
     let eventId: UUID
     let userId: UUID
-    let storageUrl: String
-    var isFlagged: Bool
-    let uploadedAt: Date
+    let storagePath: String
+    let capturedAt: Date
+    var capturedByUsername: String?
+    var isRevealed: Bool
+    var uploadStatus: String
     
     enum CodingKeys: String, CodingKey {
         case id
         case eventId = "event_id"
         case userId = "user_id"
-        case storageUrl = "storage_url"
-        case isFlagged = "is_flagged"
-        case uploadedAt = "uploaded_at"
+        case storagePath = "storage_path"
+        case capturedAt = "captured_at"
+        case capturedByUsername = "captured_by_username"
+        case isRevealed = "is_revealed"
+        case uploadStatus = "upload_status"
     }
 }
 

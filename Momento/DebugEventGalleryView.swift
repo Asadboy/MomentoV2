@@ -194,10 +194,13 @@ private struct DebugPhotoCard: View {
 }
 
 #Preview {
+    let now = Date()
     let event = Event(
         title: "Test Event",
-        coverEmoji: "🎉",
-        releaseAt: .now,
+        coverEmoji: "\u{1F389}",
+        startsAt: now.addingTimeInterval(-3600),
+        endsAt: now.addingTimeInterval(3600),
+        releaseAt: now.addingTimeInterval(24 * 3600),
         memberCount: 10,
         photosTaken: 2,
         joinCode: "TEST"

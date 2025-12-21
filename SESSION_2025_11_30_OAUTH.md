@@ -39,15 +39,7 @@
 
 ## 🔑 CREDENTIALS SAVED (In Memory)
 
-| Credential | Value |
-|------------|-------|
-| iOS Client ID | `172415826311-9nfl4mgir4gijvvq7v56ndpncaa6kj37.apps.googleusercontent.com` |
-| Web Client ID | `172415826311-lbgdi6n8pvj473tr85btv7u0rhk2hdou.apps.googleusercontent.com` |
-| Web Client Secret | `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` |
-| Supabase URL | `https://thnbjfcmawwaxvihggjm.supabase.co` |
-| Supabase Anon Key | Updated in `SupabaseConfig.swift` |
 
----
 
 ## 📁 FILES MODIFIED
 

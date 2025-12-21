@@ -104,15 +104,15 @@ struct JoinEventSheet: View {
                     }
                 }
             }
-            .onChange(of: selectedMethod) { _ in
+            .onChange(of: selectedMethod) {
                 // Stop scanning when switching methods
                 if selectedMethod != .qrCode {
                     qrScanner.stopScanning()
                 }
             }
-            .onChange(of: qrScanner.scannedCode) { code in
+            .onChange(of: qrScanner.scannedCode) {
                 // Handle scanned QR code
-                if let code = code {
+                if let code = qrScanner.scannedCode {
                     handleQRCode(code)
                 }
             }

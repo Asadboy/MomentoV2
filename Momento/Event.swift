@@ -55,16 +55,20 @@ struct Event: Identifiable, Hashable {
     let id: String
     var title: String
     var coverEmoji: String
-    var releaseAt: Date
+    var startsAt: Date      // When event goes live (photos can be taken)
+    var endsAt: Date        // When photo-taking stops
+    var releaseAt: Date     // When photos are revealed
     var memberCount: Int
-    var photosTaken: Int  // Number of photos taken in this disposable camera event
-    var joinCode: String?  // Optional join code for code-based joining
+    var photosTaken: Int    // Number of photos taken in this disposable camera event
+    var joinCode: String?   // Join code for sharing
     var isRevealed: Bool = false
     
     init(
         id: String = UUID().uuidString,
         title: String,
         coverEmoji: String,
+        startsAt: Date,
+        endsAt: Date,
         releaseAt: Date,
         memberCount: Int,
         photosTaken: Int,
@@ -74,6 +78,8 @@ struct Event: Identifiable, Hashable {
         self.id = id
         self.title = title
         self.coverEmoji = coverEmoji
+        self.startsAt = startsAt
+        self.endsAt = endsAt
         self.releaseAt = releaseAt
         self.memberCount = memberCount
         self.photosTaken = photosTaken
@@ -81,9 +87,26 @@ struct Event: Identifiable, Hashable {
         self.isRevealed = isRevealed
     }
     
-    // Note: photos array is excluded from Hashable conformance
-    // as UIImage doesn't conform to Hashable
-    // In production, photos would be stored separately and referenced by ID
+    /// Current state of the event based on time
+    enum State {
+        case upcoming   // Before startsAt
+        case live       // Between startsAt and endsAt (photos can be taken)
+        case processing // Between endsAt and releaseAt (waiting for reveal)
+        case revealed   // After releaseAt or isRevealed == true
+    }
+    
+    /// Get the current state of the event
+    func currentState(at now: Date = .now) -> State {
+        if isRevealed || now >= releaseAt {
+            return .revealed
+        } else if now >= endsAt {
+            return .processing
+        } else if now >= startsAt {
+            return .live
+        } else {
+            return .upcoming
+        }
+    }
 }
 
 // MARK: - Supabase Bridge
@@ -94,7 +117,9 @@ extension Event {
         self.init(
             id: eventModel.id.uuidString,
             title: eventModel.title,
-            coverEmoji: "📸", // Default emoji, can be customized later
+            coverEmoji: "\u{1F4F8}", // Camera emoji
+            startsAt: eventModel.startsAt,
+            endsAt: eventModel.endsAt,
             releaseAt: eventModel.releaseAt,
             memberCount: eventModel.memberCount,
             photosTaken: eventModel.photoCount,
@@ -108,32 +133,40 @@ extension Event {
 /// - Parameter now: Current date to base sample events on
 /// - Returns: Array of sample Event objects
 func makeFakeEvents(now: Date = .now) -> [Event] {
-    [
-        // Countdown state - releases in 12 hours
+    let calendar = Calendar.current
+    
+    return [
+        // Upcoming state - starts in 12 hours
         Event(
-            title: "Joe's 26th 🎂",
-            coverEmoji: "🎂",
-            releaseAt: Calendar.current.date(byAdding: .hour, value: 12, to: now)!,
+            title: "Joe's 26th",
+            coverEmoji: "\u{1F382}", // cake
+            startsAt: calendar.date(byAdding: .hour, value: 12, to: now)!,
+            endsAt: calendar.date(byAdding: .hour, value: 20, to: now)!,
+            releaseAt: calendar.date(byAdding: .hour, value: 44, to: now)!,
             memberCount: 12,
             photosTaken: 0,
             joinCode: "JOE26"
         ),
         
-        // Live state - started 30 minutes ago
+        // Live state - started 30 minutes ago, ends in 6 hours
         Event(
-            title: "NYE House Party 🎉",
-            coverEmoji: "🎉",
-            releaseAt: Calendar.current.date(byAdding: .minute, value: -30, to: now)!,
+            title: "NYE House Party",
+            coverEmoji: "\u{1F389}", // party popper
+            startsAt: calendar.date(byAdding: .minute, value: -30, to: now)!,
+            endsAt: calendar.date(byAdding: .hour, value: 6, to: now)!,
+            releaseAt: calendar.date(byAdding: .hour, value: 30, to: now)!,
             memberCount: 28,
             photosTaken: 23,
             joinCode: "NYE2025"
         ),
         
-        // Revealed state - released 25 hours ago (past the 24h window)
+        // Revealed state - event ended, photos revealed
         Event(
-            title: "Asad's Sopranos Party 🧺",
-            coverEmoji: "🧺",
-            releaseAt: Calendar.current.date(byAdding: .hour, value: -25, to: now)!,
+            title: "Sopranos Party",
+            coverEmoji: "\u{1F37B}", // beers
+            startsAt: calendar.date(byAdding: .hour, value: -30, to: now)!,
+            endsAt: calendar.date(byAdding: .hour, value: -20, to: now)!,
+            releaseAt: calendar.date(byAdding: .hour, value: -2, to: now)!,
             memberCount: 7,
             photosTaken: 15,
             joinCode: "SOPRANO",

@@ -182,11 +182,14 @@ struct InviteSheet: View {
 }
 
 #Preview {
-    InviteSheet(
+    let now = Date()
+    return InviteSheet(
         event: Event(
-            title: "NYE House Party 🎉",
-            coverEmoji: "",
-            releaseAt: .now,
+            title: "NYE House Party",
+            coverEmoji: "\u{1F389}",
+            startsAt: now,
+            endsAt: now.addingTimeInterval(6 * 3600),
+            releaseAt: now.addingTimeInterval(24 * 3600),
             memberCount: 28,
             photosTaken: 15,
             joinCode: "NYE2025"

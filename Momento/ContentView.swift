@@ -64,15 +64,11 @@ struct ContentView: View {
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
     
-    /// Form state for new event creation
-    @State private var newTitle = ""
-    @State private var newReleaseAt = Date().addingTimeInterval(24 * 3600) // Default: 24 hours from now
-    @State private var newEmoji = "??" // Default emoji
+    /// Error alert state
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
     
-    // MARK: - Constants
     
-    /// Available emoji choices for event covers
-    private let emojiChoices = ["??", "??", "??", "??", "??", "??", "??", "??"]
     
     // MARK: - Timer
     
@@ -178,7 +174,6 @@ struct ContentView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        prepareAddDefaults()
                         showAddSheet = true
                     } label: {
                         Image(systemName: "plus")
@@ -195,18 +190,10 @@ struct ContentView: View {
             .refreshable {
                 await loadEvents()
             }
-            .sheet(isPresented: $showAddSheet) {
-                AddEventSheet(
-                    title: $newTitle,
-                    releaseAt: $newReleaseAt,
-                    emoji: $newEmoji,
-                    emojiChoices: emojiChoices,
-                    onCancel: { showAddSheet = false },
-                    onSave: {
-                        saveNewEvent()
-                        showAddSheet = false
-                    }
-                )
+            .fullScreenCover(isPresented: $showAddSheet) {
+                CreateMomentoFlow { createdEvent in
+                    events.append(createdEvent)
+                }
             }
             .sheet(isPresented: $showJoinSheet) {
                 JoinEventSheet(isPresented: $showJoinSheet) { joinedEvent in
@@ -247,6 +234,11 @@ struct ContentView: View {
                     RevealView(event: event)
                         .environmentObject(supabaseManager)
                 }
+            }
+            .alert("Error", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
             }
         }
     }
@@ -297,39 +289,6 @@ struct ContentView: View {
         }
     }
     
-    /// Resets form fields to default values before showing add sheet
-    private func prepareAddDefaults() {
-        newTitle = ""
-        newReleaseAt = Date().addingTimeInterval(24 * 3600) // 24 hours from now
-        newEmoji = "📸" // Default emoji
-    }
-
-    /// Saves a new event
-    private func saveNewEvent() {
-        let trimmedTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else { return }
-        
-        // Generate random 6-character join code
-        let joinCode = String((0..<6).map { _ in "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".randomElement()! })
-        
-        Task {
-            do {
-                let eventModel = try await supabaseManager.createEvent(
-                    title: trimmedTitle,
-                    releaseAt: newReleaseAt,
-                    joinCode: joinCode
-                )
-                
-                await MainActor.run {
-                    let event = Event(fromSupabase: eventModel)
-                    events.append(event)
-                }
-            } catch {
-                print("Failed to create event: \(error)")
-                // TODO: Show error to user
-            }
-        }
-    }
 
     /// Deletes momentos at specified indices
     private func deleteEvents(at offsets: IndexSet) {

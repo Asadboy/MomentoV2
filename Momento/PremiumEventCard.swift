@@ -440,17 +440,20 @@ private struct MetadataBadge: View {
 // MARK: - Preview
 
 #Preview {
-    VStack(spacing: 20) {
+    let now = Date()
+    return VStack(spacing: 20) {
         // Countdown state
         PremiumEventCard(
             event: Event(
-                title: "Joe's 26th 🎂",
-                coverEmoji: "",
-                releaseAt: Date().addingTimeInterval(3600 * 12),
+                title: "Joe's 26th",
+                coverEmoji: "\u{1F382}",
+                startsAt: now.addingTimeInterval(3600 * 12),
+                endsAt: now.addingTimeInterval(3600 * 20),
+                releaseAt: now.addingTimeInterval(3600 * 44),
                 memberCount: 12,
                 photosTaken: 0
             ),
-            now: Date(),
+            now: now,
             onTap: {},
             onLongPress: {}
         )
@@ -458,13 +461,15 @@ private struct MetadataBadge: View {
         // Live state
         PremiumEventCard(
             event: Event(
-                title: "NYE House Party 🎉",
-                coverEmoji: "",
-                releaseAt: Date().addingTimeInterval(-100),
+                title: "NYE House Party",
+                coverEmoji: "\u{1F389}",
+                startsAt: now.addingTimeInterval(-3600),
+                endsAt: now.addingTimeInterval(3600 * 5),
+                releaseAt: now.addingTimeInterval(3600 * 29),
                 memberCount: 28,
                 photosTaken: 15
             ),
-            now: Date(),
+            now: now,
             onTap: {},
             onLongPress: {}
         )

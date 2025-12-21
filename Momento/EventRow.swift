@@ -161,10 +161,19 @@ struct EventRow: View {
 }
 
 #Preview {
-    // Lightweight preview fixture
-    EventRow(
-        event: Event(title: "Preview Party", coverEmoji: "🎉", releaseAt: .now.addingTimeInterval(3600), memberCount: 10, photosTaken: 7, joinCode: "PREVIEW"),
-        now: .now
+    let now = Date()
+    return EventRow(
+        event: Event(
+            title: "Preview Party",
+            coverEmoji: "\u{1F389}",
+            startsAt: now,
+            endsAt: now.addingTimeInterval(6 * 3600),
+            releaseAt: now.addingTimeInterval(24 * 3600),
+            memberCount: 10,
+            photosTaken: 7,
+            joinCode: "PREVIEW"
+        ),
+        now: now
     )
 }
 

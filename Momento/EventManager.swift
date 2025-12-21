@@ -27,19 +27,31 @@ class EventManager: ObservableObject {
     /// - Parameters:
     ///   - title: Event title (will be trimmed)
     ///   - emoji: Cover emoji for the event
-    ///   - releaseAt: When the event releases
+    ///   - startsAt: When the event starts
+    ///   - endsAt: When photo-taking ends
     ///   - memberCount: Number of members (optional, defaults to random)
-    func addEvent(title: String, emoji: String, releaseAt: Date, memberCount: Int? = nil) {
+    func addEvent(title: String, emoji: String, startsAt: Date, endsAt: Date, memberCount: Int? = nil) {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else { return }
+        
+        // Calculate reveal time as 8pm same day as endsAt or 24h later
+        let calendar = Calendar.current
+        var revealComponents = calendar.dateComponents([.year, .month, .day], from: endsAt)
+        revealComponents.hour = 20
+        var releaseAt = calendar.date(from: revealComponents) ?? endsAt.addingTimeInterval(24 * 3600)
+        if endsAt > releaseAt {
+            releaseAt = releaseAt.addingTimeInterval(24 * 3600)
+        }
         
         let event = Event(
             title: trimmedTitle,
             coverEmoji: emoji,
+            startsAt: startsAt,
+            endsAt: endsAt,
             releaseAt: releaseAt,
-            memberCount: memberCount ?? Int.random(in: 2...30), // Random member count between 2-30
-            photosTaken: 0, // Start with 0 photos
-            joinCode: nil // No join code for manually created events
+            memberCount: memberCount ?? Int.random(in: 2...30),
+            photosTaken: 0,
+            joinCode: nil
         )
         events.append(event)
     }

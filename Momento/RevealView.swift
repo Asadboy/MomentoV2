@@ -545,11 +545,14 @@ struct ConfettiPiece: View {
 // MARK: - Preview
 
 #Preview {
-    RevealView(event: Event(
+    let now = Date()
+    return RevealView(event: Event(
         id: UUID().uuidString,
         title: "Beach Party 2025",
-        coverEmoji: "🏖️",
-        releaseAt: Date().addingTimeInterval(24 * 3600),
+        coverEmoji: "\u{1F3D6}",
+        startsAt: now.addingTimeInterval(-48 * 3600),
+        endsAt: now.addingTimeInterval(-24 * 3600),
+        releaseAt: now.addingTimeInterval(-1 * 3600),
         memberCount: 5,
         photosTaken: 12,
         joinCode: "ABC123",
