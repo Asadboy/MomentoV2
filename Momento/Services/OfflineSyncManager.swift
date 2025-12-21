@@ -49,6 +49,7 @@ class OfflineSyncManager: ObservableObject {
     @Published var activeUploads = 0
     
     private let supabaseManager = SupabaseManager.shared
+    private let kodakFilter = KodakGoldFilter()  // Film filter
     private let maxRetries = 3
     private let maxConcurrentUploads = 3  // Upload 3 photos at once
     private let queueFileName = "upload_queue.json"
@@ -230,13 +231,16 @@ class OfflineSyncManager: ObservableObject {
     
     // MARK: - Local Storage
     
-    /// Save image to local storage (compressed and resized for fast upload)
+    /// Save image to local storage (filtered, resized, compressed for fast upload)
     private func saveImageToLocal(_ image: UIImage, photoId: UUID) throws -> URL {
-        // Resize image to max 1200px on longest side (like Snapchat/Instagram)
+        // Step 1: Resize image to max 1200px on longest side
         let resizedImage = resizeImage(image, maxDimension: 1200)
         
-        // Compress to 0.5 quality (~150-300KB instead of 2MB+)
-        guard let imageData = resizedImage.jpegData(compressionQuality: 0.5) else {
+        // Step 2: Apply Kodak Gold 35mm film filter 🎞️
+        let filteredImage = kodakFilter.apply(to: resizedImage)
+        
+        // Step 3: Compress to 0.5 quality (~150-300KB)
+        guard let imageData = filteredImage.jpegData(compressionQuality: 0.5) else {
             throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG"])
         }
         
@@ -249,7 +253,7 @@ class OfflineSyncManager: ObservableObject {
         let fileURL = queueDirectory.appendingPathComponent("\(photoId.uuidString).jpg")
         try imageData.write(to: fileURL)
         
-        print("📸 Saved photo: \(imageData.count / 1024)KB (was \(image.jpegData(compressionQuality: 1.0)?.count ?? 0 / 1024)KB)")
+        print("🎞️ Photo processed: \(imageData.count / 1024)KB with Kodak Gold filter")
         
         return fileURL
     }

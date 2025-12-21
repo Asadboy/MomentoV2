@@ -43,6 +43,7 @@
 		C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */; };
 		C3ACE77B2EC0F190004B23B1 /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */; };
 		C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE77D2EC0F920004B23B1 /* Supabase */; };
+		C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +98,7 @@
 		C3ACE7762EC0F101004B23B1 /* OfflineSyncManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OfflineSyncManager.swift; path = Services/OfflineSyncManager.swift; sourceTree = "<group>"; };
 		C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SupabaseConfig.swift; path = Config/SupabaseConfig.swift; sourceTree = "<group>"; };
 		C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SupabaseManager.swift; path = Services/SupabaseManager.swift; sourceTree = "<group>"; };
+		C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KodakGoldFilter.swift; path = Momento/Filters/KodakGoldFilter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +135,7 @@
 		C34888CE2EB75FEE003094CB = {
 			isa = PBXGroup;
 			children = (
+				C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */,
 				C348890C2EB7BEAD003094CB /* Momento */,
 				C34888EA2EB75FF2003094CB /* MomentoTests */,
 				C34888F42EB75FF2003094CB /* MomentoUITests */,
@@ -208,13 +211,6 @@
 			path = Momento;
 			sourceTree = "<group>";
 		};
-		C3ACE77C2EC0F920004B23B1 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		C36446BE2EF8200000000005 /* CreateMomento */ = {
 			isa = PBXGroup;
 			children = (
@@ -224,6 +220,13 @@
 				C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */,
 			);
 			path = CreateMomento;
+			sourceTree = "<group>";
+		};
+		C3ACE77C2EC0F920004B23B1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -371,6 +374,7 @@
 				C3ACE77B2EC0F190004B23B1 /* SupabaseManager.swift in Sources */,
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
+				C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
