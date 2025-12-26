@@ -43,19 +43,22 @@ struct RevealView: View {
             } else if photos.isEmpty {
                 emptyView
             } else {
-                VStack(spacing: 0) {
+                VStack(spacing: 12) {
                     // Header
                     headerView
-                        .padding()
+                        .padding(.horizontal)
+                        .padding(.top, 8)
                     
-                    // Progress indicator
+                    // Progress indicator (Stories-style segments)
                     progressView
                         .padding(.horizontal)
                     
-                    // Main card area
+                    Spacer(minLength: 8)
+                    
+                    // Main card area - takes remaining space
                     TabView(selection: $currentIndex) {
                         ForEach(Array(photos.enumerated()), id: \.offset) { index, photo in
-                            VStack(spacing: 16) {
+                            VStack(spacing: 0) {
                                 PhotoRevealCard(
                                     photoURL: photo.url,
                                     photographerName: photo.photographerName ?? "Unknown",
@@ -65,47 +68,8 @@ struct RevealView: View {
                                         handlePhotoRevealed(at: index)
                                     }
                                 )
-                                
-                                // Show reactions if photo is revealed
-                                if revealedIndices.contains(index) {
-                                    VStack(spacing: 12) {
-                                        // Display existing reactions
-                                        if let reactions = photoReactions[photo.id], !reactions.isEmpty {
-                                            EmojiReactionDisplay(reactions: reactions)
-                                        }
-                                        
-                                        // Reaction picker
-                                        if showReactionPicker && currentIndex == index {
-                                            EmojiReactionPicker { emoji in
-                                                addReaction(emoji, to: photo.id)
-                                            }
-                                            .transition(.scale.combined(with: .opacity))
-                                        } else {
-                                            Button(action: {
-                                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                                    showReactionPicker.toggle()
-                                                }
-                                            }) {
-                                                HStack(spacing: 8) {
-                                                    Image(systemName: "face.smiling")
-                                                        .font(.system(size: 16))
-                                                    Text("Add Reaction")
-                                                        .font(.subheadline)
-                                                        .fontWeight(.medium)
-                                                }
-                                                .foregroundColor(.white.opacity(0.8))
-                                                .padding(.horizontal, 20)
-                                                .padding(.vertical, 10)
-                                                .background(
-                                                    Capsule()
-                                                        .fill(Color.white.opacity(0.1))
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
                             }
-                            .padding()
+                            .padding(.horizontal, 12)
                             .tag(index)
                         }
                     }
@@ -114,10 +78,42 @@ struct RevealView: View {
                         // Hide reaction picker when changing photos
                         showReactionPicker = false
                     }
+                    // Tap zones for navigation (invisible overlays on sides)
+                    .overlay(
+                        HStack(spacing: 0) {
+                            // Left tap zone - go previous
+                            Color.clear
+                                .frame(width: 80)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    if currentIndex > 0 {
+                                        goToPrevious()
+                                    }
+                                }
+                            
+                            Spacer()
+                            
+                            // Right tap zone - go next
+                            Color.clear
+                                .frame(width: 80)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    // If revealed and can go next, navigate
+                                    if revealedIndices.contains(currentIndex) && currentIndex < photos.count - 1 {
+                                        goToNext()
+                                    }
+                                }
+                        }
+                    )
                     
-                    // Navigation controls
-                    navigationControls
-                        .padding()
+                    // Reaction area (compact, below card)
+                    if let currentPhoto = photos[safe: currentIndex], revealedIndices.contains(currentIndex) {
+                        reactionArea(for: currentPhoto)
+                            .padding(.horizontal)
+                            .transition(.opacity)
+                    }
+                    
+                    Spacer(minLength: 20)
                 }
             }
             
@@ -214,65 +210,59 @@ struct RevealView: View {
     }
     
     private var progressView: some View {
-        VStack(spacing: 8) {
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.2))
-                        .frame(height: 8)
-                    
-                    // Progress
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.cyan, Color.blue, Color.purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(
-                            width: geometry.size.width * CGFloat(revealedIndices.count) / CGFloat(max(photos.count, 1)),
-                            height: 8
-                        )
-                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: revealedIndices.count)
-                }
+        // Segmented progress bar (Instagram Stories style)
+        HStack(spacing: 4) {
+            ForEach(0..<photos.count, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(index <= currentIndex ? Color.white : Color.white.opacity(0.3))
+                    .frame(height: 3)
+                    .animation(.easeInOut(duration: 0.2), value: currentIndex)
             }
-            .frame(height: 8)
-            
-            // Counter
-            Text("Photo \(currentIndex + 1) of \(photos.count)")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
         }
     }
     
-    private var navigationControls: some View {
-        HStack(spacing: 40) {
-            // Previous button
-            Button(action: {
-                goToPrevious()
-            }) {
-                Image(systemName: "chevron.left.circle.fill")
-                    .font(.system(size: 50))
-                    .foregroundColor(currentIndex > 0 ? .white : .white.opacity(0.3))
+    // MARK: - Reaction Area (Compact)
+    
+    private func reactionArea(for photo: PhotoData) -> some View {
+        HStack(spacing: 16) {
+            // Display existing reactions
+            if let reactions = photoReactions[photo.id], !reactions.isEmpty {
+                EmojiReactionDisplay(reactions: reactions)
             }
-            .disabled(currentIndex == 0)
             
             Spacer()
             
-            // Next button
-            Button(action: {
-                goToNext()
-            }) {
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 50))
-                    .foregroundColor(canGoNext && currentIndex < photos.count - 1 ? .white : .white.opacity(0.3))
+            // Reaction picker or button
+            if showReactionPicker {
+                EmojiReactionPicker { emoji in
+                    addReaction(emoji, to: photo.id)
+                }
+                .transition(.scale.combined(with: .opacity))
+            } else {
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        showReactionPicker.toggle()
+                    }
+                    HapticsManager.shared.light()
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "heart")
+                            .font(.system(size: 18))
+                        Text("React")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.15))
+                    )
+                }
             }
-            .disabled(!canGoNext || currentIndex >= photos.count - 1)
         }
-        .padding(.horizontal, 40)
+        .frame(height: 44)
     }
     
     private var completionOverlay: some View {
@@ -559,5 +549,13 @@ struct ConfettiPiece: View {
         isRevealed: true
     ))
     .environmentObject(SupabaseManager.shared)
+}
+
+// MARK: - Safe Array Subscript
+
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
 }
 

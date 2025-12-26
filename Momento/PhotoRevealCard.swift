@@ -38,7 +38,8 @@ struct PhotoRevealCard: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 500)
+        .frame(maxHeight: .infinity)
+        .aspectRatio(3/4, contentMode: .fit) // Nice photo ratio
         .onAppear {
             // Pre-animate if already revealed
             if isRevealed {
@@ -132,8 +133,7 @@ struct PhotoRevealCard: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 500)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .clipped()
                             .cornerRadius(20)
                             .onAppear {
@@ -153,41 +153,45 @@ struct PhotoRevealCard: View {
                 }
             }
             
-            // Info overlay at bottom
+            // Info overlay at bottom (counter-rotated to fix mirror effect from card flip)
             VStack {
                 Spacer()
                 
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack {
+                        HStack(spacing: 6) {
                             Image(systemName: "person.circle.fill")
-                                .font(.caption)
+                                .font(.system(size: 14))
                             Text(photographerName)
                                 .font(.subheadline)
-                                .fontWeight(.medium)
+                                .fontWeight(.semibold)
                         }
                         
-                        HStack {
+                        HStack(spacing: 6) {
                             Image(systemName: "clock.fill")
-                                .font(.caption2)
+                                .font(.system(size: 12))
                             Text(capturedAt, style: .relative)
                                 .font(.caption)
                         }
+                        .opacity(0.8)
                     }
                     .foregroundColor(.white)
                     
                     Spacer()
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
                 .background(
                     LinearGradient(
-                        colors: [.clear, .black.opacity(0.7)],
+                        colors: [.clear, .black.opacity(0.8)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
             }
             .cornerRadius(20)
+            // Counter-rotate to fix mirrored text from 3D flip
+            .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
         }
         .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
         .scaleEffect(flipped && imageLoaded ? 1.0 : 0.95)
