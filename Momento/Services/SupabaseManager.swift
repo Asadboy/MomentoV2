@@ -536,20 +536,25 @@ class SupabaseManager: ObservableObject {
             .execute()
             .value
         
-        // Convert to PhotoData with storage URLs
-        return photos.map { photo in
-            // Get signed URL for photo
-            let url = try? client.storage
+        // Convert to PhotoData with signed storage URLs (bucket is private)
+        var photoDataArray: [PhotoData] = []
+        
+        for photo in photos {
+            // Get signed URL for photo (expires in 7 days)
+            let signedURL = try? await client.storage
                 .from("momento-photos")
-                .getPublicURL(path: photo.storagePath)
+                .createSignedURL(path: photo.storagePath, expiresIn: 604800)
             
-            return PhotoData(
+            photoDataArray.append(PhotoData(
                 id: photo.id.uuidString,
-                url: url,
+                url: signedURL,
                 capturedAt: photo.capturedAt,
                 photographerName: photo.capturedByUsername ?? "Unknown"
-            )
+            ))
         }
+        
+        print("📸 Loaded \(photoDataArray.count) photos with signed URLs")
+        return photoDataArray
     }
     
     /// Delete a photo (creator or photo owner)
