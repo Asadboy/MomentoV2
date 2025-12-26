@@ -22,6 +22,7 @@ struct RevealView: View {
     @State private var canGoNext = false
     @State private var showReactionPicker = false
     @State private var photoReactions: [String: [String: String]] = [:] // [photoId: [userId: emoji]]
+    @State private var showGallery = false
     
     var body: some View {
         ZStack {
@@ -131,6 +132,9 @@ struct RevealView: View {
         }
         .task {
             await loadPhotos()
+        }
+        .fullScreenCover(isPresented: $showGallery) {
+            PhotoGalleryView(event: event, photos: photos)
         }
     }
     
@@ -304,7 +308,7 @@ struct RevealView: View {
                 
                 Button(action: {
                     HapticsManager.shared.buttonPress()
-                    dismiss()
+                    showGallery = true
                 }) {
                     Text("View Gallery")
                         .font(.headline)
@@ -322,6 +326,16 @@ struct RevealView: View {
                 }
                 .padding(.horizontal, 40)
                 .padding(.top, 20)
+                
+                // Close button (smaller, secondary)
+                Button(action: {
+                    dismiss()
+                }) {
+                    Text("Close")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .padding(.top, 12)
             }
             .padding()
         }
