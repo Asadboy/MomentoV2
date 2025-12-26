@@ -52,8 +52,14 @@ struct ContentView: View {
     /// Controls whether the reveal view is presented
     @State private var showRevealView = false
     
+    /// Controls whether the film roll gallery is presented (for completed reveals)
+    @State private var showFilmRollGallery = false
+    
     /// Currently selected event for reveal
     @State private var selectedEventForReveal: Event?
+    
+    /// Photos loaded for film roll gallery
+    @State private var galleryPhotos: [PhotoData] = []
     
     /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
     @State private var eventPhotos: [String: [EventPhoto]] = [:]
@@ -256,6 +262,11 @@ struct ContentView: View {
                         .environmentObject(supabaseManager)
                 }
             }
+            .fullScreenCover(isPresented: $showFilmRollGallery) {
+                if let event = selectedEventForReveal {
+                    FilmRollGalleryView(event: event, photos: galleryPhotos)
+                }
+            }
             .alert("Error", isPresented: $showErrorAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -285,10 +296,18 @@ struct ContentView: View {
             showErrorAlert = true
             
         case .revealed:
-            // Photos are ready - open reveal view
-            HapticsManager.shared.unlock()
-            selectedEventForReveal = event
-            showRevealView = true
+            // Check if user has already completed the reveal experience
+            if RevealStateManager.shared.hasCompletedReveal(for: event.id) {
+                // Already revealed - go straight to film roll gallery
+                HapticsManager.shared.light()
+                selectedEventForReveal = event
+                loadPhotosForGallery(event: event)
+            } else {
+                // First time - show the reveal experience
+                HapticsManager.shared.unlock()
+                selectedEventForReveal = event
+                showRevealView = true
+            }
         }
     }
     
@@ -307,6 +326,25 @@ struct ContentView: View {
             return minutes == 1 ? "1 minute" : "\(minutes) minutes"
         } else {
             return "less than a minute"
+        }
+    }
+    
+    /// Load photos for gallery and show film roll view
+    private func loadPhotosForGallery(event: Event) {
+        Task {
+            do {
+                let photos = try await supabaseManager.getPhotos(for: event.id)
+                await MainActor.run {
+                    self.galleryPhotos = photos
+                    self.showFilmRollGallery = true
+                }
+            } catch {
+                print("❌ Failed to load photos for gallery: \(error)")
+                await MainActor.run {
+                    self.errorMessage = "Failed to load photos"
+                    self.showErrorAlert = true
+                }
+            }
         }
     }
     

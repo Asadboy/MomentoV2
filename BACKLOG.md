@@ -139,8 +139,9 @@
 - [ ] UI tests for critical flows
 - [ ] Performance profiling
 - [ ] Crash reporting (Sentry/Crashlytics)
+- [ ] **Sync reveal state to Supabase** - Currently stored in UserDefaults (local only). Should sync to user's profile in Supabase so "completed reveal" persists across devices. See `RevealStateManager.swift`.
 
 ---
 
-**Last Updated:** December 21, 2025
+**Last Updated:** December 26, 2025
 

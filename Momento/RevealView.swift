@@ -134,7 +134,13 @@ struct RevealView: View {
             await loadPhotos()
         }
         .fullScreenCover(isPresented: $showGallery) {
-            PhotoGalleryView(event: event, photos: photos)
+            FilmRollGalleryView(event: event, photos: photos)
+        }
+        .onDisappear {
+            // Mark reveal as completed if user went through all photos
+            if allRevealed {
+                RevealStateManager.shared.markRevealCompleted(for: event.id)
+            }
         }
     }
     

@@ -45,6 +45,8 @@
 		C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE77D2EC0F920004B23B1 /* Supabase */; };
 		C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */; };
 		C3C4112E2EFEF5F8002D8DB5 /* PhotoGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112D2EFEF5F8002D8DB5 /* PhotoGalleryView.swift */; };
+		C3C411302EFEF87B002D8DB5 /* FilmRollGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */; };
+		C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +103,8 @@
 		C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SupabaseManager.swift; path = Services/SupabaseManager.swift; sourceTree = "<group>"; };
 		C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KodakGoldFilter.swift; path = Momento/Filters/KodakGoldFilter.swift; sourceTree = "<group>"; };
 		C3C4112D2EFEF5F8002D8DB5 /* PhotoGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoGalleryView.swift; sourceTree = "<group>"; };
+		C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FilmRollGalleryView.swift; sourceTree = "<group>"; };
+		C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RevealStateManager.swift; path = Services/RevealStateManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -197,12 +201,14 @@
 				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
 				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
 				C3C4112D2EFEF5F8002D8DB5 /* PhotoGalleryView.swift */,
+				C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */,
 				C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */,
 				C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */,
 				C34889112EB7C5F4003094CB /* MomentoApp.swift */,
 				C34889132EB7C6F5003094CB /* ContentView.swift */,
 				C34889152EB7C7F6003094CB /* Event.swift */,
 				C34889172EB7C8F7003094CB /* EventRow.swift */,
+				C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */,
 				C34889192EB7C9F8003094CB /* AddEventSheet.swift */,
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C348890D2EB7B3F2003094CB /* CameraView.swift */,
@@ -379,10 +385,12 @@
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */,
+				C3C411302EFEF87B002D8DB5 /* FilmRollGalleryView.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
 				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
+				C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
 				C34A39602EDC55360059FA89 /* EmojiReactionPicker.swift in Sources */,
 				C34A395F2EDC55360059FA89 /* RevealView.swift in Sources */,
