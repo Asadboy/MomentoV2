@@ -449,6 +449,16 @@ class SupabaseManager: ObservableObject {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
         
+        // Get user's username for photo attribution
+        let username: String
+        do {
+            let profile = try await getUserProfile(userId: userId)
+            username = profile.displayName ?? profile.username
+        } catch {
+            username = "Unknown"
+            print("⚠️ Could not fetch username, using 'Unknown'")
+        }
+        
         // Photo limit check - disabled for beta testing
         // TODO: Re-enable with premium tier check after beta
         
@@ -456,7 +466,7 @@ class SupabaseManager: ObservableObject {
         let photoId = UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
         
-        print("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8))...")
+        print("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(username)...")
         
         // Upload to storage
         _ = try await client.storage
@@ -470,14 +480,14 @@ class SupabaseManager: ObservableObject {
                 )
             )
         
-        // Create photo record with storage path
+        // Create photo record with storage path and username
         let photo = PhotoModel(
             id: photoId,
             eventId: eventId,
             userId: userId,
             storagePath: fileName,
             capturedAt: Date(),
-            capturedByUsername: nil,
+            capturedByUsername: username,
             isRevealed: false,
             uploadStatus: "uploaded"
         )

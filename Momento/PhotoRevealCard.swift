@@ -168,9 +168,9 @@ struct PhotoRevealCard: View {
                         }
                         
                         HStack(spacing: 6) {
-                            Image(systemName: "clock.fill")
+                            Image(systemName: "calendar")
                                 .font(.system(size: 12))
-                            Text(capturedAt, style: .relative)
+                            Text(formatCaptureDate(capturedAt))
                                 .font(.caption)
                         }
                         .opacity(0.8)
@@ -196,6 +196,14 @@ struct PhotoRevealCard: View {
         .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
         .scaleEffect(flipped && imageLoaded ? 1.0 : 0.95)
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: imageLoaded)
+    }
+    
+    // MARK: - Helpers
+    
+    private func formatCaptureDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yy HH:mm"
+        return formatter.string(from: date)
     }
     
     // MARK: - Actions
