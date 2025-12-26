@@ -8,20 +8,31 @@
 //
 
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct InviteSheet: View {
     let event: Event
     let onDismiss: () -> Void
     
     @State private var showCopiedConfirmation = false
+    @State private var qrCodeImage: UIImage?
     
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
     }
     
     private var inviteLink: String {
-        // TODO: Generate real invite link with backend
         "https://momento.app/join/\(event.joinCode ?? "INVITE")"
+    }
+    
+    private var shareText: String {
+        """
+        Join my Momento "\(event.title)"! 📸
+        
+        Use code: \(event.joinCode ?? "INVITE")
+        
+        Or open: \(inviteLink)
+        """
     }
     
     var body: some View {
@@ -68,29 +79,38 @@ struct InviteSheet: View {
                     }
                     .padding(.top, 32)
                     
-                    // QR Code placeholder
+                    // QR Code (real, scannable)
                     VStack(spacing: 16) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 24)
                                 .fill(Color.white)
                                 .frame(width: 220, height: 220)
                             
-                            // TODO: Generate actual QR code
-                            VStack(spacing: 12) {
-                                Image(systemName: "qrcode")
-                                    .font(.system(size: 120, weight: .light))
-                                    .foregroundColor(.black.opacity(0.8))
-                                
-                                Text(event.joinCode ?? "INVITE")
-                                    .font(.system(size: 16, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.black.opacity(0.6))
+                            if let qrImage = qrCodeImage {
+                                Image(uiImage: qrImage)
+                                    .interpolation(.none)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 180, height: 180)
+                            } else {
+                                ProgressView()
+                                    .tint(.black)
                             }
                         }
                         .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
                         
-                        Text("Scan to join")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                        VStack(spacing: 4) {
+                            Text("Scan to join")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white.opacity(0.6))
+                            
+                            Text("Code: \(event.joinCode ?? "INVITE")")
+                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .foregroundColor(royalPurple)
+                        }
+                    }
+                    .onAppear {
+                        generateQRCode()
                     }
                     
                     Spacer()
@@ -175,9 +195,61 @@ struct InviteSheet: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
         
-        // TODO: Present native share sheet
-        // For now, just copy the link
-        copyInviteLink()
+        // Create share items
+        var shareItems: [Any] = [shareText]
+        
+        // Add QR code image if available
+        if let qrImage = qrCodeImage {
+            shareItems.append(qrImage)
+        }
+        
+        // Present native share sheet
+        let activityVC = UIActivityViewController(
+            activityItems: shareItems,
+            applicationActivities: nil
+        )
+        
+        // Get the current window scene
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            // Find the topmost presented view controller
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            
+            // For iPad: set popover source
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = topVC.view
+                popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            
+            topVC.present(activityVC, animated: true)
+        }
+    }
+    
+    // MARK: - QR Code Generation
+    
+    private func generateQRCode() {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        
+        // Encode the invite link into the QR code
+        let data = Data(inviteLink.utf8)
+        filter.setValue(data, forKey: "inputMessage")
+        filter.setValue("H", forKey: "inputCorrectionLevel") // High error correction
+        
+        guard let outputImage = filter.outputImage else { return }
+        
+        // Scale up the QR code (it's generated very small)
+        let scale: CGFloat = 10
+        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        
+        // Convert to UIImage
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            qrCodeImage = UIImage(cgImage: cgImage)
+        }
     }
 }
 
