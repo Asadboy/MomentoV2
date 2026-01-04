@@ -1,6 +1,22 @@
 default_platform(:ios)
 
 platform :ios do
+  desc "Setup Match certificates"
+  lane :setup_match do
+    api_key = app_store_connect_api_key(
+      key_id: "ZPWYQC3TN3",
+      issuer_id: "6555c846-269e-4790-96ec-2574330dc6ad",
+      key_filepath: File.expand_path("~/Documents/AuthKey_ZPWYQC3TN3.p8")
+    )
+
+    match(
+      type: "appstore",
+      readonly: false,
+      api_key: api_key
+    )
+  end
+
+
   desc "Build and upload to TestFlight"
   lane :beta do
     # Set up API Key authentication
@@ -15,11 +31,10 @@ platform :ios do
       xcodeproj: "Momento.xcodeproj"
     )
 
-    # Build the app (using automatic signing)
+    # Build the app (certificates already imported by GitHub Actions)
     build_app(
       scheme: "Momento",
       export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates",
       export_options: {
         method: "app-store"
       }
