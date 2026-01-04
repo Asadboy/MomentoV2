@@ -16,43 +16,71 @@ struct SettingsView: View {
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     
+    // Royal purple accent (matches main app)
+    private var royalPurple: Color {
+        Color(red: 0.5, green: 0.0, blue: 0.8)
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background gradient (matches app aesthetic)
+                // Background gradient (matches main app)
                 LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.1, green: 0.1, blue: 0.2),
-                        Color(red: 0.2, green: 0.1, blue: 0.3)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    colors: [
+                        Color(red: 0.05, green: 0.05, blue: 0.1),
+                        Color(red: 0.08, green: 0.06, blue: 0.12)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
                 .ignoresSafeArea()
                 
                 VStack(spacing: 32) {
-                    // User Info Section
-                    VStack(spacing: 16) {
-                        // Profile icon
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 80, weight: .light))
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        // User email
-                        if let email = supabaseManager.currentUser?.email {
-                            Text(email)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white)
+                    // User Info Section in card
+                    VStack(spacing: 20) {
+                        // Profile icon with glow
+                        ZStack {
+                            Image(systemName: "person.circle.fill")
+                                .font(.system(size: 80, weight: .light))
+                                .foregroundColor(royalPurple)
+                                .blur(radius: 15)
+                                .opacity(0.5)
+                            
+                            Image(systemName: "person.circle.fill")
+                                .font(.system(size: 80, weight: .light))
+                                .foregroundColor(.white.opacity(0.9))
                         }
                         
-                        // User ID (truncated)
-                        if let userId = supabaseManager.currentUser?.id {
-                            Text("ID: \(String(userId.uuidString.prefix(8)))...")
-                                .font(.system(size: 14, weight: .regular, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.5))
+                        VStack(spacing: 8) {
+                            // User email
+                            if let email = supabaseManager.currentUser?.email {
+                                Text(email)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            // User ID (truncated)
+                            if let userId = supabaseManager.currentUser?.id {
+                                Text("ID: \(String(userId.uuidString.prefix(8)))...")
+                                    .font(.system(size: 13, weight: .regular, design: .monospaced))
+                                    .foregroundColor(.white.opacity(0.4))
+                            }
                         }
                     }
-                    .padding(.top, 40)
+                    .padding(.vertical, 32)
+                    .padding(.horizontal, 24)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color(red: 0.12, green: 0.1, blue: 0.16))
+                            .shadow(color: Color.black.opacity(0.3), radius: 16, x: 0, y: 8)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
                     
                     Spacer()
                     
@@ -73,13 +101,13 @@ struct SettingsView: View {
                                 .font(.system(size: 17, weight: .semibold))
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.red.opacity(0.8))
+                        .frame(height: 54)
+                        .background(Color.red.opacity(0.85))
                         .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .cornerRadius(14)
                     }
                     .disabled(isLoggingOut)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 40)
                 }
             }

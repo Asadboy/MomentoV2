@@ -17,16 +17,21 @@ struct SignInView: View {
     @State private var currentNonce: String?
     @State private var webAuthSession: ASWebAuthenticationSession?
     
+    // Royal purple accent (matches main app)
+    private var royalPurple: Color {
+        Color(red: 0.5, green: 0.0, blue: 0.8)
+    }
+    
     var body: some View {
         ZStack {
-            // Background gradient
+            // Background gradient (matches main app)
             LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.2),
-                    Color(red: 0.2, green: 0.1, blue: 0.3)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [
+                    Color(red: 0.05, green: 0.05, blue: 0.1),
+                    Color(red: 0.08, green: 0.06, blue: 0.12)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
             
@@ -34,31 +39,39 @@ struct SignInView: View {
                 Spacer()
                 
                 // App Logo & Title
-                VStack(spacing: 16) {
-                    Image(systemName: "camera.metering.center.weighted")
-                        .font(.system(size: 80, weight: .light))
-                        .foregroundColor(.white)
+                VStack(spacing: 20) {
+                    // Logo with subtle glow
+                    ZStack {
+                        Image(systemName: "camera.metering.center.weighted")
+                            .font(.system(size: 80, weight: .light))
+                            .foregroundColor(royalPurple)
+                            .blur(radius: 20)
+                            .opacity(0.6)
+                        
+                        Image(systemName: "camera.metering.center.weighted")
+                            .font(.system(size: 80, weight: .light))
+                            .foregroundColor(.white)
+                    }
                     
                     Text("Momento")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .font(.system(size: 48, weight: .bold))
                         .foregroundColor(.white)
                     
                     Text("Capture & Reveal Memories Together")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.6))
                         .multilineTextAlignment(.center)
                 }
                 
                 Spacer()
                 
-                // Sign In Buttons
-                VStack(spacing: 16) {
-                    // Google Sign In (Primary - working!)
+                // Sign In Buttons in a card-like container
+                VStack(spacing: 14) {
+                    // Google Sign In
                     Button {
                         signInWithGoogle()
                     } label: {
                         HStack(spacing: 12) {
-                            // Google "G" logo
                             Image(systemName: "g.circle.fill")
                                 .font(.system(size: 22, weight: .medium))
                                 .foregroundColor(.blue)
@@ -67,10 +80,10 @@ struct SignInView: View {
                                 .font(.system(size: 17, weight: .semibold))
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 50)
+                        .frame(height: 54)
                         .background(Color.white)
                         .foregroundColor(.black)
-                        .cornerRadius(12)
+                        .cornerRadius(14)
                     }
                     .disabled(isSigningIn)
                     
@@ -84,11 +97,21 @@ struct SignInView: View {
                         handleAppleSignIn(result)
                     }
                     .signInWithAppleButtonStyle(.white)
-                    .frame(height: 50)
-                    .cornerRadius(12)
+                    .frame(height: 54)
+                    .cornerRadius(14)
                     .disabled(isSigningIn)
                 }
-                .padding(.horizontal, 32)
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color(red: 0.12, green: 0.1, blue: 0.16))
+                        .shadow(color: Color.black.opacity(0.3), radius: 16, x: 0, y: 8)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
+                .padding(.horizontal, 24)
                 
                 // Error message
                 if let error = errorMessage {
@@ -105,24 +128,24 @@ struct SignInView: View {
                 VStack(spacing: 8) {
                     Text("By continuing, you agree to our")
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.5))
                     
                     HStack(spacing: 4) {
                         Button("Terms of Service") {
                             // TODO: Show terms
                         }
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(royalPurple.opacity(0.8))
                         
                         Text("and")
                             .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(.white.opacity(0.5))
                         
                         Button("Privacy Policy") {
                             // TODO: Show privacy policy
                         }
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(royalPurple.opacity(0.8))
                     }
                 }
                 .padding(.bottom, 32)
@@ -130,17 +153,17 @@ struct SignInView: View {
             
             // Loading overlay
             if isSigningIn {
-                Color.black.opacity(0.5)
+                Color.black.opacity(0.6)
                     .ignoresSafeArea()
                 
                 VStack(spacing: 16) {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .progressViewStyle(CircularProgressViewStyle(tint: royalPurple))
                         .scaleEffect(1.5)
                     
                     Text("Signing in...")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.7))
                 }
             }
         }
