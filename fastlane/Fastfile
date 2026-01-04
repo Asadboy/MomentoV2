@@ -19,6 +19,7 @@ platform :ios do
     build_app(
       scheme: "Momento",
       export_method: "app-store",
+      xcargs: "-allowProvisioningUpdates",
       export_options: {
         method: "app-store"
       }
