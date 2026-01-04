@@ -22,7 +22,7 @@ DerivedData
 .swiftpm/
 Packages/
 Package.pins
-Package.resolved
+# Package.resolved  # Commented out - needed for Xcode Cloud
 
 # CocoaPods
 Pods/
