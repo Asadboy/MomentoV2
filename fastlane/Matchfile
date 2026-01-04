@@ -1,0 +1,7 @@
+git_url("https://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@github.com/Asadboy/momento-certificates")
+
+storage_mode("git")
+
+type("appstore")
+
+app_identifier(["com.asad.Momento"])
