@@ -27,8 +27,9 @@ Package.pins
 # CocoaPods
 Pods/
 
-# Supabase credentials (IMPORTANT!)
-**/SupabaseConfig.swift
+# Supabase credentials
+# Note: Anon key is safe to commit - security is via RLS
+# **/SupabaseConfig.swift  # Commented out for Xcode Cloud
 
 # Temporary files
 *.swp
