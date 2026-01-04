@@ -10,12 +10,10 @@ import SwiftUI
 struct CreateStep2TimesView: View {
     let momentoName: String
     @Binding var startsAt: Date
-    @Binding var endsAt: Date
     let onNext: () -> Void
     let onBack: () -> Void
-    
+
     @State private var showStartPicker = false
-    @State private var showEndPicker = false
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -26,6 +24,12 @@ struct CreateStep2TimesView: View {
     private let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
+        return formatter
+    }()
+
+    private let dateTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE, MMM d 'at' h:mm a"
         return formatter
     }()
     
@@ -64,13 +68,13 @@ struct CreateStep2TimesView: View {
                     Text("When's the party?")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
-                    
-                    Text("Set when photos can be taken")
+
+                    Text("Pick when your event starts")
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(.white.opacity(0.6))
                 }
                 
-                // Time cards
+                // Time picker
                 VStack(spacing: 16) {
                     // Starts at
                     TimePickerCard(
@@ -82,11 +86,10 @@ struct CreateStep2TimesView: View {
                         onTap: {
                             withAnimation(.spring(response: 0.3)) {
                                 showStartPicker.toggle()
-                                if showStartPicker { showEndPicker = false }
                             }
                         }
                     )
-                    
+
                     if showStartPicker {
                         DatePicker("", selection: $startsAt, displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.wheel)
@@ -94,42 +97,42 @@ struct CreateStep2TimesView: View {
                             .colorScheme(.dark)
                             .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     }
-                    
-                    // Ends at
-                    TimePickerCard(
-                        label: "Ends",
-                        date: endsAt,
-                        dateText: dateFormatter.string(from: endsAt),
-                        timeText: timeFormatter.string(from: endsAt),
-                        isExpanded: showEndPicker,
-                        onTap: {
-                            withAnimation(.spring(response: 0.3)) {
-                                showEndPicker.toggle()
-                                if showEndPicker { showStartPicker = false }
-                            }
-                        }
-                    )
-                    
-                    if showEndPicker {
-                        DatePicker("", selection: $endsAt, in: startsAt..., displayedComponents: [.date, .hourAndMinute])
-                            .datePickerStyle(.wheel)
-                            .labelsHidden()
-                            .colorScheme(.dark)
-                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    }
                 }
                 .padding(.horizontal, 20)
-                
-                // Duration indicator
-                if !showStartPicker && !showEndPicker {
-                    HStack(spacing: 8) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 14))
-                        
-                        Text(durationText)
-                            .font(.system(size: 14, weight: .medium))
+
+                // Calculated times info
+                if !showStartPicker {
+                    VStack(spacing: 0) {
+                        // Photo taking window
+                        InfoCard(
+                            icon: "camera.fill",
+                            title: "Photo Window",
+                            description: "12 hours",
+                            detail: "Until \(dateTimeFormatter.string(from: endsAt))"
+                        )
+
+                        Divider()
+                            .background(Color.white.opacity(0.1))
+                            .padding(.horizontal, 20)
+
+                        // Reveal time
+                        InfoCard(
+                            icon: "clock.fill",
+                            title: "Photos Reveal",
+                            description: "24 hours after start",
+                            detail: dateTimeFormatter.string(from: releaseAt)
+                        )
                     }
-                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 20)
                 }
             }
             
@@ -162,21 +165,16 @@ struct CreateStep2TimesView: View {
     }
     
     private var isValidTimes: Bool {
-        endsAt > startsAt
+        true // Always valid since we only need start time
     }
-    
-    private var durationText: String {
-        let interval = endsAt.timeIntervalSince(startsAt)
-        let hours = Int(interval / 3600)
-        let minutes = Int((interval.truncatingRemainder(dividingBy: 3600)) / 60)
-        
-        if hours > 0 && minutes > 0 {
-            return "\(hours)h \(minutes)m duration"
-        } else if hours > 0 {
-            return "\(hours) hour\(hours > 1 ? "s" : "") duration"
-        } else {
-            return "\(minutes) minute\(minutes > 1 ? "s" : "") duration"
-        }
+
+    // Auto-calculated times
+    private var endsAt: Date {
+        startsAt.addingTimeInterval(12 * 3600) // +12 hours
+    }
+
+    private var releaseAt: Date {
+        startsAt.addingTimeInterval(24 * 3600) // +24 hours
     }
     
     private var backgroundGradient: some View {
@@ -189,6 +187,49 @@ struct CreateStep2TimesView: View {
             endPoint: .bottomTrailing
         )
         .ignoresSafeArea()
+    }
+}
+
+// MARK: - Info Card
+
+struct InfoCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let detail: String
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+
+                Text(description)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+
+                Text(detail)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
     }
 }
 
@@ -249,7 +290,6 @@ struct TimePickerCard: View {
     CreateStep2TimesView(
         momentoName: "Sopranos Party",
         startsAt: .constant(Date()),
-        endsAt: .constant(Date().addingTimeInterval(6 * 3600)),
         onNext: {},
         onBack: {}
     )

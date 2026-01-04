@@ -12,8 +12,12 @@ struct CreateStep3ShareView: View {
     let momentoName: String
     let joinCode: String
     let startsAt: Date
-    let endsAt: Date
     let onDone: () -> Void
+
+    // Auto-calculated end time (12 hours after start)
+    private var endsAt: Date {
+        startsAt.addingTimeInterval(12 * 3600)
+    }
     
     @State private var copiedCode = false
     @State private var showShareSheet = false
@@ -244,7 +248,6 @@ struct ShareSheet: UIViewControllerRepresentable {
         momentoName: "Sopranos Party",
         joinCode: "SOPRAN",
         startsAt: Date(),
-        endsAt: Date().addingTimeInterval(6 * 3600),
         onDone: {}
     )
 }

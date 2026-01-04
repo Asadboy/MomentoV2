@@ -17,7 +17,6 @@ struct CreateMomentoFlow: View {
     // Form data
     @State private var momentoName = ""
     @State private var startsAt = Date().addingTimeInterval(3600) // 1 hour from now
-    @State private var endsAt = Date().addingTimeInterval(7 * 3600) // 7 hours from now
     @State private var joinCode = ""
     
     // State
@@ -48,7 +47,6 @@ struct CreateMomentoFlow: View {
                     CreateStep2TimesView(
                         momentoName: momentoName,
                         startsAt: $startsAt,
-                        endsAt: $endsAt,
                         onNext: { createMomento() },
                         onBack: { goToStep(1) }
                     )
@@ -62,7 +60,6 @@ struct CreateMomentoFlow: View {
                         momentoName: momentoName,
                         joinCode: joinCode,
                         startsAt: startsAt,
-                        endsAt: endsAt,
                         onDone: { finishFlow() }
                     )
                     .transition(.asymmetric(
