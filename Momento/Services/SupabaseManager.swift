@@ -240,30 +240,21 @@ class SupabaseManager: ObservableObject {
     
     // MARK: - Event Management
     
-    /// Create a new event with start/end times
+    /// Create a new event (auto-calculates end and reveal times)
     /// - Parameters:
     ///   - title: Event name
-    ///   - startsAt: When the event begins (photos can be taken)
-    ///   - endsAt: When photo-taking stops
+    ///   - startsAt: When the event begins (photos accepted for 12h, reveal at 24h)
     ///   - joinCode: Unique code for joining
     /// - Returns: The created EventModel
-    func createEvent(title: String, startsAt: Date, endsAt: Date, joinCode: String) async throws -> EventModel {
+    func createEvent(title: String, startsAt: Date, joinCode: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
             print("[createEvent] Error: User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
-        
-        // Calculate reveal time: same day as endsAt at 8pm, or 24h after if event ends late
-        let calendar = Calendar.current
-        var revealComponents = calendar.dateComponents([.year, .month, .day], from: endsAt)
-        revealComponents.hour = 20 // 8pm
-        revealComponents.minute = 0
-        var releaseAt = calendar.date(from: revealComponents) ?? endsAt.addingTimeInterval(24 * 3600)
-        
-        // If event ends after 8pm, reveal next day at 8pm
-        if endsAt > releaseAt {
-            releaseAt = releaseAt.addingTimeInterval(24 * 3600)
-        }
+
+        // Auto-calculate event times from start
+        let endsAt = startsAt.addingTimeInterval(12 * 3600)  // +12 hours
+        let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
         
         print("[createEvent] Creating: \(title)")
         print("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")

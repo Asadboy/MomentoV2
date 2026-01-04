@@ -123,7 +123,6 @@ struct CreateMomentoFlow: View {
                 let eventModel = try await supabaseManager.createEvent(
                     title: momentoName.trimmingCharacters(in: .whitespacesAndNewlines),
                     startsAt: startsAt,
-                    endsAt: endsAt,
                     joinCode: joinCode
                 )
                 

@@ -28,20 +28,14 @@ class EventManager: ObservableObject {
     ///   - title: Event title (will be trimmed)
     ///   - emoji: Cover emoji for the event
     ///   - startsAt: When the event starts
-    ///   - endsAt: When photo-taking ends
     ///   - memberCount: Number of members (optional, defaults to random)
-    func addEvent(title: String, emoji: String, startsAt: Date, endsAt: Date, memberCount: Int? = nil) {
+    func addEvent(title: String, emoji: String, startsAt: Date, memberCount: Int? = nil) {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else { return }
-        
-        // Calculate reveal time as 8pm same day as endsAt or 24h later
-        let calendar = Calendar.current
-        var revealComponents = calendar.dateComponents([.year, .month, .day], from: endsAt)
-        revealComponents.hour = 20
-        var releaseAt = calendar.date(from: revealComponents) ?? endsAt.addingTimeInterval(24 * 3600)
-        if endsAt > releaseAt {
-            releaseAt = releaseAt.addingTimeInterval(24 * 3600)
-        }
+
+        // Auto-calculate event times from start
+        let endsAt = startsAt.addingTimeInterval(12 * 3600)  // +12 hours
+        let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
         
         let event = Event(
             title: trimmedTitle,
