@@ -36,7 +36,10 @@ platform :ios do
       scheme: "Momento",
       export_method: "app-store",
       export_options: {
-        method: "app-store"
+        method: "app-store",
+        provisioningProfiles: {
+          "com.asad.Momento" => "449735c2-723c-49c0-b2d8-0c944e8ff714"
+        }
       }
     )
 
