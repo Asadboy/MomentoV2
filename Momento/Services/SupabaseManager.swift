@@ -54,13 +54,11 @@ class SupabaseManager: ObservableObject {
                 self.currentUser = session.user
                 self.isAuthenticated = true
             }
-            print("✅ User session found: \(session.user.id)")
         } catch {
             await MainActor.run {
                 self.currentUser = nil
                 self.isAuthenticated = false
             }
-            print("ℹ️ No active session")
         }
     }
     
@@ -234,10 +232,59 @@ class SupabaseManager: ObservableObject {
             .update(updates)
             .eq("id", value: userId.uuidString)
             .execute()
-        
+
         print("✅ Profile updated")
     }
-    
+
+    /// Check if user needs to set their username (has auto-generated username)
+    func needsUsernameSelection(userId: UUID) async throws -> Bool {
+        let profile = try await getUserProfile(userId: userId)
+
+        // Pattern: auto-generated usernames end with exactly 4 digits
+        let pattern = ".*\\d{4}$"
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(location: 0, length: profile.username.utf16.count)
+
+        return regex.firstMatch(in: profile.username, range: range) != nil
+    }
+
+    /// Check if a username is available (unique in database)
+    func checkUsernameAvailability(_ username: String) async throws -> Bool {
+        let normalized = username.lowercased()
+
+        let response = try await client
+            .from("profiles")
+            .select("username", head: true, count: .exact)
+            .eq("username", value: normalized)
+            .execute()
+
+        return response.count == 0
+    }
+
+    /// Update user's username (only if current username is auto-generated)
+    func updateUsername(userId: UUID, newUsername: String) async throws {
+        let normalized = newUsername.lowercased()
+
+        // Verify uniqueness
+        let isAvailable = try await checkUsernameAvailability(normalized)
+        guard isAvailable else {
+            throw NSError(
+                domain: "SupabaseManager",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Username is already taken"]
+            )
+        }
+
+        // Update profile
+        try await client
+            .from("profiles")
+            .update(["username": AnyJSON.string(normalized)])
+            .eq("id", value: userId.uuidString)
+            .execute()
+
+        print("✅ Username updated to: \(normalized)")
+    }
+
     // MARK: - Event Management
     
     /// Create a new event (auto-calculates end and reveal times)

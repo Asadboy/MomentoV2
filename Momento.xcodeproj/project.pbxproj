@@ -24,6 +24,9 @@
 		C34A395F2EDC55360059FA89 /* RevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395C2EDC55360059FA89 /* RevealView.swift */; };
 		C34A39602EDC55360059FA89 /* EmojiReactionPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */; };
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
+		C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D444D2F0A80ED0019CA2C /* SettingsView.swift */; };
+		C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34D444F2F0AA5B70019CA2C /* Assets.xcassets */; };
+		C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */; };
 		C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B72EF8200000000001 /* CreateMomentoFlow.swift */; };
 		C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B92EF8200000000002 /* CreateStep1NameView.swift */; };
 		C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */; };
@@ -88,6 +91,10 @@
 		C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmojiReactionPicker.swift; sourceTree = "<group>"; };
 		C34A39632EDC55DB0059FA89 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		C34A39682EDC96D90059FA89 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C34D444C2F0A80760019CA2C /* Momento.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Momento.entitlements; sourceTree = "<group>"; };
+		C34D444D2F0A80ED0019CA2C /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		C34D444F2F0AA5B70019CA2C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Momento/Assets.xcassets; sourceTree = "<group>"; };
+		C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UsernameSelectionView.swift; sourceTree = "<group>"; };
 		C36446B72EF8200000000001 /* CreateMomentoFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMomentoFlow.swift; sourceTree = "<group>"; };
 		C36446B92EF8200000000002 /* CreateStep1NameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep1NameView.swift; sourceTree = "<group>"; };
 		C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2TimesView.swift; sourceTree = "<group>"; };
@@ -141,6 +148,7 @@
 		C34888CE2EB75FEE003094CB = {
 			isa = PBXGroup;
 			children = (
+				C34D444F2F0AA5B70019CA2C /* Assets.xcassets */,
 				C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */,
 				C348890C2EB7BEAD003094CB /* Momento */,
 				C34888EA2EB75FF2003094CB /* MomentoTests */,
@@ -188,6 +196,9 @@
 		C348890C2EB7BEAD003094CB /* Momento */ = {
 			isa = PBXGroup;
 			children = (
+				C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */,
+				C34D444D2F0A80ED0019CA2C /* SettingsView.swift */,
+				C34D444C2F0A80760019CA2C /* Momento.entitlements */,
 				C34A39682EDC96D90059FA89 /* Info.plist */,
 				C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */,
 				C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */,
@@ -353,6 +364,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,6 +404,7 @@
 				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
 				C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
+				C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */,
 				C34A39602EDC55360059FA89 /* EmojiReactionPicker.swift in Sources */,
 				C34A395F2EDC55360059FA89 /* RevealView.swift in Sources */,
 				C3ACE7742EC0F096004B23B1 /* SignInView.swift in Sources */,
@@ -402,6 +415,7 @@
 				C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */,
 				C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */,
 				C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */,
+				C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
 				C34A395E2EDC55360059FA89 /* PhotoRevealCard.swift in Sources */,
 				C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */,
@@ -568,6 +582,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Momento/Momento.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Momento/Preview Content\"";
@@ -575,6 +590,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Momento/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Momento;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -585,7 +602,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asad.Momento;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -599,6 +616,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Momento/Momento.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Momento/Preview Content\"";
@@ -606,6 +624,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Momento/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Momento;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -616,7 +636,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asad.Momento;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

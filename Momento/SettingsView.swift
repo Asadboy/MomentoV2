@@ -10,12 +10,13 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var supabaseManager = SupabaseManager.shared
-    
+
+    @State private var username: String?
     @State private var isLoggingOut = false
     @State private var showLogoutConfirmation = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
-    
+
     // Royal purple accent (matches main app)
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
@@ -52,18 +53,14 @@ struct SettingsView: View {
                         }
                         
                         VStack(spacing: 8) {
-                            // User email
-                            if let email = supabaseManager.currentUser?.email {
-                                Text(email)
-                                    .font(.system(size: 18, weight: .semibold))
+                            // Username
+                            if let username = username {
+                                Text("@\(username)")
+                                    .font(.system(size: 22, weight: .semibold))
                                     .foregroundColor(.white)
-                            }
-                            
-                            // User ID (truncated)
-                            if let userId = supabaseManager.currentUser?.id {
-                                Text("ID: \(String(userId.uuidString.prefix(8)))...")
-                                    .font(.system(size: 13, weight: .regular, design: .monospaced))
-                                    .foregroundColor(.white.opacity(0.4))
+                            } else {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             }
                         }
                     }
@@ -139,6 +136,22 @@ struct SettingsView: View {
             } message: {
                 Text(errorMessage)
             }
+            .task {
+                await loadUsername()
+            }
+        }
+    }
+
+    private func loadUsername() async {
+        guard let userId = supabaseManager.currentUser?.id else { return }
+
+        do {
+            let profile = try await supabaseManager.getUserProfile(userId: userId)
+            await MainActor.run {
+                username = profile.username
+            }
+        } catch {
+            print("❌ Failed to load username: \(error)")
         }
     }
     
