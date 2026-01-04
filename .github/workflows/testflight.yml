@@ -26,6 +26,7 @@ jobs:
       - name: Create SupabaseConfig.swift
         run: |
           mkdir -p Momento/Config
+          mkdir -p "Momento/Preview Content"
           cat > Momento/Config/SupabaseConfig.swift << 'EOF'
           import Foundation
 
