@@ -77,6 +77,9 @@ struct ContentView: View {
     /// Debounce for loading events
     @State private var isRefreshing = false
     
+    /// Controls whether the settings sheet is presented
+    @State private var showSettings = false
+    
     
     
     // MARK: - Timer
@@ -193,13 +196,23 @@ struct ContentView: View {
                     .tint(.white)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 20, weight: .medium))
+                    HStack(spacing: 16) {
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 20, weight: .medium))
+                        }
+                        .tint(.white)
+                        
+                        Button {
+                            showAddSheet = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .medium))
+                        }
+                        .tint(.white)
                     }
-                    .tint(.white)
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -271,6 +284,9 @@ struct ContentView: View {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
             }
         }
     }

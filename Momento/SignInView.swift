@@ -87,27 +87,6 @@ struct SignInView: View {
                     .frame(height: 50)
                     .cornerRadius(12)
                     .disabled(isSigningIn)
-                    .opacity(0.5) // Disabled until Apple Developer account approved
-                    
-                    // Email Sign In (optional)
-                    Button {
-                        // TODO: Show email sign in sheet
-                        errorMessage = "Email sign in coming soon!"
-                    } label: {
-                        Text("Sign in with Email")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color.white.opacity(0.1))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                    }
-                    .disabled(true)
-                    .opacity(0.5)
                 }
                 .padding(.horizontal, 32)
                 
