@@ -63,10 +63,7 @@ struct ContentView: View {
     
     /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
     @State private var eventPhotos: [String: [EventPhoto]] = [:]
-    
-    /// Event whose debug gallery is currently presented
-    @State private var eventForDebugGallery: Event?
-    
+
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
     
@@ -154,12 +151,6 @@ struct ContentView: View {
                                 } label: {
                                     Label("Invite Friends", systemImage: "person.badge.plus")
                                 }
-                                
-                                Button {
-                                    eventForDebugGallery = event
-                                } label: {
-                                    Label("View Debug Photos", systemImage: "photo.stack")
-                                }
                             }
                         }
                         .onDelete(perform: deleteEvents)
@@ -176,19 +167,8 @@ struct ContentView: View {
                         .fontWeight(.bold)
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Button {
-                            showJoinSheet = true
-                        } label: {
-                            Label("Join Event", systemImage: "qrcode.viewfinder")
-                        }
-                        
-                        // Debug option to clear upload queue
-                        Button(role: .destructive) {
-                            syncManager.clearQueue()
-                        } label: {
-                            Label("Clear Upload Queue", systemImage: "trash")
-                        }
+                    Button {
+                        showJoinSheet = true
                     } label: {
                         Image(systemName: "qrcode.viewfinder")
                             .font(.system(size: 20, weight: .medium))
@@ -252,19 +232,6 @@ struct ContentView: View {
                         )
                     }
                 }
-            }
-            .sheet(item: $eventForDebugGallery) { event in
-                let photosBinding = Binding<[EventPhoto]>(
-                    get: { eventPhotos[event.id] ?? [] },
-                    set: { eventPhotos[event.id] = $0 }
-                )
-                
-                DebugEventGalleryView(
-                    event: event,
-                    photos: photosBinding,
-                    onReveal: { revealPhoto($0, for: event) },
-                    onDismiss: { eventForDebugGallery = nil }
-                )
             }
             .sheet(item: $eventForInvite) { event in
                 InviteSheet(event: event, onDismiss: { eventForInvite = nil })
@@ -461,25 +428,7 @@ struct ContentView: View {
             print("❌ Failed to save photo: \(error)")
         }
     }
-    
-    /// Reveals a photo and updates metadata/state
-    private func revealPhoto(_ photo: EventPhoto, for event: Event) {
-        do {
-            try PhotoStorageManager.shared.updateRevealStatus(for: photo, isRevealed: true)
-            
-            guard let index = eventPhotos[event.id]?.firstIndex(where: { $0.id == photo.id }) else {
-                return
-            }
-            
-            // Load image from disk, then update state
-            let image = PhotoStorageManager.shared.loadImage(for: photo)
-            eventPhotos[event.id]?[index].isRevealed = true
-            eventPhotos[event.id]?[index].image = image
-        } catch {
-            print("Failed to reveal photo: \(error)")
-        }
-    }
-    
+
     /// Shows the invite sheet for an event
     private func showInviteSheet(for event: Event) {
         eventForInvite = event

@@ -405,8 +405,7 @@ struct JoinEventSheet: View {
 class QRCodeScanner: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsDelegate {
     @Published var scannedCode: String?
     @Published var hasPermission: Bool = false
-    
-    var captureSession: AVCaptureSession?
+    @Published var captureSession: AVCaptureSession?
     private var previewLayer: AVCaptureVideoPreviewLayer?
     
     override init() {
@@ -513,54 +512,44 @@ class QRCodeScanner: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsD
     }
 }
 
+/// Custom UIView that properly handles preview layer layout
+class QRPreviewView: UIView {
+    let previewLayer = AVCaptureVideoPreviewLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        previewLayer.videoGravity = .resizeAspectFill
+        layer.addSublayer(previewLayer)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        previewLayer.frame = bounds
+    }
+}
+
 /// SwiftUI view wrapper for QR code scanner
 struct QRCodeScannerView: UIViewRepresentable {
-    let scanner: QRCodeScanner
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .black
-        
-        // Create preview layer
-        let previewLayer = AVCaptureVideoPreviewLayer()
-        previewLayer.videoGravity = .resizeAspectFill
-        
-        // Store reference to preview layer
-        context.coordinator.previewLayer = previewLayer
-        context.coordinator.parentView = view
-        
-        // Add preview layer to view
-        view.layer.addSublayer(previewLayer)
-        
-        // Setup session when available
+    @ObservedObject var scanner: QRCodeScanner
+
+    func makeUIView(context: Context) -> QRPreviewView {
+        let view = QRPreviewView()
         if let session = scanner.captureSession {
-            previewLayer.session = session
-            previewLayer.frame = view.bounds
+            view.previewLayer.session = session
         }
-        
         return view
     }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        // Update preview layer frame when view size changes
-        if let previewLayer = context.coordinator.previewLayer {
-            previewLayer.frame = uiView.bounds
-            
-            // Setup session if not already set
-            if previewLayer.session == nil, let session = scanner.captureSession {
-                previewLayer.session = session
-                previewLayer.frame = uiView.bounds
-            }
+
+    func updateUIView(_ uiView: QRPreviewView, context: Context) {
+        // Connect session when it becomes available
+        if uiView.previewLayer.session == nil, let session = scanner.captureSession {
+            uiView.previewLayer.session = session
         }
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-    
-    class Coordinator {
-        var previewLayer: AVCaptureVideoPreviewLayer?
-        var parentView: UIView?
     }
 }
 

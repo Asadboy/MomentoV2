@@ -32,7 +32,6 @@
 		C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */; };
 		C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
-		C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */; };
 		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
 		C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */; };
 		C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7682EC0E45B004B23B1 /* Auth */; };
@@ -100,7 +99,6 @@
 		C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2TimesView.swift; sourceTree = "<group>"; };
 		C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep3ShareView.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
-		C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugEventGalleryView.swift; sourceTree = "<group>"; };
 		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
 		C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InviteSheet.swift; sourceTree = "<group>"; };
 		C3ACE7722EC0F096004B23B1 /* SignInView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -213,7 +211,6 @@
 				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
 				C3C4112D2EFEF5F8002D8DB5 /* PhotoGalleryView.swift */,
 				C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */,
-				C3ACE7602EC0A137004B23B1 /* DebugEventGalleryView.swift */,
 				C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */,
 				C34889112EB7C5F4003094CB /* MomentoApp.swift */,
 				C34889132EB7C6F5003094CB /* ContentView.swift */,
@@ -412,7 +409,6 @@
 				C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */,
 				C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */,
 				C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */,
-				C3ACE7622EC0A137004B23B1 /* DebugEventGalleryView.swift in Sources */,
 				C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */,
 				C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */,
 				C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */,
