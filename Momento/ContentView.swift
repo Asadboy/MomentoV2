@@ -48,18 +48,15 @@ struct ContentView: View {
     @State private var selectedEventForPhoto: Event?
     
     // MARK: - Reveal State
-    
-    /// Controls whether the reveal view is presented
-    @State private var showRevealView = false
-    
-    /// Controls whether the film roll gallery is presented (for completed reveals)
-    @State private var showFilmRollGallery = false
-    
+
+    /// Controls whether the stack reveal view is presented
+    @State private var showStackReveal = false
+
+    /// Controls whether the liked gallery is presented (after reveal completed)
+    @State private var showLikedGallery = false
+
     /// Currently selected event for reveal
     @State private var selectedEventForReveal: Event?
-    
-    /// Photos loaded for film roll gallery
-    @State private var galleryPhotos: [PhotoData] = []
     
     /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
     @State private var eventPhotos: [String: [EventPhoto]] = [:]
@@ -236,15 +233,18 @@ struct ContentView: View {
             .sheet(item: $eventForInvite) { event in
                 InviteSheet(event: event, onDismiss: { eventForInvite = nil })
             }
-            .fullScreenCover(isPresented: $showRevealView) {
+            .fullScreenCover(isPresented: $showStackReveal) {
                 if let event = selectedEventForReveal {
-                    RevealView(event: event)
-                        .environmentObject(supabaseManager)
+                    StackRevealView(event: event) {
+                        // On complete - show liked gallery
+                        showStackReveal = false
+                        showLikedGallery = true
+                    }
                 }
             }
-            .fullScreenCover(isPresented: $showFilmRollGallery) {
+            .fullScreenCover(isPresented: $showLikedGallery) {
                 if let event = selectedEventForReveal {
-                    FilmRollGalleryView(event: event, photos: galleryPhotos)
+                    LikedGalleryView(event: event)
                 }
             }
             .alert("Error", isPresented: $showErrorAlert) {
@@ -279,18 +279,9 @@ struct ContentView: View {
             showErrorAlert = true
             
         case .revealed:
-            // Check if user has already completed the reveal experience
-            if RevealStateManager.shared.hasCompletedReveal(for: event.id) {
-                // Already revealed - go straight to film roll gallery
-                HapticsManager.shared.light()
-                selectedEventForReveal = event
-                loadPhotosForGallery(event: event)
-            } else {
-                // First time - show the reveal experience
-                HapticsManager.shared.unlock()
-                selectedEventForReveal = event
-                showRevealView = true
-            }
+            // Check if user has already completed the reveal swipe
+            selectedEventForReveal = event
+            checkRevealProgress(for: event)
         }
     }
     
@@ -299,7 +290,7 @@ struct ContentView: View {
         let seconds = max(0, Int(date.timeIntervalSince(now)))
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
-        
+
         if hours >= 24 {
             let days = hours / 24
             return days == 1 ? "1 day" : "\(days) days"
@@ -311,21 +302,34 @@ struct ContentView: View {
             return "less than a minute"
         }
     }
-    
-    /// Load photos for gallery and show film roll view
-    private func loadPhotosForGallery(event: Event) {
+
+    /// Check reveal progress and show appropriate view
+    private func checkRevealProgress(for event: Event) {
+        guard let eventUUID = UUID(uuidString: event.id) else {
+            showStackReveal = true
+            return
+        }
+
         Task {
             do {
-                let photos = try await supabaseManager.getPhotos(for: event.id)
-                await MainActor.run {
-                    self.galleryPhotos = photos
-                    self.showFilmRollGallery = true
+                if let progress = try await supabaseManager.getRevealProgress(eventId: eventUUID),
+                   progress.completed {
+                    // Already completed - show liked gallery
+                    await MainActor.run {
+                        HapticsManager.shared.light()
+                        showLikedGallery = true
+                    }
+                } else {
+                    // Not completed - show stack reveal
+                    await MainActor.run {
+                        HapticsManager.shared.unlock()
+                        showStackReveal = true
+                    }
                 }
             } catch {
-                print("❌ Failed to load photos for gallery: \(error)")
+                // On error, default to stack reveal
                 await MainActor.run {
-                    self.errorMessage = "Failed to load photos"
-                    self.showErrorAlert = true
+                    showStackReveal = true
                 }
             }
         }

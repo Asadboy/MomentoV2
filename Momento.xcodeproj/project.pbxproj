@@ -32,6 +32,8 @@
 		C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */; };
 		C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
+		C3STACK012F0B000000000001 /* StackRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK022F0B000000000001 /* StackRevealView.swift */; };
+		C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK042F0B000000000002 /* LikedGalleryView.swift */; };
 		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
 		C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */; };
 		C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7682EC0E45B004B23B1 /* Auth */; };
@@ -99,6 +101,8 @@
 		C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2TimesView.swift; sourceTree = "<group>"; };
 		C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep3ShareView.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
+		C3STACK022F0B000000000001 /* StackRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackRevealView.swift; sourceTree = "<group>"; };
+		C3STACK042F0B000000000002 /* LikedGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikedGalleryView.swift; sourceTree = "<group>"; };
 		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
 		C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InviteSheet.swift; sourceTree = "<group>"; };
 		C3ACE7722EC0F096004B23B1 /* SignInView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -217,6 +221,8 @@
 				C34889152EB7C7F6003094CB /* Event.swift */,
 				C34889172EB7C8F7003094CB /* EventRow.swift */,
 				C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */,
+				C3STACK022F0B000000000001 /* StackRevealView.swift */,
+				C3STACK042F0B000000000002 /* LikedGalleryView.swift */,
 				C34889192EB7C9F8003094CB /* AddEventSheet.swift */,
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C348890D2EB7B3F2003094CB /* CameraView.swift */,
@@ -395,6 +401,8 @@
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */,
 				C3C411302EFEF87B002D8DB5 /* FilmRollGalleryView.swift in Sources */,
+				C3STACK012F0B000000000001 /* StackRevealView.swift in Sources */,
+				C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,

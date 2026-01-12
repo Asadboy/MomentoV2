@@ -628,7 +628,7 @@ class SupabaseManager: ObservableObject {
     }
     
     // MARK: - Real-time Subscriptions
-    
+
     /// Subscribe to event updates (member count, photo count, reveal status)
     /// TODO: Fix RealtimeV2 API once we have proper documentation
     func subscribeToEvent(eventId: UUID) -> AsyncStream<EventModel> {
@@ -638,6 +638,151 @@ class SupabaseManager: ObservableObject {
             // Return empty stream for now
             continuation.finish()
         }
+    }
+
+    // MARK: - Photo Interactions (Like/Archive)
+
+    /// Record a photo interaction (like or archive)
+    func setPhotoInteraction(photoId: UUID, status: InteractionStatus) async throws {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        // Upsert: insert or update if exists
+        let interaction = [
+            "photo_id": AnyJSON.string(photoId.uuidString),
+            "user_id": AnyJSON.string(userId.uuidString),
+            "status": AnyJSON.string(status.rawValue)
+        ]
+
+        try await client
+            .from("photo_interactions")
+            .upsert(interaction, onConflict: "photo_id,user_id")
+            .execute()
+
+        print("✅ Photo \(status.rawValue): \(photoId.uuidString.prefix(8))")
+    }
+
+    /// Get user's liked photos for an event
+    func getLikedPhotos(eventId: UUID) async throws -> [PhotoData] {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        // Get photos for this event that user has liked
+        let photos = try await getPhotos(eventId: eventId)
+        let photoIds = photos.map { $0.id.uuidString }
+
+        if photoIds.isEmpty { return [] }
+
+        // Get user's liked interactions for these photos
+        let interactions: [PhotoInteraction] = try await client
+            .from("photo_interactions")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "liked")
+            .in("photo_id", values: photoIds)
+            .execute()
+            .value
+
+        let likedPhotoIds = Set(interactions.map { $0.photoId.uuidString })
+
+        // Filter and convert to PhotoData with signed URLs
+        var likedPhotos: [PhotoData] = []
+        for photo in photos where likedPhotoIds.contains(photo.id.uuidString) {
+            let signedURL = try? await client.storage
+                .from("momento-photos")
+                .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+
+            likedPhotos.append(PhotoData(
+                id: photo.id.uuidString,
+                url: signedURL,
+                capturedAt: photo.capturedAt,
+                photographerName: photo.capturedByUsername ?? "Unknown"
+            ))
+        }
+
+        return likedPhotos.sorted { $0.capturedAt < $1.capturedAt }
+    }
+
+    /// Get user's archived photos for an event
+    func getArchivedPhotos(eventId: UUID) async throws -> [PhotoData] {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        let photos = try await getPhotos(eventId: eventId)
+        let photoIds = photos.map { $0.id.uuidString }
+
+        if photoIds.isEmpty { return [] }
+
+        let interactions: [PhotoInteraction] = try await client
+            .from("photo_interactions")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "archived")
+            .in("photo_id", values: photoIds)
+            .execute()
+            .value
+
+        let archivedPhotoIds = Set(interactions.map { $0.photoId.uuidString })
+
+        var archivedPhotos: [PhotoData] = []
+        for photo in photos where archivedPhotoIds.contains(photo.id.uuidString) {
+            let signedURL = try? await client.storage
+                .from("momento-photos")
+                .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+
+            archivedPhotos.append(PhotoData(
+                id: photo.id.uuidString,
+                url: signedURL,
+                capturedAt: photo.capturedAt,
+                photographerName: photo.capturedByUsername ?? "Unknown"
+            ))
+        }
+
+        return archivedPhotos.sorted { $0.capturedAt < $1.capturedAt }
+    }
+
+    // MARK: - Reveal Progress
+
+    /// Get user's reveal progress for an event
+    func getRevealProgress(eventId: UUID) async throws -> UserRevealProgress? {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        let progress: [UserRevealProgress] = try await client
+            .from("user_reveal_progress")
+            .select()
+            .eq("event_id", value: eventId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+
+        return progress.first
+    }
+
+    /// Update user's reveal progress (current position in swipe stack)
+    func updateRevealProgress(eventId: UUID, lastPhotoIndex: Int, completed: Bool) async throws {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        let progress = [
+            "event_id": AnyJSON.string(eventId.uuidString),
+            "user_id": AnyJSON.string(userId.uuidString),
+            "last_photo_index": AnyJSON.integer(lastPhotoIndex),
+            "completed": AnyJSON.bool(completed),
+            "updated_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date()))
+        ]
+
+        try await client
+            .from("user_reveal_progress")
+            .upsert(progress, onConflict: "event_id,user_id")
+            .execute()
+
+        print("✅ Progress updated: \(lastPhotoIndex), completed: \(completed)")
     }
 }
 
@@ -743,4 +888,46 @@ struct PhotoData: Identifiable {
     let url: URL?
     let capturedAt: Date
     let photographerName: String?
+}
+
+/// Photo interaction status (liked or archived)
+enum InteractionStatus: String, Codable {
+    case liked
+    case archived
+}
+
+/// User's interaction with a photo (like/archive)
+struct PhotoInteraction: Codable, Identifiable {
+    let id: UUID
+    let photoId: UUID
+    let userId: UUID
+    let status: InteractionStatus
+    let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case photoId = "photo_id"
+        case userId = "user_id"
+        case status
+        case createdAt = "created_at"
+    }
+}
+
+/// User's progress through reveal swipe stack
+struct UserRevealProgress: Codable, Identifiable {
+    let id: UUID
+    let eventId: UUID
+    let userId: UUID
+    var lastPhotoIndex: Int
+    var completed: Bool
+    var updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case eventId = "event_id"
+        case userId = "user_id"
+        case lastPhotoIndex = "last_photo_index"
+        case completed
+        case updatedAt = "updated_at"
+    }
 }
