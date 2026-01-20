@@ -235,7 +235,7 @@ struct ContentView: View {
             }
             .fullScreenCover(isPresented: $showStackReveal) {
                 if let event = selectedEventForReveal {
-                    StackRevealView(event: event) {
+                    FeedRevealView(event: event) {
                         // On complete - show liked gallery
                         showStackReveal = false
                         showLikedGallery = true
