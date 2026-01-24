@@ -14,10 +14,13 @@ import SwiftUI
 struct PremiumEventCard: View {
     let event: Event
     let now: Date
+    var userHasCompletedReveal: Bool = false
+    var likedCount: Int = 0
     let onTap: () -> Void
     let onLongPress: () -> Void
     
     @State private var cameraScale: CGFloat = 1.0
+    @State private var breathingScale: CGFloat = 1.0
     
     // MARK: - Event State
     
@@ -39,7 +42,8 @@ struct PremiumEventCard: View {
         case .processing:
             return .processing
         case .revealed:
-            return event.isRevealed ? .revealed : .readyToReveal
+            // Show revealed if user completed their reveal swipe, otherwise ready to reveal
+            return userHasCompletedReveal ? .revealed : .readyToReveal
         }
     }
     
@@ -116,7 +120,7 @@ struct PremiumEventCard: View {
             )
         case .live:
             return LinearGradient(
-                colors: [Color.green.opacity(0.6), Color.green.opacity(0.3)],
+                colors: [royalPurple.opacity(0.6), royalPurple.opacity(0.6)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -126,9 +130,15 @@ struct PremiumEventCard: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-        default:
+        case .upcoming:
             return LinearGradient(
-                colors: [Color.white.opacity(0.06)],
+                colors: [royalPurple.opacity(0.5)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .revealed:
+            return LinearGradient(
+                colors: [royalPurple.opacity(0.5)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -140,14 +150,15 @@ struct PremiumEventCard: View {
         case .readyToReveal: return 3
         case .live: return 2
         case .processing: return 1.5
-        default: return 1
+        case .revealed: return 1.5
+        case .upcoming: return 1
         }
     }
     
     private var cardGlowColor: Color {
         switch eventState {
         case .readyToReveal: return Color.purple.opacity(0.6)
-        case .live: return Color.green.opacity(0.3)
+        case .live: return royalPurple.opacity(0.4)  // Per spec: soft purple, 10pt blur
         default: return Color.clear
         }
     }
@@ -211,7 +222,7 @@ struct PremiumEventCard: View {
         )
         .shadow(
             color: cardGlowColor,
-            radius: eventState == .readyToReveal ? 20 : (eventState == .live ? 12 : 0),
+            radius: eventState == .readyToReveal ? 20 : (eventState == .live ? 10 : 0),
             x: 0,
             y: 0
         )
@@ -247,7 +258,7 @@ struct PremiumEventCard: View {
     
     private var upcomingIndicator: some View {
         ZStack {
-            // Background circle
+            // Background circle with breathing animation
             Circle()
                 .fill(
                     LinearGradient(
@@ -259,8 +270,9 @@ struct PremiumEventCard: View {
                         endPoint: .bottomTrailing
                     )
                 )
-            
-            // Progress ring
+                .scaleEffect(breathingScale)
+
+            // Progress ring with breathing animation
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
@@ -268,13 +280,22 @@ struct PremiumEventCard: View {
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
+                .scaleEffect(breathingScale)
                 .animation(.linear(duration: 1), value: progress)
-            
+
             // Time display
             VStack(spacing: 2) {
                 Text(formatCompactTime(secondsUntilStart))
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
                     .foregroundColor(royalPurple)
+            }
+        }
+        .onAppear {
+            withAnimation(
+                Animation.easeInOut(duration: 3.0)
+                    .repeatForever(autoreverses: true)
+            ) {
+                breathingScale = 1.04
             }
         }
     }
@@ -440,16 +461,56 @@ struct PremiumEventCard: View {
         }
     }
     
-    private func formatCountdown(_ seconds: Int) -> String {
+    /// Humanized time formatting for better emotional connection
+    private func formatHumanizedTime(_ seconds: Int) -> String {
         let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+
+        if hours >= 48 {
+            let days = hours / 24
+            return "in \(days) days"
+        } else if hours >= 24 {
+            return "tomorrow"
+        } else if hours >= 12 {
+            return "tonight"
+        } else if hours >= 6 {
+            return "in a few hours"
+        } else if hours >= 2 {
+            return "in \(hours) hours"
+        } else if hours >= 1 {
+            return "in about an hour"
+        } else if minutes >= 30 {
+            return "in 30 min"
+        } else if minutes >= 10 {
+            return "soon"
+        } else {
+            return "any moment"
+        }
+    }
+
+    /// Format for "almost live" state (last 3 hours before start)
+    private func formatUpcomingTime(_ seconds: Int) -> String {
+        let hours = seconds / 3600
+        if hours <= 3 && hours >= 1 {
+            return "Almost live"
+        }
+        return "Starts \(formatHumanizedTime(seconds))"
+    }
+
+    /// Format for processing/reveal countdown
+    private func formatRevealTime(_ seconds: Int) -> String {
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+
         if hours >= 24 {
             let days = hours / 24
-            return days == 1 ? "1 day" : "\(days) days"
-        } else if hours > 0 {
-            return hours == 1 ? "1 hour" : "\(hours) hours"
+            return "~\(days) days"
+        } else if hours >= 1 {
+            return "~\(hours)h"
+        } else if minutes >= 1 {
+            return "~\(minutes)m"
         } else {
-            let minutes = seconds / 60
-            return minutes <= 1 ? "soon" : "\(minutes) min"
+            return "soon"
         }
     }
     
@@ -460,44 +521,44 @@ struct PremiumEventCard: View {
             HStack(spacing: 6) {
                 Image(systemName: "clock.fill")
                     .font(.system(size: 11, weight: .medium))
-                Text("Starts in \(formatCountdown(secondsUntilStart))")
+                Text(formatUpcomingTime(secondsUntilStart))
                     .font(.system(size: 13, weight: .medium))
             }
             .foregroundColor(.white.opacity(0.6))
-            
+
         case .live:
             HStack(spacing: 6) {
                 Circle()
                     .fill(Color.green)
                     .frame(width: 6, height: 6)
-                Text("Live now • Tap to capture")
+                Text("Live now\(event.photosTaken > 0 ? " • \(event.photosTaken) taken" : "")")
                     .font(.system(size: 13, weight: .semibold))
             }
             .foregroundColor(.green)
-            
+
         case .processing:
             HStack(spacing: 6) {
                 Image(systemName: "film")
                     .font(.system(size: 11, weight: .medium))
-                Text("Developing • \(formatCountdown(secondsUntilReveal))")
+                Text("In the darkroom • reveals \(formatRevealTime(secondsUntilReveal))")
                     .font(.system(size: 13, weight: .medium))
             }
             .foregroundColor(.orange)
-            
+
         case .readyToReveal:
             HStack(spacing: 6) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 11, weight: .medium))
-                Text("Ready to reveal!")
+                Text("Your photos are ready")
                     .font(.system(size: 13, weight: .bold))
             }
             .foregroundColor(Color.cyan)
-            
+
         case .revealed:
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 11, weight: .medium))
-                Text("Photos revealed")
+                Text("Revealed\(likedCount > 0 ? " • \(likedCount) liked" : "")")
                     .font(.system(size: 13, weight: .medium))
             }
             .foregroundColor(.white.opacity(0.6))

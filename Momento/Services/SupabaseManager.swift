@@ -317,7 +317,8 @@ class SupabaseManager: ObservableObject {
             isRevealed: false,
             memberCount: 1,
             photoCount: 0,
-            createdAt: Date()
+            createdAt: Date(),
+            isDeleted: false
         )
         
         try await client
@@ -417,11 +418,12 @@ class SupabaseManager: ObservableObject {
             return []
         }
         
-        // Get events
+        // Get events (excluding soft-deleted ones)
         let events: [EventModel] = try await client
             .from("events")
             .select()
             .in("id", values: eventIds)
+            .eq("is_deleted", value: false)
             .order("created_at", ascending: false)
             .execute()
             .value
@@ -446,18 +448,36 @@ class SupabaseManager: ObservableObject {
         return event
     }
     
-    /// Delete an event (creator only)
+    /// Soft-delete an event (creator only) - marks as deleted instead of removing
     func deleteEvent(id: UUID) async throws {
         guard let userId = currentUser?.id else {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
-        
+
         try await client
             .from("events")
-            .delete()
+            .update(["is_deleted": true])
             .eq("id", value: id.uuidString)
             .eq("creator_id", value: userId.uuidString)
             .execute()
+
+        print("Soft-deleted event: \(id.uuidString.prefix(8))...")
+    }
+
+    /// Restore a soft-deleted event
+    func restoreEvent(id: UUID) async throws {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        try await client
+            .from("events")
+            .update(["is_deleted": false])
+            .eq("id", value: id.uuidString)
+            .eq("creator_id", value: userId.uuidString)
+            .execute()
+
+        print("Restored event: \(id.uuidString.prefix(8))...")
         
         print("✅ Event deleted")
     }
@@ -705,6 +725,29 @@ class SupabaseManager: ObservableObject {
         return likedPhotos.sorted { $0.capturedAt < $1.capturedAt }
     }
 
+    /// Get count of user's liked photos for an event
+    func getLikedPhotoCount(eventId: UUID) async throws -> Int {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        let photos = try await getPhotos(eventId: eventId)
+        let photoIds = photos.map { $0.id.uuidString }
+
+        if photoIds.isEmpty { return 0 }
+
+        let interactions: [PhotoInteraction] = try await client
+            .from("photo_interactions")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "liked")
+            .in("photo_id", values: photoIds)
+            .execute()
+            .value
+
+        return interactions.count
+    }
+
     /// Get user's archived photos for an event
     func getArchivedPhotos(eventId: UUID) async throws -> [PhotoData] {
         guard let userId = currentUser?.id else {
@@ -826,7 +869,8 @@ struct EventModel: Codable, Identifiable {
     var memberCount: Int
     var photoCount: Int
     let createdAt: Date
-    
+    var isDeleted: Bool
+
     enum CodingKeys: String, CodingKey {
         case id
         case title
@@ -839,6 +883,7 @@ struct EventModel: Codable, Identifiable {
         case memberCount = "member_count"
         case photoCount = "photo_count"
         case createdAt = "created_at"
+        case isDeleted = "is_deleted"
     }
 }
 

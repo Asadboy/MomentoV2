@@ -61,6 +61,12 @@ struct ContentView: View {
     /// Photo storage: maps event ID to array of photos (UI-only, in-memory)
     @State private var eventPhotos: [String: [EventPhoto]] = [:]
 
+    /// Tracks which events the user has completed revealing (event ID -> completed)
+    @State private var revealCompletionStatus: [String: Bool] = [:]
+
+    /// Tracks liked photo count per revealed event (event ID -> count)
+    @State private var likedCounts: [String: Int] = [:]
+
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
     
@@ -85,8 +91,48 @@ struct ContentView: View {
         in: .common
     ).autoconnect()
 
+    // MARK: - Sorted Events
+
+    /// Events sorted by priority: Live > Ready to Reveal > Upcoming > Revealed
+    private var sortedEvents: [Event] {
+        events.sorted { event1, event2 in
+            let state1 = event1.currentState(at: now)
+            let state2 = event2.currentState(at: now)
+
+            // Priority: live (0) > revealed-but-not-completed (1) > upcoming (2) > revealed-completed (3)
+            func priority(_ event: Event, _ state: Event.State) -> Int {
+                switch state {
+                case .live: return 0
+                case .revealed:
+                    // Check if user completed reveal
+                    let completed = revealCompletionStatus[event.id] ?? false
+                    return completed ? 3 : 1  // Ready to reveal vs fully revealed
+                case .processing: return 1  // Same priority as ready to reveal
+                case .upcoming: return 2
+                }
+            }
+
+            let p1 = priority(event1, state1)
+            let p2 = priority(event2, state2)
+
+            if p1 != p2 {
+                return p1 < p2
+            }
+
+            // Within same priority, sort by relevant date
+            switch state1 {
+            case .upcoming:
+                return event1.startsAt < event2.startsAt  // Soonest first
+            case .revealed:
+                return event1.releaseAt > event2.releaseAt  // Most recent first
+            default:
+                return event1.startsAt < event2.startsAt
+            }
+        }
+    }
+
     // MARK: - Background
-    
+
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
@@ -128,10 +174,12 @@ struct ContentView: View {
                     }
                 } else {
                     List {
-                        ForEach(events) { event in
+                        ForEach(sortedEvents) { event in
                             PremiumEventCard(
                                 event: event,
                                 now: now,
+                                userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
+                                likedCount: likedCounts[event.id] ?? 0,
                                 onTap: {
                                     handleEventTap(event)
                                 },
@@ -140,7 +188,7 @@ struct ContentView: View {
                                 }
                             )
                             .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                             .listRowBackground(Color.clear)
                             .contextMenu {
                                 Button {
@@ -150,7 +198,8 @@ struct ContentView: View {
                                 }
                             }
                         }
-                        .onDelete(perform: deleteEvents)
+                        // Deletion disabled for safety
+                        // .onDelete(perform: deleteEvents)
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
@@ -236,7 +285,8 @@ struct ContentView: View {
             .fullScreenCover(isPresented: $showStackReveal) {
                 if let event = selectedEventForReveal {
                     FeedRevealView(event: event) {
-                        // On complete - show liked gallery
+                        // On complete - mark as completed and show liked gallery
+                        revealCompletionStatus[event.id] = true
                         showStackReveal = false
                         showLikedGallery = true
                     }
@@ -342,17 +392,38 @@ struct ContentView: View {
             print("⏳ Already refreshing, skipping duplicate call")
             return
         }
-        
+
         await MainActor.run {
             isRefreshing = true
             isLoadingEvents = events.isEmpty // Only show loading if no events yet
         }
-        
+
         do {
             let eventModels = try await supabaseManager.getMyEvents()
-            
+            let loadedEvents = eventModels.map { Event(fromSupabase: $0) }
+
+            // Fetch reveal progress and liked counts for revealed events
+            var completionStatus: [String: Bool] = [:]
+            var likeCounts: [String: Int] = [:]
+
+            for event in loadedEvents where event.currentState() == .revealed {
+                if let eventUUID = UUID(uuidString: event.id) {
+                    // Fetch reveal progress
+                    if let progress = try? await supabaseManager.getRevealProgress(eventId: eventUUID) {
+                        completionStatus[event.id] = progress.completed
+                    }
+
+                    // Fetch liked count
+                    if let count = try? await supabaseManager.getLikedPhotoCount(eventId: eventUUID) {
+                        likeCounts[event.id] = count
+                    }
+                }
+            }
+
             await MainActor.run {
-                events = eventModels.map { Event(fromSupabase: $0) }
+                events = loadedEvents
+                revealCompletionStatus = completionStatus
+                likedCounts = likeCounts
                 isLoadingEvents = false
                 isRefreshing = false
             }

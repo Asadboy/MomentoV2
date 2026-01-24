@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var showLogoutConfirmation = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
+    @State private var showCardPreview = false
 
     // Royal purple accent (matches main app)
     private var royalPurple: Color {
@@ -78,9 +79,38 @@ struct SettingsView: View {
                     )
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
-                    
+
+                    // Card Preview Button (Debug)
+                    Button {
+                        showCardPreview = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "rectangle.stack")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Preview Card States")
+                                .font(.system(size: 17, weight: .semibold))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .padding(.horizontal, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color(red: 0.12, green: 0.1, blue: 0.16))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(royalPurple.opacity(0.3), lineWidth: 1)
+                        )
+                        .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 24)
+
                     Spacer()
-                    
+
                     // Logout Button
                     Button {
                         showLogoutConfirmation = true
@@ -138,6 +168,9 @@ struct SettingsView: View {
             }
             .task {
                 await loadUsername()
+            }
+            .fullScreenCover(isPresented: $showCardPreview) {
+                CardPreviewView()
             }
         }
     }

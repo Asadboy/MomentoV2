@@ -52,8 +52,8 @@
 		C3C6D43A2F20299100847D38 /* RevealCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C6D4392F20299100847D38 /* RevealCardView.swift */; };
 		C3C6D43C2F2029A400847D38 /* FeedRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C6D43B2F2029A400847D38 /* FeedRevealView.swift */; };
 		C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C6D43D2F2029F700847D38 /* ImageCacheManager.swift */; };
-		C3STACK012F0B000000000001 /* StackRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK022F0B000000000001 /* StackRevealView.swift */; };
 		C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK042F0B000000000002 /* LikedGalleryView.swift */; };
+		C3CARDPREV012F0B00000001 /* CardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CARDPREV022F0B00000001 /* CardPreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -118,8 +118,8 @@
 		C3C6D4392F20299100847D38 /* RevealCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RevealCardView.swift; sourceTree = "<group>"; };
 		C3C6D43B2F2029A400847D38 /* FeedRevealView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FeedRevealView.swift; sourceTree = "<group>"; };
 		C3C6D43D2F2029F700847D38 /* ImageCacheManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ImageCacheManager.swift; path = Services/ImageCacheManager.swift; sourceTree = "<group>"; };
-		C3STACK022F0B000000000001 /* StackRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackRevealView.swift; sourceTree = "<group>"; };
 		C3STACK042F0B000000000002 /* LikedGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikedGalleryView.swift; sourceTree = "<group>"; };
+		C3CARDPREV022F0B00000001 /* CardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardPreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -230,8 +230,8 @@
 				C34889152EB7C7F6003094CB /* Event.swift */,
 				C34889172EB7C8F7003094CB /* EventRow.swift */,
 				C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */,
-				C3STACK022F0B000000000001 /* StackRevealView.swift */,
 				C3STACK042F0B000000000002 /* LikedGalleryView.swift */,
+				C3CARDPREV022F0B00000001 /* CardPreviewView.swift */,
 				C34889192EB7C9F8003094CB /* AddEventSheet.swift */,
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C348890D2EB7B3F2003094CB /* CameraView.swift */,
@@ -410,8 +410,8 @@
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */,
 				C3C411302EFEF87B002D8DB5 /* FilmRollGalleryView.swift in Sources */,
-				C3STACK012F0B000000000001 /* StackRevealView.swift in Sources */,
 				C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */,
+				C3CARDPREV012F0B00000001 /* CardPreviewView.swift in Sources */,
 				C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
