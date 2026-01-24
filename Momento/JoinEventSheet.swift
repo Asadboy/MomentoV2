@@ -39,7 +39,13 @@ struct JoinEventSheet: View {
 
     /// Error message to display
     @State private var errorMessage: String?
-    
+
+    /// Clipboard content if valid code detected
+    @State private var clipboardCode: String?
+
+    /// Whether to show clipboard banner
+    @State private var showClipboardBanner = false
+
     /// QR code scanner session
     @StateObject private var qrScanner = QRCodeScanner()
     
@@ -176,11 +182,51 @@ struct JoinEventSheet: View {
         }
     }
     
+    /// Banner shown when clipboard contains valid code
+    @ViewBuilder
+    private var clipboardBanner: some View {
+        if showClipboardBanner, let code = clipboardCode {
+            Button {
+                enteredCode = code
+                showClipboardBanner = false
+                // Auto-lookup after paste
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    handleCodeEntry()
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "doc.on.clipboard.fill")
+                        .foregroundColor(royalPurple)
+                    Text("Paste \"\(code)\"?")
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text("Tap")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(red: 0.15, green: 0.12, blue: 0.2))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(royalPurple.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            }
+            .padding(.horizontal)
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
     // MARK: - Code Entry View
-    
+
     /// Code entry view for manual code input
     private var codeEntryView: some View {
         VStack(spacing: 24) {
+            // Clipboard banner at top
+            clipboardBanner
+
             Spacer()
 
             VStack(spacing: 16) {
@@ -234,10 +280,49 @@ struct JoinEventSheet: View {
 
             Spacer()
         }
+        .onAppear {
+            checkClipboard()
+        }
+        .onChange(of: enteredCode) { _, newValue in
+            // Hide banner when user types manually
+            if !newValue.isEmpty && showClipboardBanner {
+                showClipboardBanner = false
+            }
+        }
     }
-    
+
     // MARK: - Actions
-    
+
+    /// Check clipboard for valid join code or link
+    private func checkClipboard() {
+        guard let clipboardString = UIPasteboard.general.string else {
+            showClipboardBanner = false
+            return
+        }
+
+        let trimmed = clipboardString.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Check if it's a momento link
+        if trimmed.lowercased().contains("momento") && trimmed.contains("/join/") {
+            let code = extractCodeFromInput(trimmed)
+            if code.count >= 4 && code.count <= 12 {
+                clipboardCode = code
+                showClipboardBanner = true
+                return
+            }
+        }
+
+        // Check if it's a raw code (alphanumeric, 4-12 chars)
+        let alphanumeric = trimmed.filter { $0.isLetter || $0.isNumber }
+        if alphanumeric.count >= 4 && alphanumeric.count <= 12 && alphanumeric.count == trimmed.count {
+            clipboardCode = alphanumeric.uppercased()
+            showClipboardBanner = true
+            return
+        }
+
+        showClipboardBanner = false
+    }
+
     /// Handles QR code scanning result
     private func handleQRCode(_ code: String) {
         // Extract event code from QR code (format: "momento://join/CODE" or just "CODE")
