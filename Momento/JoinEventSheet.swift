@@ -182,41 +182,40 @@ struct JoinEventSheet: View {
     private var codeEntryView: some View {
         VStack(spacing: 24) {
             Spacer()
-            
+
             VStack(spacing: 16) {
                 Image(systemName: "number.circle.fill")
                     .font(.system(size: 64))
                     .foregroundColor(royalPurple)
-                
+
                 Text("Enter Join Code")
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
-                
+
                 Text("Enter a code or paste an invite link")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
             }
-            
-            VStack(spacing: 12) {
-                TextField("Enter code", text: $enteredCode)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled()
-                    .padding(.horizontal)
-                    .submitLabel(.go)
-                    .onSubmit {
+
+            VStack(spacing: 16) {
+                VerificationCodeInput(
+                    code: $enteredCode,
+                    maxLength: 8,
+                    onComplete: {
                         handleCodeEntry()
                     }
-                
+                )
+                .padding(.horizontal)
+
                 if let error = errorMessage {
                     Text(error)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal)
                 }
-                
+
                 Button {
                     handleCodeEntry()
                 } label: {
@@ -224,7 +223,7 @@ struct JoinEventSheet: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
-                        Text("Join Event")
+                        Text("Look up event")
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -232,7 +231,7 @@ struct JoinEventSheet: View {
                 .disabled(enteredCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isJoining)
             }
             .padding(.horizontal)
-            
+
             Spacer()
         }
     }
