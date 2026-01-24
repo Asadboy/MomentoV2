@@ -93,7 +93,7 @@ struct CardPreviewView: View {
             endsAt: now.addingTimeInterval(-3600 * 64),
             releaseAt: now.addingTimeInterval(-3600 * 24),
             memberCount: 7,
-            photosTaken: 15,
+            photosTaken: 47,  // More photos = feels like a richer memory
             isRevealed: true
         )
     }
@@ -113,8 +113,8 @@ struct CardPreviewView: View {
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
 
-                        // 1a. Upcoming - "Starts tonight"
-                        cardSection(title: "1a. Upcoming", subtitle: "Starts tonight (8 hours away)") {
+                        // 1a. Upcoming - Rally your crew
+                        cardSection(title: "1a. Upcoming", subtitle: "8 hours away - rally your crew") {
                             PremiumEventCard(
                                 event: upcomingEvent,
                                 now: now,
@@ -125,8 +125,8 @@ struct CardPreviewView: View {
                             )
                         }
 
-                        // 1b. Upcoming - "Almost live"
-                        cardSection(title: "1b. Almost Live", subtitle: "Starting in 2 hours") {
+                        // 1b. Upcoming - Almost time
+                        cardSection(title: "1b. Almost Live", subtitle: "2 hours away - almost time!") {
                             PremiumEventCard(
                                 event: almostLiveEvent,
                                 now: now,
@@ -173,13 +173,13 @@ struct CardPreviewView: View {
                             )
                         }
 
-                        // 5. Revealed
-                        cardSection(title: "5. Revealed", subtitle: "User completed reveal swipe") {
+                        // 5. Revealed - Premium keepsake
+                        cardSection(title: "5. Revealed", subtitle: "Your memories - premium keepsake") {
                             PremiumEventCard(
                                 event: revealedEvent,
                                 now: now,
                                 userHasCompletedReveal: true,
-                                likedCount: 8,
+                                likedCount: 12,
                                 onTap: {},
                                 onLongPress: {}
                             )

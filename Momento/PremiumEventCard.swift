@@ -105,7 +105,16 @@ struct PremiumEventCard: View {
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
     }
-    
+
+    private var warmGold: Color {
+        Color(red: 0.85, green: 0.65, blue: 0.3)
+    }
+
+    // Premium silver for completed/keepsake momentos
+    private var premiumSilver: Color {
+        Color(red: 0.75, green: 0.78, blue: 0.85)
+    }
+
     private var cardBackground: Color {
         Color(red: 0.12, green: 0.1, blue: 0.16)
     }
@@ -137,10 +146,11 @@ struct PremiumEventCard: View {
                 endPoint: .bottom
             )
         case .revealed:
+            // Premium silver for keepsake feel
             return LinearGradient(
-                colors: [royalPurple.opacity(0.5)],
-                startPoint: .top,
-                endPoint: .bottom
+                colors: [premiumSilver.opacity(0.6), premiumSilver.opacity(0.3)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
         }
     }
@@ -158,7 +168,8 @@ struct PremiumEventCard: View {
     private var cardGlowColor: Color {
         switch eventState {
         case .readyToReveal: return Color.purple.opacity(0.6)
-        case .live: return royalPurple.opacity(0.4)  // Per spec: soft purple, 10pt blur
+        case .live: return royalPurple.opacity(0.4)
+        case .revealed: return premiumSilver.opacity(0.3)  // Subtle silver glow for keepsake feel
         default: return Color.clear
         }
     }
@@ -222,7 +233,7 @@ struct PremiumEventCard: View {
         )
         .shadow(
             color: cardGlowColor,
-            radius: eventState == .readyToReveal ? 20 : (eventState == .live ? 10 : 0),
+            radius: eventState == .readyToReveal ? 20 : (eventState == .live ? 10 : (eventState == .revealed ? 12 : 0)),
             x: 0,
             y: 0
         )
@@ -263,8 +274,8 @@ struct PremiumEventCard: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            royalPurple.opacity(0.15),
-                            royalPurple.opacity(0.05)
+                            royalPurple.opacity(0.2),
+                            royalPurple.opacity(0.08)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -276,18 +287,22 @@ struct PremiumEventCard: View {
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    royalPurple.opacity(0.8),
+                    royalPurple.opacity(0.9),
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
                 .scaleEffect(breathingScale)
                 .animation(.linear(duration: 1), value: progress)
 
-            // Time display
-            VStack(spacing: 2) {
+            // Time + invite hint
+            VStack(spacing: 3) {
                 Text(formatCompactTime(secondsUntilStart))
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
                     .foregroundColor(royalPurple)
+
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(royalPurple.opacity(0.7))
             }
         }
         .onAppear {
@@ -437,26 +452,31 @@ struct PremiumEventCard: View {
     
     private var galleryButton: some View {
         ZStack {
+            // Premium silver gradient background
             Circle()
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.15),
-                            Color.white.opacity(0.05)
+                            premiumSilver.opacity(0.25),
+                            premiumSilver.opacity(0.1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-            
+
+            // Subtle inner glow
+            Circle()
+                .stroke(premiumSilver.opacity(0.4), lineWidth: 1)
+
             VStack(spacing: 4) {
                 Image(systemName: "photo.stack.fill")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
-                
-                Text("\(event.photosTaken)")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(premiumSilver)
+
+                Text("Relive")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(premiumSilver.opacity(0.9))
             }
         }
     }
@@ -497,6 +517,20 @@ struct PremiumEventCard: View {
         return "Starts \(formatHumanizedTime(seconds))"
     }
 
+    /// Hype-building subtitle for upcoming events
+    private var upcomingSubtitleText: String {
+        let hours = secondsUntilStart / 3600
+        let memberText = event.memberCount == 1 ? "Just you" : "\(event.memberCount) friends ready"
+
+        if hours <= 3 {
+            return "\(memberText) • Almost time!"
+        } else if hours <= 12 {
+            return "\(memberText) • Invite more!"
+        } else {
+            return "\(memberText) • Rally your crew"
+        }
+    }
+
     /// Format for processing/reveal countdown
     private func formatRevealTime(_ seconds: Int) -> String {
         let hours = seconds / 3600
@@ -519,12 +553,12 @@ struct PremiumEventCard: View {
         switch eventState {
         case .upcoming:
             HStack(spacing: 6) {
-                Image(systemName: "clock.fill")
+                Image(systemName: "person.badge.plus")
                     .font(.system(size: 11, weight: .medium))
-                Text(formatUpcomingTime(secondsUntilStart))
+                Text(upcomingSubtitleText)
                     .font(.system(size: 13, weight: .medium))
             }
-            .foregroundColor(.white.opacity(0.6))
+            .foregroundColor(royalPurple.opacity(0.9))
 
         case .live:
             HStack(spacing: 6) {
@@ -556,12 +590,12 @@ struct PremiumEventCard: View {
 
         case .revealed:
             HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 11, weight: .medium))
-                Text("Revealed\(likedCount > 0 ? " • \(likedCount) liked" : "")")
+                Text(likedCount > 0 ? "\(likedCount) liked • \(likedCount) saved" : "Tap to relive")
                     .font(.system(size: 13, weight: .medium))
             }
-            .foregroundColor(.white.opacity(0.6))
+            .foregroundColor(premiumSilver)
         }
     }
 }
