@@ -8,7 +8,6 @@
 //  This sheet provides multiple ways to join an event:
 //  1. QR code scanning (primary, interactive method)
 //  2. Code entry (alternative method)
-//  3. Link handling (alternative method)
 
 import SwiftUI
 import AVFoundation
@@ -16,11 +15,10 @@ import AVFoundation
 /// Join methods available in the sheet
 enum JoinMethod: String, CaseIterable {
     case qrCode = "QR Code"
-    case code = "Code"
-    case link = "Link"
+    case enterCode = "Enter Code"
 }
 
-/// Sheet for joining events via QR code, code, or link
+/// Sheet for joining events via QR code or code entry
 struct JoinEventSheet: View {
     @Binding var isPresented: Bool
     let onJoin: (Event) -> Void  // Callback when an event is successfully joined
@@ -38,10 +36,7 @@ struct JoinEventSheet: View {
     
     /// Code entry field for code-based joining
     @State private var enteredCode: String = ""
-    
-    /// Link entry field for link-based joining
-    @State private var enteredLink: String = ""
-    
+
     /// Error message to display
     @State private var errorMessage: String?
     
@@ -74,10 +69,8 @@ struct JoinEventSheet: View {
                     switch selectedMethod {
                     case .qrCode:
                         qrCodeView
-                    case .code:
+                    case .enterCode:
                         codeEntryView
-                    case .link:
-                        linkEntryView
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -244,68 +237,6 @@ struct JoinEventSheet: View {
         }
     }
     
-    // MARK: - Link Entry View
-    
-    /// Link entry view for URL-based joining
-    private var linkEntryView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            VStack(spacing: 16) {
-                Image(systemName: "link.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundColor(royalPurple)
-                
-                Text("Enter Event Link")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                
-                Text("Paste the event link shared by the host")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-            }
-            
-            VStack(spacing: 12) {
-                TextField("Enter link", text: $enteredLink)
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.URL)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                    .padding(.horizontal)
-                    .submitLabel(.go)
-                    .onSubmit {
-                        handleLinkEntry()
-                    }
-                
-                if let error = errorMessage {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal)
-                }
-                
-                Button {
-                    handleLinkEntry()
-                } label: {
-                    if isJoining {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text("Join Event")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(royalPurple)
-                .disabled(enteredLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isJoining)
-            }
-            .padding(.horizontal)
-            
-            Spacer()
-        }
-    }
-    
     // MARK: - Actions
     
     /// Handles QR code scanning result
@@ -324,20 +255,7 @@ struct JoinEventSheet: View {
         }
         joinEventWithCode(trimmedCode)
     }
-    
-    /// Handles link entry
-    private func handleLinkEntry() {
-        let trimmedLink = enteredLink.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedLink.isEmpty else {
-            errorMessage = "Please enter a link"
-            return
-        }
-        
-        // Extract code from link (format: "momento://join/CODE" or "https://momento.app/join/CODE")
-        let code = extractCodeFromLink(trimmedLink)
-        joinEventWithCode(code)
-    }
-    
+
     /// Extracts event code from QR code string
     private func extractCodeFromQR(_ qrString: String) -> String {
         // Handle momento://join/CODE format
@@ -353,23 +271,7 @@ struct JoinEventSheet: View {
         // Assume it's just the code
         return qrString.uppercased()
     }
-    
-    /// Extracts event code from link string
-    private func extractCodeFromLink(_ link: String) -> String {
-        // Handle momento://join/CODE format
-        if link.hasPrefix("momento://join/") {
-            return String(link.dropFirst("momento://join/".count)).uppercased()
-        }
-        // Handle https://momento.app/join/CODE format
-        if link.contains("/join/") {
-            if let code = link.components(separatedBy: "/join/").last?.components(separatedBy: "/").first {
-                return code.uppercased()
-            }
-        }
-        // Assume it's just the code
-        return link.uppercased()
-    }
-    
+
     /// Attempts to join an event with the given code
     private func joinEventWithCode(_ code: String) {
         errorMessage = nil
