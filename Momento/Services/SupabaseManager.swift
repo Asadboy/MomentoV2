@@ -397,7 +397,25 @@ class SupabaseManager: ObservableObject {
         print("✅ Joined event: \(event.title)")
         return event
     }
-    
+
+    /// Lookup an event by code without joining (for preview)
+    func lookupEvent(code: String) async throws -> EventModel {
+        // Find event by join code (no auth required for lookup)
+        let events: [EventModel] = try await client
+            .from("events")
+            .select()
+            .eq("join_code", value: code.uppercased())
+            .eq("is_deleted", value: false)
+            .execute()
+            .value
+
+        guard let event = events.first else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No event found with code: \(code)"])
+        }
+
+        return event
+    }
+
     /// Get all events the user is a member of
     func getMyEvents() async throws -> [EventModel] {
         guard let userId = currentUser?.id else {
