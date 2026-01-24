@@ -35,10 +35,13 @@ struct ContentView: View {
     @State private var showAddSheet = false
     
     // MARK: - Join Event Sheet State
-    
+
     /// Controls whether the join event sheet is presented
     @State private var showJoinSheet = false
-    
+
+    /// ID of event that was just joined (for glow animation)
+    @State private var newlyJoinedEventId: String?
+
     // MARK: - Photo Capture State
     
     /// Controls whether the photo capture sheet is presented
@@ -187,6 +190,25 @@ struct ContentView: View {
                                     showInviteSheet(for: event)
                                 }
                             )
+                            .overlay {
+                                if newlyJoinedEventId == event.id {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.purple.opacity(0.8),
+                                                    Color.blue.opacity(0.6),
+                                                    Color.cyan.opacity(0.4)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 3
+                                        )
+                                        .shadow(color: Color.purple.opacity(0.6), radius: 12)
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                             .listRowBackground(Color.clear)
@@ -460,12 +482,22 @@ struct ContentView: View {
         }
     }
     
-    /// Joins a new event (adds it to the events list)
-    /// - Parameter event: The event to join
+    /// Joins a new event (adds it to the events list with animation)
     private func joinEvent(_ event: Event) {
-        // Event has already been joined via JoinEventSheet
-        // Just add it to the local list
-        events.append(event)
+        // Set the newly joined ID before adding
+        newlyJoinedEventId = event.id
+
+        // Add to list with animation
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            events.append(event)
+        }
+
+        // Clear the glow after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            withAnimation(.easeOut(duration: 0.5)) {
+                newlyJoinedEventId = nil
+            }
+        }
     }
     
     /// Handles a captured photo for an event
