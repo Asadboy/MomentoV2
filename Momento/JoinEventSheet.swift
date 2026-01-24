@@ -46,6 +46,12 @@ struct JoinEventSheet: View {
     /// Whether to show clipboard banner
     @State private var showClipboardBanner = false
 
+    /// Event being previewed (before joining)
+    @State private var previewEvent: Event?
+
+    /// Whether to show preview modal
+    @State private var showPreview = false
+
     /// QR code scanner session
     @StateObject private var qrScanner = QRCodeScanner()
     
@@ -115,6 +121,30 @@ struct JoinEventSheet: View {
                     handleQRCode(code)
                 }
             }
+            .overlay {
+                if showPreview, let event = previewEvent {
+                    ZStack {
+                        Color.black.opacity(0.7)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                showPreview = false
+                            }
+
+                        EventPreviewModal(
+                            event: event,
+                            onJoin: {
+                                confirmJoin()
+                            },
+                            onCancel: {
+                                showPreview = false
+                                previewEvent = nil
+                            }
+                        )
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: showPreview)
         }
     }
     
@@ -325,9 +355,8 @@ struct JoinEventSheet: View {
 
     /// Handles QR code scanning result
     private func handleQRCode(_ code: String) {
-        // Extract event code from QR code (format: "momento://join/CODE" or just "CODE")
-        let code = extractCodeFromQR(code)
-        joinEventWithCode(code)
+        let extractedCode = extractCodeFromQR(code)
+        lookupAndPreviewEvent(code: extractedCode)
     }
     
     /// Handles manual code entry (supports both raw codes and links)
@@ -338,13 +367,12 @@ struct JoinEventSheet: View {
             return
         }
 
-        // Smart parsing: detect if input is a link or raw code
         let code = extractCodeFromInput(input)
         guard !code.isEmpty else {
             errorMessage = "Could not find a valid code in the link"
             return
         }
-        joinEventWithCode(code)
+        lookupAndPreviewEvent(code: code)
     }
 
     /// Extracts event code from any input format (link or raw code)
@@ -373,29 +401,50 @@ struct JoinEventSheet: View {
         return extractCodeFromInput(qrString)
     }
 
-    /// Attempts to join an event with the given code
-    private func joinEventWithCode(_ code: String) {
+    /// Looks up event and shows preview modal
+    private func lookupAndPreviewEvent(code: String) {
+        guard !isJoining else { return }  // Prevent concurrent lookups
         errorMessage = nil
         isJoining = true
-        
+
         Task {
             do {
-                let eventModel = try await supabaseManager.joinEvent(code: code)
-                let joinedEvent = Event(fromSupabase: eventModel)
-                
+                let eventModel = try await supabaseManager.lookupEvent(code: code)
+                let event = Event(fromSupabase: eventModel)
+
                 await MainActor.run {
-                    // Call the join callback
-                    onJoin(joinedEvent)
-                    
-                    // Close the sheet
-                    qrScanner.stopScanning()
-                    isPresented = false
+                    previewEvent = event
+                    showPreview = true
                     isJoining = false
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Failed to join event: \(error.localizedDescription)"
+                    errorMessage = "No event found with that code"
                     isJoining = false
+                }
+            }
+        }
+    }
+
+    /// Confirms joining the previewed event
+    private func confirmJoin() {
+        guard let event = previewEvent, let joinCode = event.joinCode else { return }
+
+        Task {
+            do {
+                let eventModel = try await supabaseManager.joinEvent(code: joinCode)
+                let joinedEvent = Event(fromSupabase: eventModel)
+
+                await MainActor.run {
+                    onJoin(joinedEvent)
+                    qrScanner.stopScanning()
+                    isPresented = false
+                }
+            } catch {
+                await MainActor.run {
+                    showPreview = false
+                    previewEvent = nil
+                    errorMessage = "Failed to join: \(error.localizedDescription)"
                 }
             }
         }
