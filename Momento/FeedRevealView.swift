@@ -9,71 +9,117 @@
 import SwiftUI
 import Photos
 
-struct FeedRevealView: View {
-    let event: Event
-    let onComplete: () -> Void
+// MARK: - View Model
 
-    @StateObject private var supabaseManager = SupabaseManager.shared
-    @State private var photos: [PhotoData] = []
-    @State private var revealedStates: [String: Bool] = [:]
-    @State private var likedStates: [String: Bool] = [:]
-    @State private var isLoading = true
-    @State private var showingCompletion = false
-
-    // Track scroll position for progress
-    @State private var visiblePhotoIndex: Int = 0
+@MainActor
+class FeedRevealViewModel: ObservableObject {
+    @Published var photos: [PhotoData] = []
+    @Published var revealedStates: [String: Bool] = [:]
+    @Published var likedStates: [String: Bool] = [:]
+    @Published var isLoading = true
+    @Published var visiblePhotoIndex: Int = 0
 
     var likedCount: Int {
         likedStates.values.filter { $0 }.count
     }
 
+    func isRevealed(_ photoId: String) -> Bool {
+        revealedStates[photoId] ?? false
+    }
+
+    func isLiked(_ photoId: String) -> Bool {
+        likedStates[photoId] ?? false
+    }
+
+    func setRevealed(_ photoId: String, _ value: Bool) {
+        revealedStates[photoId] = value
+    }
+
+    func setLiked(_ photoId: String, _ value: Bool) {
+        likedStates[photoId] = value
+    }
+
+    func loadPhotos(eventId: String) async {
+        let supabaseManager = SupabaseManager.shared
+
+        do {
+            let loadedPhotos = try await supabaseManager.getPhotos(for: eventId)
+
+            guard let eventUUID = UUID(uuidString: eventId) else {
+                photos = loadedPhotos
+                isLoading = false
+                return
+            }
+
+            let likedPhotos = try await supabaseManager.getLikedPhotos(eventId: eventUUID)
+            let likedIds = Set(likedPhotos.map { $0.id })
+
+            photos = loadedPhotos
+
+            for photo in loadedPhotos {
+                likedStates[photo.id] = likedIds.contains(photo.id)
+                if likedIds.contains(photo.id) {
+                    revealedStates[photo.id] = true
+                }
+            }
+
+            isLoading = false
+        } catch {
+            print("❌ Failed to load photos: \(error)")
+            isLoading = false
+        }
+    }
+
+    func saveLikedPhotos() async {
+        let supabaseManager = SupabaseManager.shared
+
+        for (photoId, isLiked) in likedStates {
+            guard let photoUUID = UUID(uuidString: photoId) else { continue }
+
+            if isLiked {
+                try? await supabaseManager.setPhotoInteraction(photoId: photoUUID, status: .liked)
+            }
+        }
+    }
+}
+
+// MARK: - Main View
+
+struct FeedRevealView: View {
+    let event: Event
+    let onComplete: () -> Void
+
+    @StateObject private var viewModel = FeedRevealViewModel()
+    @State private var showingSaveAlert = false
+    @State private var saveAlertMessage = ""
+
     var body: some View {
         ZStack {
-            // Background
             Color.black.ignoresSafeArea()
 
-            if isLoading {
+            if viewModel.isLoading {
                 loadingView
-            } else if photos.isEmpty {
+            } else if viewModel.photos.isEmpty {
                 emptyView
             } else {
                 VStack(spacing: 0) {
-                    // Progress header
                     progressHeader
-
-                    // Scrollable feed
-                    ScrollView {
-                        LazyVStack(spacing: 24) {
-                            ForEach(Array(photos.enumerated()), id: \.element.id) { index, photo in
-                                RevealCardView(
-                                    photo: photo,
-                                    isRevealed: binding(for: photo.id, in: $revealedStates, default: false),
-                                    isLiked: binding(for: photo.id, in: $likedStates, default: false),
-                                    onDownload: { downloadPhoto(photo) }
-                                )
-                                .onAppear {
-                                    visiblePhotoIndex = index
-                                }
-                            }
-
-                            // Completion section at bottom
-                            completionSection
-                                .padding(.top, 24)
-                                .padding(.bottom, 48)
-                        }
-                        .padding(.vertical, 16)
-                    }
+                    scrollableFeed
                 }
             }
         }
         .task {
-            await loadPhotos()
+            await viewModel.loadPhotos(eventId: event.id)
         }
         .onDisappear {
-            // Save liked states when leaving
             Task {
-                await saveLikedPhotos()
+                await viewModel.saveLikedPhotos()
             }
+        }
+        .alert("Photo", isPresented: $showingSaveAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveAlertMessage)
         }
     }
 
@@ -102,18 +148,16 @@ struct FeedRevealView: View {
 
     private var progressHeader: some View {
         HStack {
-            // Position indicator
-            Text("\(visiblePhotoIndex + 1) of \(photos.count)")
+            Text("\(viewModel.visiblePhotoIndex + 1) of \(viewModel.photos.count)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
 
             Spacer()
 
-            // Liked count
             HStack(spacing: 4) {
                 Image(systemName: "heart.fill")
                     .foregroundColor(.red)
-                Text("\(likedCount) liked")
+                Text("\(viewModel.likedCount) liked")
             }
             .font(.subheadline)
             .foregroundColor(.white.opacity(0.7))
@@ -123,22 +167,52 @@ struct FeedRevealView: View {
         .background(Color.black.opacity(0.8))
     }
 
+    private var scrollableFeed: some View {
+        ScrollView {
+            LazyVStack(spacing: 24) {
+                ForEach(viewModel.photos.indices, id: \.self) { index in
+                    let photo = viewModel.photos[index]
+                    RevealCardView(
+                        photo: photo,
+                        isRevealed: Binding(
+                            get: { viewModel.isRevealed(photo.id) },
+                            set: { viewModel.setRevealed(photo.id, $0) }
+                        ),
+                        isLiked: Binding(
+                            get: { viewModel.isLiked(photo.id) },
+                            set: { viewModel.setLiked(photo.id, $0) }
+                        ),
+                        onDownload: { downloadPhoto(photo) }
+                    )
+                    .onAppear {
+                        viewModel.visiblePhotoIndex = index
+                    }
+                }
+
+                completionSection
+                    .padding(.top, 24)
+                    .padding(.bottom, 48)
+            }
+            .padding(.vertical, 16)
+        }
+    }
+
     private var completionSection: some View {
         VStack(spacing: 20) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.green)
 
-            Text("You've seen all \(photos.count) photos!")
+            Text("You've seen all \(viewModel.photos.count) photos!")
                 .font(.headline)
                 .foregroundColor(.white)
 
-            Text("\(likedCount) photos liked")
+            Text("\(viewModel.likedCount) photos liked")
                 .foregroundColor(.white.opacity(0.7))
 
             Button {
                 Task {
-                    await saveLikedPhotos()
+                    await viewModel.saveLikedPhotos()
                     onComplete()
                 }
             } label: {
@@ -154,93 +228,47 @@ struct FeedRevealView: View {
         .padding(.vertical, 32)
     }
 
-    // MARK: - Data Loading
-
-    private func loadPhotos() async {
-        do {
-            let loadedPhotos = try await supabaseManager.getPhotos(for: event.id)
-
-            // Load existing liked states
-            guard let eventUUID = UUID(uuidString: event.id) else {
-                await MainActor.run {
-                    photos = loadedPhotos
-                    isLoading = false
-                }
-                return
-            }
-
-            let likedPhotos = try await supabaseManager.getLikedPhotos(for: eventUUID)
-            let likedIds = Set(likedPhotos.map { $0.id })
-
-            await MainActor.run {
-                photos = loadedPhotos
-
-                // Initialize liked states from existing data
-                for photo in loadedPhotos {
-                    likedStates[photo.id] = likedIds.contains(photo.id)
-                    // Photos that were already liked should be revealed
-                    if likedIds.contains(photo.id) {
-                        revealedStates[photo.id] = true
-                    }
-                }
-
-                isLoading = false
-            }
-        } catch {
-            print("❌ Failed to load photos: \(error)")
-            await MainActor.run {
-                isLoading = false
-            }
-        }
-    }
-
     // MARK: - Actions
 
     private func downloadPhoto(_ photo: PhotoData) {
         guard let url = photo.url else { return }
 
         Task {
-            // Get image from cache
-            guard let image = await ImageCacheManager.shared.image(for: url) else {
-                print("❌ Failed to get image for download")
-                return
-            }
-
-            // Save to photo library
-            PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-                guard status == .authorized || status == .limited else {
-                    print("❌ Photo library access denied")
+            do {
+                // Download fresh from URL (same pattern as LikedGalleryView)
+                let (data, _) = try await URLSession.shared.data(from: url)
+                guard let image = UIImage(data: data) else {
+                    print("❌ Failed to create image from data")
                     return
                 }
 
-                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                // Request permission
+                let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                guard status == .authorized || status == .limited else {
+                    await MainActor.run {
+                        saveAlertMessage = "Please allow photo access in Settings"
+                        showingSaveAlert = true
+                    }
+                    return
+                }
 
-                DispatchQueue.main.async {
+                // Save to camera roll
+                try await PHPhotoLibrary.shared().performChanges {
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                }
+
+                await MainActor.run {
                     HapticsManager.shared.success()
+                    saveAlertMessage = "Saved to camera roll"
+                    showingSaveAlert = true
+                }
+            } catch {
+                await MainActor.run {
+                    saveAlertMessage = "Failed to save photo"
+                    showingSaveAlert = true
                 }
             }
         }
-    }
-
-    private func saveLikedPhotos() async {
-        for (photoId, isLiked) in likedStates {
-            guard let photoUUID = UUID(uuidString: photoId) else { continue }
-
-            if isLiked {
-                try? await supabaseManager.setPhotoInteraction(photoId: photoUUID, status: .liked)
-            }
-            // Note: We don't explicitly archive - scrolling past is implicit skip
-        }
-    }
-
-    // MARK: - Helpers
-
-    /// Creates a binding for a dictionary value with a default
-    private func binding<T>(for key: String, in dict: Binding<[String: T]>, default defaultValue: T) -> Binding<T> {
-        Binding(
-            get: { dict.wrappedValue[key] ?? defaultValue },
-            set: { dict.wrappedValue[key] = $0 }
-        )
     }
 }
 
