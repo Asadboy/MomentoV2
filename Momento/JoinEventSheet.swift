@@ -193,7 +193,7 @@ struct JoinEventSheet: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                 
-                Text("Ask the event host for the join code")
+                Text("Enter a code or paste an invite link")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -246,30 +246,47 @@ struct JoinEventSheet: View {
         joinEventWithCode(code)
     }
     
-    /// Handles manual code entry
+    /// Handles manual code entry (supports both raw codes and links)
     private func handleCodeEntry() {
-        let trimmedCode = enteredCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard !trimmedCode.isEmpty else {
+        let input = enteredCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !input.isEmpty else {
             errorMessage = "Please enter a code"
             return
         }
-        joinEventWithCode(trimmedCode)
+
+        // Smart parsing: detect if input is a link or raw code
+        let code = extractCodeFromInput(input)
+        guard !code.isEmpty else {
+            errorMessage = "Could not find a valid code in the link"
+            return
+        }
+        joinEventWithCode(code)
     }
 
-    /// Extracts event code from QR code string
-    private func extractCodeFromQR(_ qrString: String) -> String {
+    /// Extracts event code from any input format (link or raw code)
+    private func extractCodeFromInput(_ input: String) -> String {
         // Handle momento://join/CODE format
-        if qrString.hasPrefix("momento://join/") {
-            return String(qrString.dropFirst("momento://join/".count)).uppercased()
+        if input.lowercased().hasPrefix("momento://join/") {
+            return String(input.dropFirst("momento://join/".count))
+                .components(separatedBy: CharacterSet(charactersIn: "?/#"))
+                .first?
+                .uppercased() ?? input.uppercased()
         }
         // Handle https://momento.app/join/CODE format
-        if qrString.contains("/join/") {
-            if let code = qrString.components(separatedBy: "/join/").last?.components(separatedBy: "/").first {
+        if input.contains("/join/") {
+            if let code = input.components(separatedBy: "/join/").last?
+                .components(separatedBy: CharacterSet(charactersIn: "?/#"))
+                .first {
                 return code.uppercased()
             }
         }
         // Assume it's just the code
-        return qrString.uppercased()
+        return input.uppercased()
+    }
+
+    /// Extracts event code from QR code string
+    private func extractCodeFromQR(_ qrString: String) -> String {
+        return extractCodeFromInput(qrString)
     }
 
     /// Attempts to join an event with the given code
