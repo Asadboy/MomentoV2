@@ -46,7 +46,7 @@ struct VerificationCodeInput: View {
                     }
                 }
 
-            // Visual character boxes
+            // Visual character boxes - relaxed spacing
             HStack(spacing: 8) {
                 ForEach(0..<maxLength, id: \.self) { index in
                     CharacterBox(
@@ -100,32 +100,56 @@ private struct CharacterBox: View {
     let royalPurple: Color
     let cardBackground: Color
 
+    @State private var cursorVisible = true
+
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(cardBackground)
-                .frame(width: 44, height: 56)
+            // Ambient glow when current - soft, not harsh
+            if isCurrent {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(royalPurple.opacity(0.12))
+                    .frame(width: 44, height: 54)
+                    .blur(radius: 8)
+            }
 
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    isCurrent ? royalPurple : royalPurple.opacity(0.5),
-                    lineWidth: isCurrent ? 2 : 1
+            // Soft filled background
+            RoundedRectangle(cornerRadius: 14)
+                .fill(
+                    isFilled
+                        ? royalPurple.opacity(0.15)
+                        : (isCurrent ? Color.white.opacity(0.08) : Color.white.opacity(0.04))
                 )
-                .frame(width: 44, height: 56)
+                .frame(width: 40, height: 50)
+
+            // Ultra-subtle border
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    isCurrent ? royalPurple.opacity(0.5) : (isFilled ? royalPurple.opacity(0.2) : Color.white.opacity(0.04)),
+                    lineWidth: isCurrent ? 1 : 0.5
+                )
+                .frame(width: 40, height: 50)
 
             if isCurrent && character.isEmpty {
-                // Blinking cursor
-                Rectangle()
-                    .fill(royalPurple)
-                    .frame(width: 2, height: 24)
-                    .opacity(0.8)
+                // Gentle breathing cursor
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(royalPurple.opacity(0.7))
+                    .frame(width: 2, height: 18)
+                    .opacity(cursorVisible ? 0.9 : 0.3)
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                            cursorVisible.toggle()
+                        }
+                    }
             }
 
             Text(character)
-                .font(.system(size: 24, weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
+                .font(.system(size: 20, weight: .medium, design: .rounded))
+                .foregroundColor(isFilled ? .white.opacity(0.95) : .white.opacity(0.3))
         }
-        .shadow(color: isCurrent ? royalPurple.opacity(0.4) : .clear, radius: 8)
+        .shadow(color: isFilled ? royalPurple.opacity(0.15) : .clear, radius: 6)
+        .scaleEffect(isFilled ? 1.02 : 1.0)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isFilled)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isCurrent)
     }
 }
 
@@ -134,6 +158,6 @@ private struct CharacterBox: View {
         Color(red: 0.05, green: 0.05, blue: 0.1)
             .ignoresSafeArea()
 
-        VerificationCodeInput(code: .constant("HIJ"), maxLength: 8)
+        VerificationCodeInput(code: .constant("HIJ"), maxLength: 6)
     }
 }

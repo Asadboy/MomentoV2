@@ -5,101 +5,77 @@
 //  Created by Asad on 02/11/2025.
 //
 //  MODULAR ARCHITECTURE: Join event component
-//  This sheet provides multiple ways to join an event:
-//  1. QR code scanning (primary, interactive method)
-//  2. Code entry (alternative method)
+//  Unified join experience: QR scanning with inline code entry fallback
 
 import SwiftUI
 import AVFoundation
 
-/// Join methods available in the sheet
-enum JoinMethod: String, CaseIterable {
-    case qrCode = "QR Code"
-    case enterCode = "Enter Code"
-}
-
-/// Sheet for joining events via QR code or code entry
+/// Sheet for joining events - mutually exclusive scan/code modes
 struct JoinEventSheet: View {
     @Binding var isPresented: Bool
-    let onJoin: (Event) -> Void  // Callback when an event is successfully joined
-    
-    // MARK: - State Management
-    
-    /// Supabase manager instance
+    let onJoin: (Event) -> Void
+
+    // MARK: - State
+
     @StateObject private var supabaseManager = SupabaseManager.shared
-    
-    /// Currently selected join method
-    @State private var selectedMethod: JoinMethod = .qrCode
-    
-    /// Loading state for join attempt
-    @State private var isJoining = false
-    
-    /// Code entry field for code-based joining
-    @State private var enteredCode: String = ""
-
-    /// Error message to display
-    @State private var errorMessage: String?
-
-    /// Clipboard content if valid code detected
-    @State private var clipboardCode: String?
-
-    /// Whether to show clipboard banner
-    @State private var showClipboardBanner = false
-
-    /// Event being previewed (before joining)
-    @State private var previewEvent: Event?
-
-    /// Whether to show preview modal
-    @State private var showPreview = false
-
-    /// QR code scanner session
     @StateObject private var qrScanner = QRCodeScanner()
-    
-    // MARK: - Constants
-    
-    /// Royal purple accent color
+
+    @State private var enteredCode: String = ""
+    @State private var isJoining = false
+    @State private var errorMessage: String?
+    @State private var clipboardCode: String?
+    @State private var showClipboardBanner = false
+    @State private var previewEvent: Event?
+    @State private var showPreview = false
+    @State private var mode: JoinMode = .scan
+    @State private var buttonPressed = false
+
+    enum JoinMode {
+        case scan
+        case code
+    }
+
+    // MARK: - Colors
+
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
     }
-    
+
+    private var cardBackground: Color {
+        Color(red: 0.12, green: 0.1, blue: 0.16)
+    }
+
+    // MARK: - Computed
+
+    private var codeProgress: CGFloat {
+        CGFloat(enteredCode.count) / 6.0
+    }
+
     // MARK: - Body
-    
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Method selector tabs
-                Picker("Join Method", selection: $selectedMethod) {
-                    ForEach(JoinMethod.allCases, id: \.self) { method in
-                        Text(method.rawValue).tag(method)
+            ZStack {
+                // Background
+                Color(red: 0.05, green: 0.05, blue: 0.1)
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Static subheader - one calm anchor
+                    subheader
+
+                    // Mutually exclusive modes
+                    if mode == .scan {
+                        scanModeView
+                            .transition(.opacity)
+                    } else {
+                        codeModeView
+                            .transition(.opacity)
                     }
                 }
-                .pickerStyle(.segmented)
-                .padding()
-                
-                // Content based on selected method
-                Group {
-                    switch selectedMethod {
-                    case .qrCode:
-                        qrCodeView
-                    case .enterCode:
-                        codeEntryView
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .background(
-                // Dark background matching main view
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.1),
-                        Color(red: 0.08, green: 0.06, blue: 0.12)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-            )
             .navigationTitle("Join Event")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -107,218 +83,429 @@ struct JoinEventSheet: View {
                         qrScanner.stopScanning()
                         isPresented = false
                     }
-                }
-            }
-            .onChange(of: selectedMethod) {
-                // Stop scanning when switching methods
-                if selectedMethod != .qrCode {
-                    qrScanner.stopScanning()
+                    .foregroundColor(.white)
                 }
             }
             .onChange(of: qrScanner.scannedCode) {
-                // Handle scanned QR code
                 if let code = qrScanner.scannedCode {
                     handleQRCode(code)
                 }
             }
+            .onChange(of: enteredCode) { oldValue, newValue in
+                // Haptic tick on each character entered
+                if newValue.count > oldValue.count {
+                    let generator = UIImpactFeedbackGenerator(style: .light)
+                    generator.impactOccurred()
+                }
+            }
+            .onChange(of: mode) { _, newMode in
+                if newMode == .scan {
+                    qrScanner.startScanning()
+                } else {
+                    qrScanner.stopScanning()
+                }
+            }
             .overlay {
                 if showPreview, let event = previewEvent {
-                    ZStack {
-                        Color.black.opacity(0.7)
-                            .ignoresSafeArea()
-                            .onTapGesture {
-                                showPreview = false
-                            }
-
-                        EventPreviewModal(
-                            event: event,
-                            onJoin: {
-                                confirmJoin()
-                            },
-                            onCancel: {
-                                showPreview = false
-                                previewEvent = nil
-                            }
-                        )
-                    }
-                    .transition(.opacity)
+                    previewOverlay(event: event)
                 }
             }
+            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: mode)
             .animation(.easeInOut(duration: 0.25), value: showPreview)
-        }
-    }
-    
-    // MARK: - QR Code View
-    
-    /// QR code scanner view
-    private var qrCodeView: some View {
-        VStack(spacing: 24) {
-            // Instructions
-            VStack(spacing: 8) {
-                Image(systemName: "qrcode.viewfinder")
-                    .font(.system(size: 48))
-                    .foregroundColor(royalPurple)
-                
-                Text("Scan QR Code")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                
-                Text("Point your camera at the event QR code")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, 40)
-            
-            // Camera preview
-            if qrScanner.hasPermission {
-                QRCodeScannerView(scanner: qrScanner)
-                    .frame(height: 300)
-                    .cornerRadius(16)
-                    .padding(.horizontal)
-            } else {
-                // Permission request view
-                VStack(spacing: 16) {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 48))
-                        .foregroundColor(.gray)
-                    
-                    Text("Camera Permission Required")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Text("Please allow camera access to scan QR codes")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                    
-                    Button("Request Permission") {
-                        qrScanner.requestPermission()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(royalPurple)
-                }
-                .padding()
-            }
-            
-            Spacer()
         }
         .onAppear {
             qrScanner.startScanning()
-        }
-        .onDisappear {
-            qrScanner.stopScanning()
+            checkClipboard()
         }
     }
-    
-    /// Banner shown when clipboard contains valid code
+
+    // MARK: - Subheader
+
+    private var subheader: some View {
+        Text("Private event")
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(.gray)
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+    }
+
+    // MARK: - Scan Mode (Full Screen)
+
+    private var scanModeView: some View {
+        VStack(spacing: 0) {
+            if qrScanner.hasPermission {
+                // Camera with soft vignette treatment
+                ZStack {
+                    QRCodeScannerView(scanner: qrScanner)
+                        .cornerRadius(20)
+
+                    // Soft vignette overlay - ambient, not technical
+                    cameraVignetteOverlay
+
+                    // Ultra-light scanning hint
+                    scanningFrameOverlay
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+
+                // Subtle instruction
+                Text("Point at QR code")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.4))
+                    .padding(.top, 20)
+
+                Spacer()
+
+                // Switch to code mode
+                switchToCodeButton
+                    .padding(.bottom, 24)
+            } else {
+                cameraPermissionView
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+
+                Spacer()
+
+                switchToCodeButton
+                    .padding(.bottom, 24)
+            }
+        }
+    }
+
+    /// Soft vignette around camera edges - feels ambient
+    private var cameraVignetteOverlay: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .strokeBorder(
+                RadialGradient(
+                    colors: [.clear, Color.black.opacity(0.4)],
+                    center: .center,
+                    startRadius: 100,
+                    endRadius: 200
+                ),
+                lineWidth: 60
+            )
+            .allowsHitTesting(false)
+    }
+
+    private var scanningFrameOverlay: some View {
+        // Ultra-subtle corners - just a hint
+        scanningCorners
+            .frame(width: 160, height: 160)
+    }
+
+    private var scanningCorners: some View {
+        let cornerColor = Color.white.opacity(0.25)
+        let lineWidth: CGFloat = 1
+
+        return ZStack {
+            CornerShape()
+                .stroke(cornerColor, lineWidth: lineWidth)
+                .frame(width: 28, height: 28)
+                .position(x: 14, y: 14)
+
+            CornerShape()
+                .stroke(cornerColor, lineWidth: lineWidth)
+                .frame(width: 28, height: 28)
+                .rotationEffect(.degrees(90))
+                .position(x: 146, y: 14)
+
+            CornerShape()
+                .stroke(cornerColor, lineWidth: lineWidth)
+                .frame(width: 28, height: 28)
+                .rotationEffect(.degrees(-90))
+                .position(x: 14, y: 146)
+
+            CornerShape()
+                .stroke(cornerColor, lineWidth: lineWidth)
+                .frame(width: 28, height: 28)
+                .rotationEffect(.degrees(180))
+                .position(x: 146, y: 146)
+        }
+    }
+
+    private var switchToCodeButton: some View {
+        Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                mode = .code
+            }
+            let generator = UIImpactFeedbackGenerator(style: .soft)
+            generator.impactOccurred()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(royalPurple.opacity(0.12))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: "number")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(royalPurple.opacity(0.9))
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Enter code instead")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.95))
+                    Text("Got a code from a friend?")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.3))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(cardBackground.opacity(0.8))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial)
+                            .opacity(0.3)
+                    )
+            )
+        }
+        .padding(.horizontal, 24)
+    }
+
+    private var cameraPermissionView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(systemName: "camera.fill")
+                .font(.system(size: 44))
+                .foregroundColor(royalPurple.opacity(0.5))
+
+            VStack(spacing: 6) {
+                Text("Camera access needed")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+
+                Text("To scan QR codes")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+            }
+
+            Button {
+                qrScanner.requestPermission()
+            } label: {
+                Text("Enable Camera")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 12)
+                    .background(royalPurple)
+                    .cornerRadius(12)
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(cardBackground)
+        )
+    }
+
+    // MARK: - Code Mode (Full Screen)
+
+    private var codeModeView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+                .frame(height: 32)
+
+            // Clipboard banner at top if available
+            clipboardBanner
+                .padding(.horizontal, 24)
+                .padding(.bottom, showClipboardBanner ? 24 : 0)
+
+            // Code input area - centered and calm
+            VStack(spacing: 28) {
+                // Code input with subtle glow when active
+                VerificationCodeInput(
+                    code: $enteredCode,
+                    maxLength: 6,
+                    onComplete: {
+                        handleCodeEntry()
+                    }
+                )
+                .padding(.horizontal, 16)
+
+                // Error message
+                if let error = errorMessage {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.circle")
+                            .font(.system(size: 12))
+                        Text(error)
+                            .font(.system(size: 13))
+                    }
+                    .foregroundColor(.red.opacity(0.8))
+                }
+
+                // CTA with progressive states
+                joinButton
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            // Switch back to scan - matching brand language
+            switchToScanButton
+                .padding(.bottom, 24)
+        }
+    }
+
+    private var switchToScanButton: some View {
+        Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                mode = .scan
+            }
+            let generator = UIImpactFeedbackGenerator(style: .soft)
+            generator.impactOccurred()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 15))
+                    .foregroundColor(royalPurple.opacity(0.8))
+
+                Text("Scan QR code instead")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 24)
+            .background(
+                Capsule()
+                    .fill(cardBackground.opacity(0.6))
+            )
+        }
+    }
+
+    private var joinButton: some View {
+        let hasCode = !enteredCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let isComplete = enteredCode.count == 6
+        let canJoin = isComplete && !isJoining
+
+        return Button {
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+            handleCodeEntry()
+        } label: {
+            HStack(spacing: 10) {
+                if isJoining {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.9)
+                } else {
+                    Text(isComplete ? "Find this event" : "Continue")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 17)
+            .background(
+                ZStack {
+                    if canJoin {
+                        // Ready state - confident gradient
+                        LinearGradient(
+                            colors: [royalPurple, Color(red: 0.55, green: 0.12, blue: 0.88)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    } else if hasCode {
+                        // Partial state - slight lift
+                        royalPurple.opacity(0.35 + (codeProgress * 0.25))
+                    } else {
+                        // Empty state - dormant
+                        Color.white.opacity(0.06)
+                    }
+                }
+            )
+            .foregroundColor(hasCode ? .white : .white.opacity(0.3))
+            .cornerRadius(16)
+            .shadow(color: canJoin ? royalPurple.opacity(0.35) : .clear, radius: 16, y: 6)
+            .scaleEffect(buttonPressed ? 0.98 : (canJoin ? 1.0 : 0.99))
+            .offset(y: hasCode && !isComplete ? -1 : 0) // Slight lift when partial
+        }
+        .disabled(!hasCode || isJoining)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in buttonPressed = true }
+                .onEnded { _ in buttonPressed = false }
+        )
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: hasCode)
+        .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isComplete)
+        .animation(.spring(response: 0.1, dampingFraction: 0.8), value: buttonPressed)
+    }
+
     @ViewBuilder
     private var clipboardBanner: some View {
         if showClipboardBanner, let code = clipboardCode {
             Button {
                 enteredCode = code
                 showClipboardBanner = false
-                // Auto-lookup after paste
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     handleCodeEntry()
                 }
             } label: {
-                HStack {
+                HStack(spacing: 12) {
                     Image(systemName: "doc.on.clipboard.fill")
+                        .font(.system(size: 18))
                         .foregroundColor(royalPurple)
-                    Text("Paste \"\(code)\"?")
-                        .foregroundColor(.white)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Paste code")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white)
+                        Text(code)
+                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .foregroundColor(royalPurple)
+                    }
+
                     Spacer()
-                    Text("Tap")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(royalPurple)
                 }
-                .padding()
+                .padding(16)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(red: 0.15, green: 0.12, blue: 0.2))
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(royalPurple.opacity(0.12))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(royalPurple.opacity(0.3), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(royalPurple.opacity(0.25), lineWidth: 1)
                         )
                 )
             }
-            .padding(.horizontal)
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(.scale(scale: 0.95).combined(with: .opacity))
         }
     }
 
-    // MARK: - Code Entry View
+    // MARK: - Preview Overlay
 
-    /// Code entry view for manual code input
-    private var codeEntryView: some View {
-        VStack(spacing: 24) {
-            // Clipboard banner at top
-            clipboardBanner
-
-            Spacer()
-
-            VStack(spacing: 16) {
-                Image(systemName: "number.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundColor(royalPurple)
-
-                Text("Enter Join Code")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-
-                Text("Enter a code or paste an invite link")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-            }
-
-            VStack(spacing: 16) {
-                VerificationCodeInput(
-                    code: $enteredCode,
-                    maxLength: 8,
-                    onComplete: {
-                        handleCodeEntry()
-                    }
-                )
-                .padding(.horizontal)
-
-                if let error = errorMessage {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal)
+    private func previewOverlay(event: Event) -> some View {
+        ZStack {
+            Color.black.opacity(0.7)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    showPreview = false
                 }
 
-                Button {
-                    handleCodeEntry()
-                } label: {
-                    if isJoining {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text("Look up event")
-                    }
+            EventPreviewModal(
+                event: event,
+                onJoin: { confirmJoin() },
+                onCancel: {
+                    showPreview = false
+                    previewEvent = nil
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(royalPurple)
-                .disabled(enteredCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isJoining)
-            }
-            .padding(.horizontal)
-
-            Spacer()
+            )
         }
-        .onAppear {
-            checkClipboard()
-        }
-        .onChange(of: enteredCode) { _, newValue in
-            // Hide banner when user types manually
-            if !newValue.isEmpty && showClipboardBanner {
-                showClipboardBanner = false
-            }
-        }
+        .transition(.opacity)
     }
 
     // MARK: - Actions
@@ -335,18 +522,26 @@ struct JoinEventSheet: View {
         // Check if it's a momento link
         if trimmed.lowercased().contains("momento") && trimmed.contains("/join/") {
             let code = extractCodeFromInput(trimmed)
-            if code.count >= 4 && code.count <= 12 {
+            if code.count == 6 {
                 clipboardCode = code
                 showClipboardBanner = true
+                // Switch to code mode when clipboard has a code
+                withAnimation {
+                    mode = .code
+                }
                 return
             }
         }
 
-        // Check if it's a raw code (alphanumeric, 4-12 chars)
+        // Check if it's a raw code (alphanumeric, exactly 6 chars)
         let alphanumeric = trimmed.filter { $0.isLetter || $0.isNumber }
-        if alphanumeric.count >= 4 && alphanumeric.count <= 12 && alphanumeric.count == trimmed.count {
+        if alphanumeric.count == 6 && alphanumeric.count == trimmed.count {
             clipboardCode = alphanumeric.uppercased()
             showClipboardBanner = true
+            // Switch to code mode when clipboard has a code
+            withAnimation {
+                mode = .code
+            }
             return
         }
 
@@ -358,7 +553,7 @@ struct JoinEventSheet: View {
         let extractedCode = extractCodeFromQR(code)
         lookupAndPreviewEvent(code: extractedCode)
     }
-    
+
     /// Handles manual code entry (supports both raw codes and links)
     private func handleCodeEntry() {
         let input = enteredCode.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -403,7 +598,7 @@ struct JoinEventSheet: View {
 
     /// Looks up event and shows preview modal
     private func lookupAndPreviewEvent(code: String) {
-        guard !isJoining else { return }  // Prevent concurrent lookups
+        guard !isJoining else { return }
         errorMessage = nil
         isJoining = true
 
@@ -602,6 +797,31 @@ struct QRCodeScannerView: UIViewRepresentable {
         if uiView.previewLayer.session == nil, let session = scanner.captureSession {
             uiView.previewLayer.session = session
         }
+    }
+}
+
+// MARK: - Helper Views
+
+/// Corner bracket shape for QR scanner frame
+struct CornerShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let length = min(rect.width, rect.height) * 0.6
+
+        // Vertical line
+        path.move(to: CGPoint(x: 0, y: length))
+        path.addLine(to: CGPoint(x: 0, y: 4))
+
+        // Corner curve
+        path.addQuadCurve(
+            to: CGPoint(x: 4, y: 0),
+            control: CGPoint(x: 0, y: 0)
+        )
+
+        // Horizontal line
+        path.addLine(to: CGPoint(x: length, y: 0))
+
+        return path
     }
 }
 

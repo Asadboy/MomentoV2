@@ -61,22 +61,40 @@ struct EventPreviewModal: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            // Event title
+        VStack(spacing: 20) {
+            // Arrival cue - acknowledgement of the moment
+            Text("You're about to join")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.gray)
+                .padding(.top, 4)
+
+            // Event title - the hero
             Text(event.title)
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 26, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
             // Timing and member info
-            Text("\(timingText) \u{2022} \(memberText)")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.gray)
+            HStack(spacing: 12) {
+                Label(timingText, systemImage: "clock")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+
+                Text("·")
+                    .foregroundColor(.gray.opacity(0.5))
+
+                Label(memberText, systemImage: "person.2")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+            }
+            .labelStyle(.titleOnly)
 
             // Join button
             Button {
                 isJoining = true
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.success)
                 onJoin()
             } label: {
                 HStack {
@@ -84,46 +102,45 @@ struct EventPreviewModal: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
-                        Text("Join the momento")
-                            .font(.system(size: 18, weight: .semibold))
+                        Text("Join")
+                            .font(.system(size: 17, weight: .semibold))
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, 15)
                 .background(
                     LinearGradient(
-                        colors: [royalPurple, royalPurple.opacity(0.8)],
+                        colors: [royalPurple, Color(red: 0.55, green: 0.1, blue: 0.85)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 )
                 .foregroundColor(.white)
-                .cornerRadius(14)
+                .cornerRadius(12)
             }
             .disabled(isJoining)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
 
-            // Cancel button
+            // Cancel - subtle
             Button {
                 onCancel()
             } label: {
-                Text("Cancel")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.gray)
+                Text("Not now")
+                    .font(.system(size: 15))
+                    .foregroundColor(.gray.opacity(0.7))
             }
             .disabled(isJoining)
+            .padding(.bottom, 4)
         }
-        .padding(32)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(cardBackground)
-                .shadow(color: Color.black.opacity(0.5), radius: 20)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(royalPurple.opacity(0.3), lineWidth: 1)
-        )
+        .padding(.vertical, 28)
         .padding(.horizontal, 24)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(cardBackground)
+                .shadow(color: Color.black.opacity(0.4), radius: 24)
+        )
+        .padding(.horizontal, 28)
     }
 }
 
