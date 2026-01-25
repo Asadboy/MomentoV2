@@ -41,11 +41,12 @@ struct StatCardView: View {
         .padding(.vertical, 14)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(red: 0.12, green: 0.1, blue: 0.16))
+                .fill(Color(red: isHero ? 0.14 : 0.12, green: isHero ? 0.11 : 0.1, blue: isHero ? 0.18 : 0.16))
+                .shadow(color: isHero ? royalPurple.opacity(0.15) : Color.clear, radius: 8, x: 0, y: 2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(royalPurple.opacity(isHero ? 0.25 : 0.1), lineWidth: 1)
+                .stroke(royalPurple.opacity(isHero ? 0.25 : 0.08), lineWidth: 1)
         )
     }
 }

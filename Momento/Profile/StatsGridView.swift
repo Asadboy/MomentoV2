@@ -70,7 +70,7 @@ struct JourneyStatsView: View {
             )
 
             Divider()
-                .background(Color.white.opacity(0.06))
+                .background(Color.white.opacity(0.04))
                 .padding(.horizontal, 16)
 
             JourneyStatRow(
@@ -80,7 +80,7 @@ struct JourneyStatsView: View {
             )
 
             Divider()
-                .background(Color.white.opacity(0.06))
+                .background(Color.white.opacity(0.04))
                 .padding(.horizontal, 16)
 
             JourneyStatRow(
@@ -90,7 +90,7 @@ struct JourneyStatsView: View {
             )
 
             Divider()
-                .background(Color.white.opacity(0.06))
+                .background(Color.white.opacity(0.04))
                 .padding(.horizontal, 16)
 
             JourneyStatRow(

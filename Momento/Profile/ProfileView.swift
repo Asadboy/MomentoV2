@@ -144,11 +144,17 @@ struct ProfileView: View {
                         .foregroundColor(.white)
                 }
 
-                // Member status - soft and warm
+                // Member status - quiet nod, not a badge
                 if let userNumber = userNumber {
-                    Text(userNumber <= 100 ? "Founding Member" : "Member #\(userNumber)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.35))
+                    HStack(spacing: 4) {
+                        if userNumber <= 100 {
+                            Image(systemName: "sparkle")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        Text(userNumber <= 100 ? "Founding Member" : "Member #\(userNumber)")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(.white.opacity(0.28))
                 }
             }
         }
@@ -208,23 +214,27 @@ struct ProfileView: View {
         Button {
             showLogoutConfirmation = true
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 if isLoggingOut {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.7)))
                 } else {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 14, weight: .medium))
                 }
 
                 Text(isLoggingOut ? "Signing Out..." : "Sign Out")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 15, weight: .medium))
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .background(Color.red.opacity(0.85))
-            .foregroundColor(.white)
-            .cornerRadius(14)
+            .frame(height: 48)
+            .background(Color(red: 0.15, green: 0.12, blue: 0.18))
+            .foregroundColor(.white.opacity(0.5))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
         }
         .disabled(isLoggingOut)
     }
