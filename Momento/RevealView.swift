@@ -23,6 +23,9 @@ struct RevealView: View {
     @State private var showReactionPicker = false
     @State private var photoReactions: [String: [String: String]] = [:] // [photoId: [userId: emoji]]
     @State private var showGallery = false
+    @State private var earnedKeepsake: EarnedKeepsake?
+    @State private var showKeepsakeReveal = false
+    @State private var showProfile = false
     
     var body: some View {
         ZStack {
@@ -129,12 +132,30 @@ struct RevealView: View {
             if allRevealed {
                 completionOverlay
             }
+
+            // Keepsake reveal overlay
+            if showKeepsakeReveal, let keepsake = earnedKeepsake {
+                KeepsakeRevealView(
+                    keepsake: keepsake,
+                    onDismiss: {
+                        showKeepsakeReveal = false
+                        allRevealed = true
+                    },
+                    onViewProfile: {
+                        showKeepsakeReveal = false
+                        showProfile = true
+                    }
+                )
+            }
         }
         .task {
             await loadPhotos()
         }
         .fullScreenCover(isPresented: $showGallery) {
             FilmRollGalleryView(event: event, photos: photos)
+        }
+        .sheet(isPresented: $showProfile) {
+            ProfileView()
         }
         .onDisappear {
             // Mark reveal as completed if user went through all photos
@@ -434,19 +455,33 @@ struct RevealView: View {
     private func completeReveal() {
         // Play celebration haptic
         HapticsManager.shared.celebration()
-        
+
         // Show confetti
         withAnimation {
             showConfetti = true
         }
-        
-        // Show completion overlay after confetti starts
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            withAnimation {
-                allRevealed = true
+
+        // Check for keepsake
+        Task {
+            if let eventUUID = UUID(uuidString: event.id) {
+                earnedKeepsake = try? await supabaseManager.hasKeepsakeForEvent(eventId: eventUUID)
+            }
+
+            await MainActor.run {
+                // Show completion overlay after confetti starts
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation {
+                        // If there's a keepsake, show that instead of completion
+                        if earnedKeepsake != nil {
+                            showKeepsakeReveal = true
+                        } else {
+                            allRevealed = true
+                        }
+                    }
+                }
             }
         }
-        
+
         // Hide confetti after a bit
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             withAnimation {
