@@ -325,7 +325,7 @@ struct ContentView: View {
                 Text(errorMessage)
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
+                ProfileView()
             }
         }
     }
