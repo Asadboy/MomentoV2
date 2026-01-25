@@ -11,6 +11,7 @@ struct StatCardView: View {
     let value: String
     let label: String
     let icon: String
+    var isHero: Bool = false
 
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
@@ -18,20 +19,20 @@ struct StatCardView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            // Icon
+            // Icon - dimmed for subtlety
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(royalPurple)
+                .font(.system(size: isHero ? 18 : 14, weight: .medium))
+                .foregroundColor(royalPurple.opacity(isHero ? 0.9 : 0.6))
 
-            // Value
+            // Value - hero stat is larger and brighter
             Text(value)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
+                .font(.system(size: isHero ? 28 : 22, weight: .bold))
+                .foregroundColor(.white.opacity(isHero ? 1.0 : 0.85))
 
-            // Label
+            // Label - muted
             Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(.white.opacity(0.4))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
@@ -44,7 +45,7 @@ struct StatCardView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(royalPurple.opacity(0.15), lineWidth: 1)
+                .stroke(royalPurple.opacity(isHero ? 0.25 : 0.1), lineWidth: 1)
         )
     }
 }
@@ -54,8 +55,8 @@ struct StatCardView: View {
         Color.black.ignoresSafeArea()
 
         HStack(spacing: 12) {
-            StatCardView(value: "42", label: "Moments captured", icon: "camera.fill")
-            StatCardView(value: "18", label: "Photos loved", icon: "heart.fill")
+            StatCardView(value: "42", label: "Moments captured", icon: "camera.fill", isHero: true)
+            StatCardView(value: "18", label: "Moments loved", icon: "heart.fill")
         }
         .padding()
     }

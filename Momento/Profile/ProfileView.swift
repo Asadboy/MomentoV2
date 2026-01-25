@@ -113,37 +113,46 @@ struct ProfileView: View {
     // MARK: - Header Section
 
     private var headerSection: some View {
-        VStack(spacing: 20) {
-            // Profile icon with glow
+        VStack(spacing: 16) {
+            // Profile icon with enhanced glow
             ZStack {
+                // Outer glow
                 Image(systemName: "person.circle.fill")
-                    .font(.system(size: 80, weight: .light))
+                    .font(.system(size: 100, weight: .light))
                     .foregroundColor(royalPurple)
-                    .blur(radius: 15)
-                    .opacity(0.5)
+                    .blur(radius: 25)
+                    .opacity(0.4)
 
+                // Inner glow
                 Image(systemName: "person.circle.fill")
-                    .font(.system(size: 80, weight: .light))
-                    .foregroundColor(.white.opacity(0.9))
+                    .font(.system(size: 100, weight: .light))
+                    .foregroundColor(royalPurple)
+                    .blur(radius: 10)
+                    .opacity(0.3)
+
+                // Main icon
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 100, weight: .light))
+                    .foregroundColor(.white.opacity(0.95))
             }
 
-            VStack(spacing: 8) {
-                // Username
+            VStack(spacing: 6) {
+                // Username - prominent
                 if let username = username {
                     Text("@\(username)")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 26, weight: .semibold))
                         .foregroundColor(.white)
                 }
 
-                // User number
+                // Member status - soft and warm
                 if let userNumber = userNumber {
-                    Text("User #\(userNumber)")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
+                    Text(userNumber <= 100 ? "Founding Member" : "Member #\(userNumber)")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.35))
                 }
             }
         }
-        .padding(.vertical, 24)
+        .padding(.vertical, 28)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 20)
@@ -159,19 +168,19 @@ struct ProfileView: View {
     // MARK: - Stats Section
 
     private func statsSection(stats: ProfileStats) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("ACTIVITY")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
-                .tracking(1.5)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white.opacity(0.3))
+                .tracking(1.2)
 
             StatsGridView(stats: stats)
 
             Text("JOURNEY")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
-                .tracking(1.5)
-                .padding(.top, 8)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white.opacity(0.3))
+                .tracking(1.2)
+                .padding(.top, 6)
 
             JourneyStatsView(stats: stats)
         }
@@ -180,11 +189,11 @@ struct ProfileView: View {
     // MARK: - Keepsakes Section
 
     private var keepsakesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("KEEPSAKES")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .tracking(1.5)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white.opacity(0.3))
+                .tracking(1.2)
 
             KeepsakeGridView(
                 keepsakes: keepsakes,

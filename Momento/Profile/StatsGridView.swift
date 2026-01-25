@@ -17,15 +17,17 @@ struct StatsGridView: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 10) {
+            // Hero stat - primary emphasis
             StatCardView(
                 value: "\(stats.momentsCaptured)",
                 label: "Moments captured",
-                icon: "camera.fill"
+                icon: "camera.fill",
+                isHero: true
             )
 
             StatCardView(
                 value: "\(stats.photosLoved)",
-                label: "Photos loved",
+                label: "Moments loved",
                 icon: "heart.fill"
             )
 
@@ -37,7 +39,7 @@ struct StatsGridView: View {
 
             StatCardView(
                 value: "\(stats.momentosShared)",
-                label: "Momentos shared",
+                label: "Shared Momentos",
                 icon: "person.2.fill"
             )
         }
@@ -68,29 +70,32 @@ struct JourneyStatsView: View {
             )
 
             Divider()
-                .background(Color.white.opacity(0.1))
+                .background(Color.white.opacity(0.06))
+                .padding(.horizontal, 16)
 
             JourneyStatRow(
                 icon: "person.2",
-                label: "Friends captured with",
-                value: "\(stats.friendsCapturedWith)"
+                label: "Captured with",
+                value: stats.friendsCapturedWith > 0 ? "\(stats.friendsCapturedWith) people" : "—"
             )
 
             Divider()
-                .background(Color.white.opacity(0.1))
+                .background(Color.white.opacity(0.06))
+                .padding(.horizontal, 16)
 
             JourneyStatRow(
                 icon: "flame",
-                label: "Most active Momento",
+                label: "Most active",
                 value: stats.mostActiveMomento ?? "—"
             )
 
             Divider()
-                .background(Color.white.opacity(0.1))
+                .background(Color.white.opacity(0.06))
+                .padding(.horizontal, 16)
 
             JourneyStatRow(
                 icon: "clock",
-                label: "Most recent Momento",
+                label: "Most recent",
                 value: stats.mostRecentMomento ?? "—"
             )
         }
@@ -100,7 +105,7 @@ struct JourneyStatsView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(royalPurple.opacity(0.15), lineWidth: 1)
+                .stroke(royalPurple.opacity(0.1), lineWidth: 1)
         )
     }
 }
@@ -116,25 +121,28 @@ struct JourneyStatRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Icon - subtle
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(royalPurple)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(royalPurple.opacity(0.6))
                 .frame(width: 20)
 
+            // Label - muted
             Text(label)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.6))
+                .font(.system(size: 13, weight: .regular))
+                .foregroundColor(.white.opacity(0.4))
 
             Spacer()
 
+            // Value - bright and confident
             Text(value)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 }
 
