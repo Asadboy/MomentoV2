@@ -914,6 +914,126 @@ class SupabaseManager: ObservableObject {
 
         print("✅ Progress updated: \(lastPhotoIndex), completed: \(completed)")
     }
+
+    // MARK: - Keepsakes
+
+    /// Get all keepsakes the user has earned
+    func getUserKeepsakes() async throws -> [EarnedKeepsake] {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        // Get user's earned keepsakes
+        let userKeepsakes: [UserKeepsake] = try await client
+            .from("user_keepsakes")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+
+        if userKeepsakes.isEmpty {
+            return []
+        }
+
+        // Get keepsake definitions
+        let keepsakeIds = userKeepsakes.map { $0.keepsakeId.uuidString }
+        let keepsakes: [Keepsake] = try await client
+            .from("keepsakes")
+            .select()
+            .in("id", values: keepsakeIds)
+            .execute()
+            .value
+
+        // Get total user count for rarity calculation
+        let totalUsersResponse = try await client
+            .from("profiles")
+            .select("id", head: true, count: .exact)
+            .execute()
+        let totalUsers = max(totalUsersResponse.count ?? 1, 1)
+
+        // Get count of users who have each keepsake
+        var earnedKeepsakes: [EarnedKeepsake] = []
+
+        for userKeepsake in userKeepsakes {
+            guard let keepsake = keepsakes.first(where: { $0.id == userKeepsake.keepsakeId }) else {
+                continue
+            }
+
+            // Count users with this keepsake
+            let countResponse = try await client
+                .from("user_keepsakes")
+                .select("id", head: true, count: .exact)
+                .eq("keepsake_id", value: keepsake.id.uuidString)
+                .execute()
+            let usersWithKeepsake = countResponse.count ?? 1
+
+            let rarityPercentage = (Double(usersWithKeepsake) / Double(totalUsers)) * 100
+
+            earnedKeepsakes.append(EarnedKeepsake(
+                id: userKeepsake.id,
+                keepsake: keepsake,
+                earnedAt: userKeepsake.earnedAt,
+                rarityPercentage: rarityPercentage
+            ))
+        }
+
+        return earnedKeepsakes.sorted { $0.earnedAt > $1.earnedAt }
+    }
+
+    /// Check if user has a keepsake for a specific event
+    func hasKeepsakeForEvent(eventId: UUID) async throws -> EarnedKeepsake? {
+        guard let userId = currentUser?.id else {
+            return nil
+        }
+
+        // Find keepsake linked to this event
+        let keepsakes: [Keepsake] = try await client
+            .from("keepsakes")
+            .select()
+            .eq("event_id", value: eventId.uuidString)
+            .execute()
+            .value
+
+        guard let keepsake = keepsakes.first else {
+            return nil
+        }
+
+        // Check if user has earned it
+        let userKeepsakes: [UserKeepsake] = try await client
+            .from("user_keepsakes")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .eq("keepsake_id", value: keepsake.id.uuidString)
+            .execute()
+            .value
+
+        guard let userKeepsake = userKeepsakes.first else {
+            return nil
+        }
+
+        // Get rarity
+        let totalUsersResponse = try await client
+            .from("profiles")
+            .select("id", head: true, count: .exact)
+            .execute()
+        let totalUsers = max(totalUsersResponse.count ?? 1, 1)
+
+        let countResponse = try await client
+            .from("user_keepsakes")
+            .select("id", head: true, count: .exact)
+            .eq("keepsake_id", value: keepsake.id.uuidString)
+            .execute()
+        let usersWithKeepsake = countResponse.count ?? 1
+
+        let rarityPercentage = (Double(usersWithKeepsake) / Double(totalUsers)) * 100
+
+        return EarnedKeepsake(
+            id: userKeepsake.id,
+            keepsake: keepsake,
+            earnedAt: userKeepsake.earnedAt,
+            rarityPercentage: rarityPercentage
+        )
+    }
 }
 
 // MARK: - Models
