@@ -1107,3 +1107,21 @@ struct EarnedKeepsake: Identifiable {
     let earnedAt: Date
     let rarityPercentage: Double
 }
+
+/// User profile statistics for display
+struct ProfileStats {
+    // Activity stats
+    let momentsCaptured: Int
+    let photosLoved: Int
+    let revealsCompleted: Int
+    let momentosShared: Int
+
+    // Journey stats
+    let firstMomentoDate: Date?
+    let friendsCapturedWith: Int
+    let mostActiveMomento: String?
+    let mostRecentMomento: String?
+
+    // Identity
+    let userNumber: Int
+}
