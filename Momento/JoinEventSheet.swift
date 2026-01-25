@@ -74,7 +74,7 @@ struct JoinEventSheet: View {
                     }
                 }
             }
-            .navigationTitle("Join Event")
+            .navigationTitle("Join Momento")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -134,25 +134,19 @@ struct JoinEventSheet: View {
     private var scanModeView: some View {
         VStack(spacing: 0) {
             if qrScanner.hasPermission {
-                // Camera with soft vignette treatment
+                // Camera with soft, ambient treatment
                 ZStack {
                     QRCodeScannerView(scanner: qrScanner)
-                        .cornerRadius(20)
+                        .cornerRadius(28)
 
-                    // Soft vignette overlay - ambient, not technical
-                    cameraVignetteOverlay
+                    // Heavy blur outside scan zone - casual, not precise
+                    cameraBlurOverlay
 
-                    // Ultra-light scanning hint
+                    // Soft rounded scan hint - no sharp corners
                     scanningFrameOverlay
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
-
-                // Subtle instruction
-                Text("Point at QR code")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.4))
-                    .padding(.top, 20)
 
                 Spacer()
 
@@ -172,55 +166,36 @@ struct JoinEventSheet: View {
         }
     }
 
-    /// Soft vignette around camera edges - feels ambient
-    private var cameraVignetteOverlay: some View {
-        RoundedRectangle(cornerRadius: 20)
-            .strokeBorder(
-                RadialGradient(
-                    colors: [.clear, Color.black.opacity(0.4)],
-                    center: .center,
-                    startRadius: 100,
-                    endRadius: 200
-                ),
-                lineWidth: 60
-            )
-            .allowsHitTesting(false)
+    /// Blur overlay outside scan zone - makes scanning feel casual
+    private var cameraBlurOverlay: some View {
+        ZStack {
+            // Dark blur around edges
+            RoundedRectangle(cornerRadius: 28)
+                .fill(Color.black.opacity(0.5))
+                .blur(radius: 0.5)
+                .mask(
+                    Rectangle()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .frame(width: 140, height: 140)
+                                .blendMode(.destinationOut)
+                        )
+                )
+
+            // Soft inner glow on scan zone
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.06), lineWidth: 30)
+                .frame(width: 140, height: 140)
+                .blur(radius: 16)
+        }
+        .allowsHitTesting(false)
     }
 
     private var scanningFrameOverlay: some View {
-        // Ultra-subtle corners - just a hint
-        scanningCorners
-            .frame(width: 160, height: 160)
-    }
-
-    private var scanningCorners: some View {
-        let cornerColor = Color.white.opacity(0.25)
-        let lineWidth: CGFloat = 1
-
-        return ZStack {
-            CornerShape()
-                .stroke(cornerColor, lineWidth: lineWidth)
-                .frame(width: 28, height: 28)
-                .position(x: 14, y: 14)
-
-            CornerShape()
-                .stroke(cornerColor, lineWidth: lineWidth)
-                .frame(width: 28, height: 28)
-                .rotationEffect(.degrees(90))
-                .position(x: 146, y: 14)
-
-            CornerShape()
-                .stroke(cornerColor, lineWidth: lineWidth)
-                .frame(width: 28, height: 28)
-                .rotationEffect(.degrees(-90))
-                .position(x: 14, y: 146)
-
-            CornerShape()
-                .stroke(cornerColor, lineWidth: lineWidth)
-                .frame(width: 28, height: 28)
-                .rotationEffect(.degrees(180))
-                .position(x: 146, y: 146)
-        }
+        // Soft rounded square - smaller, contained
+        RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+            .frame(width: 130, height: 130)
     }
 
     private var switchToCodeButton: some View {
@@ -243,7 +218,7 @@ struct JoinEventSheet: View {
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Enter code instead")
+                    Text("Enter invite code")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.95))
                     Text("Got a code from a friend?")
@@ -372,7 +347,7 @@ struct JoinEventSheet: View {
                     .font(.system(size: 15))
                     .foregroundColor(royalPurple.opacity(0.8))
 
-                Text("Scan QR code instead")
+                Text("Scan invite instead")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
             }
@@ -401,7 +376,7 @@ struct JoinEventSheet: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(0.9)
                 } else {
-                    Text(isComplete ? "Find this event" : "Continue")
+                    Text(isComplete ? "Preview" : "Next")
                         .font(.system(size: 17, weight: .semibold))
                 }
             }
@@ -410,9 +385,12 @@ struct JoinEventSheet: View {
             .background(
                 ZStack {
                     if canJoin {
-                        // Ready state - confident gradient
+                        // Ready state - stronger purple
                         LinearGradient(
-                            colors: [royalPurple, Color(red: 0.55, green: 0.12, blue: 0.88)],
+                            colors: [
+                                Color(red: 0.55, green: 0.0, blue: 0.9),
+                                Color(red: 0.6, green: 0.15, blue: 0.95)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -427,9 +405,9 @@ struct JoinEventSheet: View {
             )
             .foregroundColor(hasCode ? .white : .white.opacity(0.3))
             .cornerRadius(16)
-            .shadow(color: canJoin ? royalPurple.opacity(0.35) : .clear, radius: 16, y: 6)
+            .shadow(color: canJoin ? royalPurple.opacity(0.45) : .clear, radius: 20, y: 8)
             .scaleEffect(buttonPressed ? 0.98 : (canJoin ? 1.0 : 0.99))
-            .offset(y: hasCode && !isComplete ? -1 : 0) // Slight lift when partial
+            .offset(y: hasCode && !isComplete ? -1 : 0)
         }
         .disabled(!hasCode || isJoining)
         .simultaneousGesture(
@@ -452,37 +430,50 @@ struct JoinEventSheet: View {
                     handleCodeEntry()
                 }
             } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "doc.on.clipboard.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(royalPurple)
+                VStack(alignment: .leading, spacing: 10) {
+                    // "Invite found" label
+                    Text("Invite found")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(royalPurple.opacity(0.8))
+                        .textCase(.uppercase)
+                        .tracking(0.5)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Paste code")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white)
-                        Text(code)
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 18))
+                            .foregroundColor(royalPurple)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Paste invite")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white)
+                            Text(code)
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                .foregroundColor(royalPurple)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 24))
                             .foregroundColor(royalPurple)
                     }
-
-                    Spacer()
-
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(royalPurple)
                 }
                 .padding(16)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(royalPurple.opacity(0.12))
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(royalPurple.opacity(0.1))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(royalPurple.opacity(0.25), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(royalPurple.opacity(0.2), lineWidth: 1)
                         )
+                        .shadow(color: royalPurple.opacity(0.15), radius: 12, y: 4)
                 )
             }
-            .transition(.scale(scale: 0.95).combined(with: .opacity))
+            .transition(.asymmetric(
+                insertion: .scale(scale: 0.9).combined(with: .opacity).animation(.spring(response: 0.4, dampingFraction: 0.7)),
+                removal: .opacity
+            ))
         }
     }
 

@@ -13,6 +13,7 @@ struct EventPreviewModal: View {
     let onCancel: () -> Void
 
     @State private var isJoining = false
+    @State private var appeared = false
 
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
@@ -51,12 +52,12 @@ struct EventPreviewModal: View {
         }
     }
 
-    /// Member count text
+    /// Member count text - humanized
     private var memberText: String {
         if event.memberCount == 1 {
-            return "1 friend"
+            return "1 person here"
         } else {
-            return "\(event.memberCount) friends"
+            return "\(event.memberCount) people here"
         }
     }
 
@@ -90,7 +91,7 @@ struct EventPreviewModal: View {
             }
             .labelStyle(.titleOnly)
 
-            // Join button
+            // Join button - warm, inviting
             Button {
                 isJoining = true
                 let generator = UINotificationFeedbackGenerator()
@@ -102,7 +103,7 @@ struct EventPreviewModal: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
-                        Text("Join")
+                        Text("Enter")
                             .font(.system(size: 17, weight: .semibold))
                     }
                 }
@@ -110,17 +111,21 @@ struct EventPreviewModal: View {
                 .padding(.vertical, 15)
                 .background(
                     LinearGradient(
-                        colors: [royalPurple, Color(red: 0.55, green: 0.1, blue: 0.85)],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        colors: [
+                            Color(red: 0.55, green: 0.0, blue: 0.9),
+                            Color(red: 0.6, green: 0.15, blue: 0.95)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
                 .foregroundColor(.white)
-                .cornerRadius(12)
+                .cornerRadius(14)
+                .shadow(color: royalPurple.opacity(0.4), radius: 16, y: 6)
             }
             .disabled(isJoining)
             .padding(.horizontal, 16)
-            .padding(.top, 4)
+            .padding(.top, 8)
 
             // Cancel - subtle
             Button {
@@ -136,11 +141,22 @@ struct EventPreviewModal: View {
         .padding(.vertical, 28)
         .padding(.horizontal, 24)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(cardBackground)
-                .shadow(color: Color.black.opacity(0.4), radius: 24)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(royalPurple.opacity(0.1), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.5), radius: 32, y: 12)
         )
         .padding(.horizontal, 28)
+        .scaleEffect(appeared ? 1.0 : 0.92)
+        .opacity(appeared ? 1.0 : 0)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.35)) {
+                appeared = true
+            }
+        }
     }
 }
 
