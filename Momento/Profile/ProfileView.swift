@@ -114,10 +114,27 @@ struct ProfileView: View {
 
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Profile icon - clean and simple
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 90, weight: .light))
-                .foregroundColor(.white.opacity(0.9))
+            // Profile icon with enhanced glow
+            ZStack {
+                // Outer glow
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 100, weight: .light))
+                    .foregroundColor(royalPurple)
+                    .blur(radius: 25)
+                    .opacity(0.4)
+
+                // Inner glow
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 100, weight: .light))
+                    .foregroundColor(royalPurple)
+                    .blur(radius: 10)
+                    .opacity(0.3)
+
+                // Main icon
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 100, weight: .light))
+                    .foregroundColor(.white.opacity(0.95))
+            }
 
             VStack(spacing: 6) {
                 // Username - prominent
