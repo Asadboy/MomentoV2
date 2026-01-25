@@ -160,12 +160,20 @@ struct ProfileView: View {
 
     private func statsSection(stats: ProfileStats) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("STATS")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
+            Text("ACTIVITY")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.4))
                 .tracking(1.5)
 
             StatsGridView(stats: stats)
+
+            Text("JOURNEY")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.4))
+                .tracking(1.5)
+                .padding(.top, 8)
+
+            JourneyStatsView(stats: stats)
         }
     }
 
