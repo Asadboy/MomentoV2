@@ -139,25 +139,33 @@ struct JourneyStatRow: View {
 }
 
 #Preview {
-    let sampleStats = ProfileStats(
-        momentsCaptured: 42,
-        photosLoved: 18,
-        revealsCompleted: 6,
-        momentosShared: 8,
-        firstMomentoDate: Date().addingTimeInterval(-90 * 24 * 3600),
-        friendsCapturedWith: 23,
-        mostActiveMomento: "Sopranos",
-        mostRecentMomento: "NYE 2026",
-        userNumber: 47
-    )
-
     ZStack {
         Color.black.ignoresSafeArea()
 
         ScrollView {
             VStack(spacing: 16) {
-                StatsGridView(stats: sampleStats)
-                JourneyStatsView(stats: sampleStats)
+                StatsGridView(stats: ProfileStats(
+                    momentsCaptured: 42,
+                    photosLoved: 18,
+                    revealsCompleted: 6,
+                    momentosShared: 8,
+                    firstMomentoDate: Date().addingTimeInterval(-90 * 24 * 3600),
+                    friendsCapturedWith: 23,
+                    mostActiveMomento: "Sopranos",
+                    mostRecentMomento: "NYE 2026",
+                    userNumber: 47
+                ))
+                JourneyStatsView(stats: ProfileStats(
+                    momentsCaptured: 42,
+                    photosLoved: 18,
+                    revealsCompleted: 6,
+                    momentosShared: 8,
+                    firstMomentoDate: Date().addingTimeInterval(-90 * 24 * 3600),
+                    friendsCapturedWith: 23,
+                    mostActiveMomento: "Sopranos",
+                    mostRecentMomento: "NYE 2026",
+                    userNumber: 47
+                ))
             }
             .padding()
         }
