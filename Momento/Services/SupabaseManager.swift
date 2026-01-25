@@ -1034,6 +1034,153 @@ class SupabaseManager: ObservableObject {
             rarityPercentage: rarityPercentage
         )
     }
+
+    // MARK: - Profile Stats
+
+    /// Get all stats for the user's profile
+    func getProfileStats() async throws -> ProfileStats {
+        guard let userId = currentUser?.id else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        // Get user profile for created_at (user number calculation)
+        let profile = try await getUserProfile(userId: userId)
+
+        // 1. Moments captured (photos taken)
+        let photosResponse = try await client
+            .from("photos")
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        let momentsCaptured = photosResponse.count ?? 0
+
+        // 2. Photos loved (liked interactions)
+        let likedResponse = try await client
+            .from("photo_interactions")
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "liked")
+            .execute()
+        let photosLoved = likedResponse.count ?? 0
+
+        // 3. Reveals completed
+        let revealsResponse = try await client
+            .from("user_reveal_progress")
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userId.uuidString)
+            .eq("completed", value: true)
+            .execute()
+        let revealsCompleted = revealsResponse.count ?? 0
+
+        // 4. Momentos shared (events joined)
+        let eventsResponse = try await client
+            .from("event_members")
+            .select("id", head: true, count: .exact)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        let momentosShared = eventsResponse.count ?? 0
+
+        // 5. First Momento date
+        let firstEventMembers: [EventMember] = try await client
+            .from("event_members")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .order("joined_at", ascending: true)
+            .limit(1)
+            .execute()
+            .value
+        let firstMomentoDate = firstEventMembers.first?.joinedAt
+
+        // 6. Friends captured with (unique co-attendees)
+        let myEventMembers: [EventMember] = try await client
+            .from("event_members")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+
+        let myEventIds = myEventMembers.map { $0.eventId.uuidString }
+        var friendsSet = Set<String>()
+
+        if !myEventIds.isEmpty {
+            let allMembers: [EventMember] = try await client
+                .from("event_members")
+                .select()
+                .in("event_id", values: myEventIds)
+                .execute()
+                .value
+
+            for member in allMembers where member.userId != userId {
+                friendsSet.insert(member.userId.uuidString)
+            }
+        }
+        let friendsCapturedWith = friendsSet.count
+
+        // 7. Most active Momento (event with most photos by user)
+        let userPhotos: [PhotoModel] = try await client
+            .from("photos")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+
+        var photoCountByEvent: [UUID: Int] = [:]
+        for photo in userPhotos {
+            photoCountByEvent[photo.eventId, default: 0] += 1
+        }
+
+        var mostActiveMomento: String? = nil
+        if let topEventId = photoCountByEvent.max(by: { $0.value < $1.value })?.key {
+            let events: [EventModel] = try await client
+                .from("events")
+                .select()
+                .eq("id", value: topEventId.uuidString)
+                .execute()
+                .value
+            mostActiveMomento = events.first?.title
+        }
+
+        // 8. Most recent Momento
+        let recentEventMembers: [EventMember] = try await client
+            .from("event_members")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .order("joined_at", ascending: false)
+            .limit(1)
+            .execute()
+            .value
+
+        var mostRecentMomento: String? = nil
+        if let recentMember = recentEventMembers.first {
+            let events: [EventModel] = try await client
+                .from("events")
+                .select()
+                .eq("id", value: recentMember.eventId.uuidString)
+                .execute()
+                .value
+            mostRecentMomento = events.first?.title
+        }
+
+        // 9. User number (count of profiles created before this user)
+        let userNumberResponse = try await client
+            .from("profiles")
+            .select("id", head: true, count: .exact)
+            .lte("created_at", value: ISO8601DateFormatter().string(from: profile.createdAt))
+            .execute()
+        let userNumber = userNumberResponse.count ?? 1
+
+        return ProfileStats(
+            momentsCaptured: momentsCaptured,
+            photosLoved: photosLoved,
+            revealsCompleted: revealsCompleted,
+            momentosShared: momentosShared,
+            firstMomentoDate: firstMomentoDate,
+            friendsCapturedWith: friendsCapturedWith,
+            mostActiveMomento: mostActiveMomento,
+            mostRecentMomento: mostRecentMomento,
+            userNumber: userNumber
+        )
+    }
 }
 
 // MARK: - Models
