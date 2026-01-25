@@ -1063,3 +1063,47 @@ struct UserRevealProgress: Codable, Identifiable {
         case updatedAt = "updated_at"
     }
 }
+
+// MARK: - Keepsake Models
+
+/// A keepsake definition (badge/collectible)
+struct Keepsake: Codable, Identifiable {
+    let id: UUID
+    let name: String
+    let artworkUrl: String
+    let flavourText: String
+    let eventId: UUID?
+    let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case artworkUrl = "artwork_url"
+        case flavourText = "flavour_text"
+        case eventId = "event_id"
+        case createdAt = "created_at"
+    }
+}
+
+/// A user's earned keepsake
+struct UserKeepsake: Codable, Identifiable {
+    let id: UUID
+    let userId: UUID
+    let keepsakeId: UUID
+    let earnedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case keepsakeId = "keepsake_id"
+        case earnedAt = "earned_at"
+    }
+}
+
+/// Combined keepsake with earning info for display
+struct EarnedKeepsake: Identifiable {
+    let id: UUID
+    let keepsake: Keepsake
+    let earnedAt: Date
+    let rarityPercentage: Double
+}
