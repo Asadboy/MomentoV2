@@ -347,24 +347,15 @@ class SupabaseManager: ObservableObject {
         return event
     }
     
-    /// Join an event with a code
+    /// Join an event with a code (uses secure RPC for lookup)
     func joinEvent(code: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
-        
-        // Find event by join code
-        let events: [EventModel] = try await client
-            .from("events")
-            .select()
-            .eq("join_code", value: code.uppercased())
-            .execute()
-            .value
-        
-        guard let event = events.first else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Event not found with code: \(code)"])
-        }
-        
+
+        // Find event by join code using secure RPC
+        let event = try await lookupEvent(code: code)
+
         // Check if already a member
         let existingMembers: [EventMember] = try await client
             .from("event_members")
@@ -373,12 +364,12 @@ class SupabaseManager: ObservableObject {
             .eq("user_id", value: userId.uuidString)
             .execute()
             .value
-        
+
         if !existingMembers.isEmpty {
             print("ℹ️ Already a member of this event")
             return event
         }
-        
+
         // Join the event
         let member = EventMember(
             id: UUID(),
@@ -388,24 +379,23 @@ class SupabaseManager: ObservableObject {
             invitedBy: nil,
             role: "member"
         )
-        
+
         try await client
             .from("event_members")
             .insert(member)
             .execute()
-        
+
         print("✅ Joined event: \(event.title)")
         return event
     }
 
     /// Lookup an event by code without joining (for preview)
+    /// Uses secure RPC function - only returns event if exact code matches
     func lookupEvent(code: String) async throws -> EventModel {
-        // Find event by join code (no auth required for lookup)
+        // Use secure RPC to lookup event by code
+        // This prevents enumeration of all events
         let events: [EventModel] = try await client
-            .from("events")
-            .select()
-            .eq("join_code", value: code.uppercased())
-            .eq("is_deleted", value: false)
+            .rpc("lookup_event_by_code", params: ["lookup_code": code])
             .execute()
             .value
 
@@ -529,7 +519,8 @@ class SupabaseManager: ObservableObject {
         let username: String
         do {
             let profile = try await getUserProfile(userId: userId)
-            username = profile.displayName ?? profile.username
+            // Use username (e.g., "Asad") not displayName (e.g., "Asad Amjid")
+            username = profile.username
         } catch {
             username = "Unknown"
             print("⚠️ Could not fetch username, using 'Unknown'")
@@ -642,7 +633,85 @@ class SupabaseManager: ObservableObject {
         print("📸 Loaded \(photoDataArray.count) photos with signed URLs")
         return photoDataArray
     }
-    
+
+    /// Fetch photos for reveal with pagination
+    /// - Parameters:
+    ///   - eventId: The event ID string
+    ///   - offset: Starting index (0-based)
+    ///   - limit: Number of photos to fetch (default 10)
+    /// - Returns: Tuple of (photos, hasMore)
+    func fetchPhotosForRevealPaginated(
+        eventId: String,
+        offset: Int = 0,
+        limit: Int = 10
+    ) async throws -> (photos: [PhotoData], hasMore: Bool) {
+        guard let uuid = UUID(uuidString: eventId) else {
+            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid event ID"])
+        }
+
+        struct PhotoWithProfile: Decodable {
+            let id: UUID
+            let eventId: UUID
+            let userId: UUID
+            let storagePath: String
+            let capturedAt: Date
+            let capturedByUsername: String?
+
+            enum CodingKeys: String, CodingKey {
+                case id
+                case eventId = "event_id"
+                case userId = "user_id"
+                case storagePath = "storage_path"
+                case capturedAt = "captured_at"
+                case capturedByUsername = "captured_by_username"
+            }
+        }
+
+        // Fetch limit + 1 to know if there are more
+        let photos: [PhotoWithProfile] = try await client
+            .from("photos")
+            .select()
+            .eq("event_id", value: uuid.uuidString)
+            .order("captured_at", ascending: true)
+            .range(from: offset, to: offset + limit)
+            .execute()
+            .value
+
+        let hasMore = photos.count > limit
+        let photosToProcess = hasMore ? Array(photos.prefix(limit)) : photos
+
+        // Generate signed URLs in parallel for speed
+        let photoDataArray = await withTaskGroup(of: (Int, PhotoData?).self) { group in
+            for (index, photo) in photosToProcess.enumerated() {
+                group.addTask {
+                    let signedURL = try? await self.client.storage
+                        .from("momento-photos")
+                        .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+
+                    let photoData = PhotoData(
+                        id: photo.id.uuidString,
+                        url: signedURL,
+                        capturedAt: photo.capturedAt,
+                        photographerName: photo.capturedByUsername ?? "Unknown"
+                    )
+                    return (index, photoData)
+                }
+            }
+
+            // Collect results maintaining order
+            var results: [(Int, PhotoData)] = []
+            for await result in group {
+                if let photoData = result.1 {
+                    results.append((result.0, photoData))
+                }
+            }
+            return results.sorted { $0.0 < $1.0 }.map { $0.1 }
+        }
+
+        print("📸 Loaded \(photoDataArray.count) photos (offset: \(offset), hasMore: \(hasMore))")
+        return (photos: photoDataArray, hasMore: hasMore)
+    }
+
     /// Delete a photo (creator or photo owner)
     func deletePhoto(id: UUID) async throws {
         try await client

@@ -17,7 +17,16 @@ class FeedRevealViewModel: ObservableObject {
     @Published var revealedStates: [String: Bool] = [:]
     @Published var likedStates: [String: Bool] = [:]
     @Published var isLoading = true
+    @Published var isLoadingMore = false
     @Published var visiblePhotoIndex: Int = 0
+
+    // Pagination state
+    private var hasMorePhotos = true
+    private var currentOffset = 0
+    private let pageSize = 10
+    private let prefetchThreshold = 3 // Load more when 3 photos from end
+    private var currentEventId: String = ""
+    private var likedPhotoIds: Set<String> = []
 
     var likedCount: Int {
         likedStates.values.filter { $0 }.count
@@ -39,27 +48,33 @@ class FeedRevealViewModel: ObservableObject {
         likedStates[photoId] = value
     }
 
+    /// Load initial batch of photos with pagination
     func loadPhotos(eventId: String) async {
+        currentEventId = eventId
         let supabaseManager = SupabaseManager.shared
 
         do {
-            let loadedPhotos = try await supabaseManager.getPhotos(for: eventId)
+            // Fetch first batch of photos
+            let result = try await supabaseManager.fetchPhotosForRevealPaginated(
+                eventId: eventId,
+                offset: 0,
+                limit: pageSize
+            )
 
-            guard let eventUUID = UUID(uuidString: eventId) else {
-                photos = loadedPhotos
-                isLoading = false
-                return
-            }
+            photos = result.photos
+            hasMorePhotos = result.hasMore
+            currentOffset = result.photos.count
 
-            let likedPhotos = try await supabaseManager.getLikedPhotos(eventId: eventUUID)
-            let likedIds = Set(likedPhotos.map { $0.id })
+            // Load liked photos to mark them
+            if let eventUUID = UUID(uuidString: eventId) {
+                let likedPhotos = try await supabaseManager.getLikedPhotos(eventId: eventUUID)
+                likedPhotoIds = Set(likedPhotos.map { $0.id })
 
-            photos = loadedPhotos
-
-            for photo in loadedPhotos {
-                likedStates[photo.id] = likedIds.contains(photo.id)
-                if likedIds.contains(photo.id) {
-                    revealedStates[photo.id] = true
+                for photo in photos {
+                    likedStates[photo.id] = likedPhotoIds.contains(photo.id)
+                    if likedPhotoIds.contains(photo.id) {
+                        revealedStates[photo.id] = true
+                    }
                 }
             }
 
@@ -67,6 +82,51 @@ class FeedRevealViewModel: ObservableObject {
         } catch {
             print("❌ Failed to load photos: \(error)")
             isLoading = false
+        }
+    }
+
+    /// Check if we need to load more photos based on current visible index
+    func loadMoreIfNeeded(currentPhoto: PhotoData) {
+        guard let index = photos.firstIndex(where: { $0.id == currentPhoto.id }) else { return }
+
+        let remainingPhotos = photos.count - index - 1
+        guard remainingPhotos <= prefetchThreshold else { return }
+        guard hasMorePhotos && !isLoadingMore else { return }
+
+        Task {
+            await loadMorePhotos()
+        }
+    }
+
+    /// Load next batch of photos
+    private func loadMorePhotos() async {
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+
+        let supabaseManager = SupabaseManager.shared
+
+        do {
+            let result = try await supabaseManager.fetchPhotosForRevealPaginated(
+                eventId: currentEventId,
+                offset: currentOffset,
+                limit: pageSize
+            )
+
+            // Apply liked states to new photos
+            for photo in result.photos {
+                likedStates[photo.id] = likedPhotoIds.contains(photo.id)
+                if likedPhotoIds.contains(photo.id) {
+                    revealedStates[photo.id] = true
+                }
+            }
+
+            photos.append(contentsOf: result.photos)
+            hasMorePhotos = result.hasMore
+            currentOffset = photos.count
+
+            print("📸 Loaded more photos. Total: \(photos.count), hasMore: \(hasMorePhotos)")
+        } catch {
+            print("❌ Failed to load more photos: \(error)")
         }
     }
 
@@ -148,7 +208,8 @@ struct FeedRevealView: View {
 
     private var progressHeader: some View {
         HStack {
-            Text("\(viewModel.visiblePhotoIndex + 1) of \(viewModel.photos.count)")
+            // Show current position out of total event photos
+            Text("\(viewModel.visiblePhotoIndex + 1) of \(event.photosTaken)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
 
@@ -186,7 +247,16 @@ struct FeedRevealView: View {
                     )
                     .onAppear {
                         viewModel.visiblePhotoIndex = index
+                        // Trigger prefetch when nearing end of loaded photos
+                        viewModel.loadMoreIfNeeded(currentPhoto: photo)
                     }
+                }
+
+                // Loading indicator when fetching more
+                if viewModel.isLoadingMore {
+                    ProgressView()
+                        .tint(.white)
+                        .padding(.vertical, 20)
                 }
 
                 completionSection
@@ -203,7 +273,7 @@ struct FeedRevealView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.green)
 
-            Text("You've seen all \(viewModel.photos.count) photos!")
+            Text("You've seen all \(event.photosTaken) photos!")
                 .font(.headline)
                 .foregroundColor(.white)
 
