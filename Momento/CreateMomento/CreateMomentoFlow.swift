@@ -124,7 +124,15 @@ struct CreateMomentoFlow: View {
                 )
                 
                 let event = Event(fromSupabase: eventModel)
-                
+
+                // Track momento creation
+                AnalyticsManager.shared.track(.momentoCreated, properties: [
+                    "event_id": event.id,
+                    "event_name": event.title,
+                    "is_premium": false,
+                    "filter": "BR"
+                ])
+
                 await MainActor.run {
                     createdEvent = event
                     isCreating = false
