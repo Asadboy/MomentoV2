@@ -385,6 +385,12 @@ class SupabaseManager: ObservableObject {
             .insert(member)
             .execute()
 
+        // Track successful join
+        AnalyticsManager.shared.track(.momentoJoined, properties: [
+            "event_id": event.id.uuidString,
+            "join_method": "code"
+        ])
+
         print("✅ Joined event: \(event.title)")
         return event
     }
