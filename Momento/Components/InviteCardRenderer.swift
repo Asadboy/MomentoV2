@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct InviteCardRenderer {
-    @MainActor
     static func render(
         eventName: String,
         joinCode: String,
