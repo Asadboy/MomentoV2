@@ -159,7 +159,16 @@ struct CreateStep3ShareView: View {
         }
         .background(backgroundGradient)
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(items: [shareMessage])
+            ShareSheet(items: [shareMessage]) { activityType, completed in
+                if completed {
+                    let destination = AnalyticsManager.mapActivityToDestination(activityType)
+                    AnalyticsManager.shared.track(.inviteShared, properties: [
+                        "join_code": joinCode,
+                        "destination": destination,
+                        "is_premium": false
+                    ])
+                }
+            }
         }
     }
     
@@ -235,11 +244,16 @@ struct CreateStep3ShareView: View {
 
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
-    
+    var completionHandler: ((UIActivity.ActivityType?, Bool) -> Void)?
+
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        activityVC.completionWithItemsHandler = { activityType, completed, _, _ in
+            completionHandler?(activityType, completed)
+        }
+        return activityVC
     }
-    
+
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 import PostHog
+import UIKit
 
 enum AnalyticsEvent: String {
     // Premium conversion (5 events)
@@ -74,5 +75,25 @@ final class AnalyticsManager {
         PostHogSDK.shared.reset()
         userId = nil
         isPremiumUser = false
+    }
+
+    static func mapActivityToDestination(_ activity: UIActivity.ActivityType?) -> String {
+        guard let activity = activity else { return "unknown" }
+
+        switch activity {
+        case .postToFacebook: return "facebook"
+        case .postToTwitter: return "twitter"
+        case .message: return "messages"
+        case .mail: return "email"
+        case .saveToCameraRoll: return "camera_roll"
+        case .copyToPasteboard: return "copy"
+        default:
+            let raw = activity.rawValue.lowercased()
+            if raw.contains("instagram") { return "instagram" }
+            if raw.contains("whatsapp") { return "whatsapp" }
+            if raw.contains("snapchat") { return "snapchat" }
+            if raw.contains("telegram") { return "telegram" }
+            return "other"
+        }
     }
 }
