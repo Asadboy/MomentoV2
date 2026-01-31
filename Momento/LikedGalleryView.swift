@@ -241,6 +241,12 @@ struct LikedGalleryView: View {
                     HapticsManager.shared.success()
                     saveAlertMessage = "Saved to camera roll"
                     showingSaveAlert = true
+
+                    // Track photo download
+                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                        "event_id": event.id,
+                        "has_watermark": true
+                    ])
                 }
             } catch {
                 await MainActor.run {
@@ -285,6 +291,15 @@ struct LikedGalleryView: View {
                 HapticsManager.shared.success()
                 saveAlertMessage = "Saved \(savedCount) of \(likedPhotos.count) photos"
                 showingSaveAlert = true
+
+                // Track each downloaded photo
+                for _ in 0..<savedCount {
+                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                        "event_id": event.id,
+                        "has_watermark": true,
+                        "source": "batch_download"
+                    ])
+                }
             }
         }
     }

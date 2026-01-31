@@ -331,6 +331,12 @@ struct FeedRevealView: View {
                     HapticsManager.shared.success()
                     saveAlertMessage = "Saved to camera roll"
                     showingSaveAlert = true
+
+                    // Track photo download
+                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                        "event_id": event.id,
+                        "has_watermark": true
+                    ])
                 }
             } catch {
                 await MainActor.run {
