@@ -36,8 +36,10 @@ final class AnalyticsManager {
     func configure() {
         guard !isConfigured else { return }
 
-        let config = PostHogConfig(apiKey: PostHogConfiguration.apiKey)
-        config.host = PostHogConfiguration.host
+        let config = PostHogConfig(
+            apiKey: PostHogConfiguration.apiKey,
+            host: PostHogConfiguration.host
+        )
         PostHogSDK.shared.setup(config)
         isConfigured = true
     }
