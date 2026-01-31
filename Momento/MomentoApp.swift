@@ -9,6 +9,11 @@ import SwiftUI
 
 @main
 struct MomentoApp: App {
+    init() {
+        // Initialize PostHog analytics on app launch
+        AnalyticsManager.shared.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
             // This is your app's entry point: loads the main screen
