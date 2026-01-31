@@ -40,6 +40,11 @@ final class AnalyticsManager {
             apiKey: PostHogConfiguration.apiKey,
             host: PostHogConfiguration.host
         )
+        // Disable automatic tracking to reduce noise
+        config.captureScreenViews = false  // We track screens manually
+        config.captureApplicationLifecycleEvents = false  // We have app_opened
+        config.sendFeatureFlagEvent = false  // Not using feature flags
+
         PostHogSDK.shared.setup(config)
         isConfigured = true
     }
