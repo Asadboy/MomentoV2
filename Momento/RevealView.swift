@@ -380,10 +380,16 @@ struct RevealView: View {
             await MainActor.run {
                 self.photos = fetchedPhotos
                 self.isLoading = false
-                
+
                 // Play entrance haptic
                 if !fetchedPhotos.isEmpty {
                     HapticsManager.shared.unlock()
+
+                    // Track reveal started
+                    AnalyticsManager.shared.track(.revealStarted, properties: [
+                        "event_id": event.id,
+                        "photos_to_reveal": fetchedPhotos.count
+                    ])
                 }
             }
         } catch {
@@ -453,6 +459,12 @@ struct RevealView: View {
     }
     
     private func completeReveal() {
+        // Track reveal completed
+        AnalyticsManager.shared.track(.revealCompleted, properties: [
+            "event_id": event.id,
+            "photos_revealed": photos.count
+        ])
+
         // Play celebration haptic
         HapticsManager.shared.celebration()
 
