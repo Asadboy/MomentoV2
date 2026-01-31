@@ -26,7 +26,7 @@ struct PremiumRowView: View {
 
                 Button(action: {
                     onEnableTapped()
-                    HapticsManager.shared.impact(.medium)
+                    HapticsManager.shared.medium()
                 }) {
                     Text(isPremiumEnabled ? "Enabled" : "Enable")
                         .font(.system(size: 14, weight: .semibold))

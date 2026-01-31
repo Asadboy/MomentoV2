@@ -10,6 +10,12 @@
 		C30858FD2F2E3A1800E11B8C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = C30858FC2F2E3A1800E11B8C /* PostHog */; };
 		C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */; };
 		C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859002F2E3FC600E11B8C /* PostHogConfig.swift */; };
+		C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */; };
+		C30859092F2E4D7400E11B8C /* LockedSettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859032F2E4D7400E11B8C /* LockedSettingView.swift */; };
+		C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859042F2E4D7400E11B8C /* AccordionRow.swift */; };
+		C308590B2F2E4D7400E11B8C /* PremiumRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859052F2E4D7400E11B8C /* PremiumRowView.swift */; };
+		C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859062F2E4D7400E11B8C /* FilterPickerView.swift */; };
+		C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859072F2E4D7400E11B8C /* InviteCardView.swift */; };
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
@@ -85,6 +91,12 @@
 /* Begin PBXFileReference section */
 		C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AnalyticsManager.swift; path = Services/AnalyticsManager.swift; sourceTree = "<group>"; };
 		C30859002F2E3FC600E11B8C /* PostHogConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostHogConfig.swift; path = Config/PostHogConfig.swift; sourceTree = "<group>"; };
+		C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = InviteCardRenderer.swift; path = Components/InviteCardRenderer.swift; sourceTree = "<group>"; };
+		C30859032F2E4D7400E11B8C /* LockedSettingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = LockedSettingView.swift; path = Components/LockedSettingView.swift; sourceTree = "<group>"; };
+		C30859042F2E4D7400E11B8C /* AccordionRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AccordionRow.swift; path = Components/AccordionRow.swift; sourceTree = "<group>"; };
+		C30859052F2E4D7400E11B8C /* PremiumRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PremiumRowView.swift; path = Components/PremiumRowView.swift; sourceTree = "<group>"; };
+		C30859062F2E4D7400E11B8C /* FilterPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FilterPickerView.swift; path = Components/FilterPickerView.swift; sourceTree = "<group>"; };
+		C30859072F2E4D7400E11B8C /* InviteCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = InviteCardView.swift; path = Components/InviteCardView.swift; sourceTree = "<group>"; };
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888E72EB75FF2003094CB /* MomentoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888EB2EB75FF2003094CB /* MomentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoTests.swift; sourceTree = "<group>"; };
@@ -222,6 +234,12 @@
 		C348890C2EB7BEAD003094CB /* Momento */ = {
 			isa = PBXGroup;
 			children = (
+				C30859042F2E4D7400E11B8C /* AccordionRow.swift */,
+				C30859062F2E4D7400E11B8C /* FilterPickerView.swift */,
+				C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */,
+				C30859072F2E4D7400E11B8C /* InviteCardView.swift */,
+				C30859032F2E4D7400E11B8C /* LockedSettingView.swift */,
+				C30859052F2E4D7400E11B8C /* PremiumRowView.swift */,
 				C30859002F2E3FC600E11B8C /* PostHogConfig.swift */,
 				C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */,
 				C372E3B42F26C55A00F905AE /* KeepsakeDetailModal.swift */,
@@ -434,6 +452,8 @@
 				C3C570A12F26579F00A8024C /* EventPreviewModal.swift in Sources */,
 				C372E3BE2F26C55A00F905AE /* KeepsakeGridView.swift in Sources */,
 				C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */,
+				C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */,
+				C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */,
 				C34889122EB7C6F5003094CB /* ContentView.swift in Sources */,
 				C3ACE77B2EC0F190004B23B1 /* SupabaseManager.swift in Sources */,
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
@@ -443,10 +463,12 @@
 				C3CARDPREV012F0B00000001 /* CardPreviewView.swift in Sources */,
 				C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */,
 				C3C570A02F26579F00A8024C /* VerificationCodeInput.swift in Sources */,
+				C30859092F2E4D7400E11B8C /* LockedSettingView.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
 				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
+				C308590B2F2E4D7400E11B8C /* PremiumRowView.swift in Sources */,
 				C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
 				C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */,
@@ -466,7 +488,9 @@
 				C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */,
 				C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */,
 				C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */,
+				C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
+				C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */,
 				C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */,
 				C34A395E2EDC55360059FA89 /* PhotoRevealCard.swift in Sources */,
 				C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */,

@@ -223,7 +223,7 @@ struct CreateStep2ConfigureView: View {
             isCaptureEndsExpanded = false
             isRevealExpanded = false
         }
-        HapticsManager.shared.impact(.light)
+        HapticsManager.shared.light()
     }
 }
 
