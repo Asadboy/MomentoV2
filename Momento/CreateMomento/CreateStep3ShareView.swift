@@ -51,7 +51,7 @@ struct CreateStep3ShareView: View {
 
                 // Title
                 VStack(spacing: 12) {
-                    Text("You're all set!")
+                    Text("Invite your people")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
 

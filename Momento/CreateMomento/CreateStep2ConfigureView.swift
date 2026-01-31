@@ -61,7 +61,7 @@ struct CreateStep2ConfigureView: View {
 
                 // Title
                 VStack(spacing: 8) {
-                    Text("Configure")
+                    Text("Set the vibe")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
 

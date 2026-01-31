@@ -49,7 +49,7 @@ struct CreateStep1NameView: View {
             VStack(spacing: 32) {
                 // Title
                 VStack(spacing: 12) {
-                    Text("Create Your Momento")
+                    Text("Name your momento")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
                     
