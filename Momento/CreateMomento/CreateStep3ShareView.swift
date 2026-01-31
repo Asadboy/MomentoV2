@@ -18,6 +18,7 @@ struct CreateStep3ShareView: View {
     @State private var copiedCode = false
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
+    @State private var showDownloadSuccess = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -111,6 +112,21 @@ struct CreateStep3ShareView: View {
                     .cornerRadius(16)
                 }
 
+                // Download Card button
+                Button(action: downloadCard) {
+                    HStack(spacing: 8) {
+                        Image(systemName: showDownloadSuccess ? "checkmark" : "arrow.down.to.line")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text(showDownloadSuccess ? "Saved!" : "Download Card")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(showDownloadSuccess ? .green : .white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.white.opacity(0.15))
+                    .cornerRadius(16)
+                }
+
                 // Done button
                 Button(action: onDone) {
                     Text("Done")
@@ -194,6 +210,41 @@ struct CreateStep3ShareView: View {
         )
 
         showShareSheet = true
+    }
+
+    private func downloadCard() {
+        // Render the invite card image
+        guard let image = InviteCardRenderer.render(
+            eventName: momentoName,
+            joinCode: joinCode,
+            startDate: startsAt,
+            hostName: hostName,
+            isPremium: isPremium
+        ) else { return }
+
+        // Save to Photos
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+
+        // Track the download event
+        AnalyticsManager.shared.track(.inviteCardDownloaded, properties: [
+            "event_name": momentoName
+        ])
+
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+
+        // Show success feedback
+        withAnimation {
+            showDownloadSuccess = true
+        }
+
+        // Reset after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                showDownloadSuccess = false
+            }
+        }
     }
 
     private var backgroundGradient: some View {

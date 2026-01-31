@@ -10,9 +10,10 @@ enum AnalyticsEvent: String {
     case premiumUpgradePromptSeen = "premium_upgrade_prompt_seen"
     case premiumUpgradedLate = "premium_upgraded_late"
 
-    // Virality & organic spread (5 events)
+    // Virality & organic spread (6 events)
     case momentoCreated = "momento_created"
     case inviteShared = "invite_shared"
+    case inviteCardDownloaded = "invite_card_downloaded"
     case momentoJoined = "momento_joined"
     case photoShared = "photo_shared"
     case photoDownloaded = "photo_downloaded"
