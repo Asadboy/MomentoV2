@@ -8,12 +8,17 @@ struct PremiumRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // Header
+            Text("This one's worth keeping")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white)
+
             // Benefits list
             VStack(alignment: .leading, spacing: 10) {
-                PremiumBenefitRow(icon: "infinity", text: "Photos live forever")
-                PremiumBenefitRow(icon: "clock.arrow.2.circlepath", text: "Flexible capture & reveal times")
-                PremiumBenefitRow(icon: "link", text: "Shareable album link")
-                PremiumBenefitRow(icon: "arrow.down.circle", text: "No watermark downloads")
+                PremiumBenefitRow(icon: "infinity", text: "Photos that never expire")
+                PremiumBenefitRow(icon: "clock.arrow.2.circlepath", text: "Set your own timeline")
+                PremiumBenefitRow(icon: "link", text: "A link everyone can revisit")
+                PremiumBenefitRow(icon: "arrow.down.circle", text: "Clean downloads, no watermarks")
             }
 
             // Price and enable button
@@ -28,7 +33,7 @@ struct PremiumRowView: View {
                     onEnableTapped()
                     HapticsManager.shared.medium()
                 }) {
-                    Text(isPremiumEnabled ? "Enabled" : "Enable")
+                    Text("Enable")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(isPremiumEnabled ? .black : premiumGold)
                         .padding(.horizontal, 20)
