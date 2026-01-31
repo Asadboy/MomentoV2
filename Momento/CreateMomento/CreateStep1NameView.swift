@@ -11,8 +11,11 @@ struct CreateStep1NameView: View {
     @Binding var momentoName: String
     let onNext: () -> Void
     let onCancel: () -> Void
-    
+
+    @StateObject private var supabaseManager = SupabaseManager.shared
     @FocusState private var isNameFocused: Bool
+    @State private var showSuggestions = true
+    @State private var displayName: String = ""
     
     var body: some View {
         VStack(spacing: 0) {
@@ -72,12 +75,12 @@ struct CreateStep1NameView: View {
                                 onNext()
                             }
                         }
-                    
+
                     // Underline
                     Rectangle()
                         .fill(
-                            momentoName.isEmpty 
-                                ? Color.white.opacity(0.2) 
+                            momentoName.isEmpty
+                                ? Color.white.opacity(0.2)
                                 : Color.white.opacity(0.6)
                         )
                         .frame(height: 2)
@@ -85,6 +88,28 @@ struct CreateStep1NameView: View {
                         .animation(.easeInOut(duration: 0.2), value: momentoName.isEmpty)
                 }
                 .padding(.horizontal, 40)
+
+                // Suggested names
+                if showSuggestions && momentoName.isEmpty && !displayName.isEmpty {
+                    VStack(spacing: 8) {
+                        ForEach(suggestedNames, id: \.self) { suggestion in
+                            Button(action: {
+                                momentoName = suggestion
+                                showSuggestions = false
+                                HapticsManager.shared.selectionChanged()
+                            }) {
+                                Text(suggestion)
+                                    .font(.system(size: 15))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(Color.white.opacity(0.08))
+                                    .cornerRadius(20)
+                            }
+                        }
+                    }
+                    .padding(.top, 20)
+                }
             }
             
             Spacer()
@@ -118,11 +143,24 @@ struct CreateStep1NameView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isNameFocused = true
             }
+
+            // Load user profile for suggestions
+            Task {
+                await loadUserProfile()
+            }
         }
     }
     
     private var isValidName: Bool {
         !momentoName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var suggestedNames: [String] {
+        [
+            "\(displayName)'s Party",
+            "\(displayName)'s Birthday",
+            "\(displayName)'s Gathering"
+        ]
     }
     
     private var backgroundGradient: some View {
@@ -135,6 +173,22 @@ struct CreateStep1NameView: View {
             endPoint: .bottomTrailing
         )
         .ignoresSafeArea()
+    }
+
+    // MARK: - Data Loading
+
+    private func loadUserProfile() async {
+        guard let userId = supabaseManager.currentUser?.id else { return }
+
+        do {
+            let profile = try await supabaseManager.getUserProfile(userId: userId)
+            await MainActor.run {
+                // Use displayName if available, otherwise fall back to username
+                self.displayName = profile.displayName ?? profile.username.capitalized
+            }
+        } catch {
+            print("Failed to load profile for suggestions: \(error)")
+        }
     }
 }
 
