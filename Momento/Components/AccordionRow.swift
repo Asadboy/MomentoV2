@@ -31,8 +31,10 @@ struct AccordionRow<Content: View>: View {
                 HapticsManager.shared.selectionChanged()
             }) {
                 HStack {
-                    Text(icon)
-                        .font(.system(size: 20))
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
@@ -71,8 +73,8 @@ struct AccordionRow<Content: View>: View {
         Color.black.ignoresSafeArea()
         VStack {
             AccordionRow(
-                icon: "📅",
-                title: "Starts",
+                icon: "calendar",
+                title: "Start",
                 subtitle: "Tomorrow at 6pm",
                 isExpanded: .constant(true)
             ) {

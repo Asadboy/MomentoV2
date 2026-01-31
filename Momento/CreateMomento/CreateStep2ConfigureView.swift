@@ -76,10 +76,10 @@ struct CreateStep2ConfigureView: View {
                 // Accordion rows
                 ScrollView {
                     VStack(spacing: 0) {
-                        // 1. Starts
+                        // 1. Start
                         AccordionRow(
-                            icon: "📅",
-                            title: "Starts",
+                            icon: "calendar",
+                            title: "Start",
                             subtitle: formatDateTime(startsAt),
                             isExpanded: $isStartsExpanded
                         ) {
@@ -88,10 +88,10 @@ struct CreateStep2ConfigureView: View {
                                 .labelsHidden()
                         }
 
-                        // 2. Capture ends
+                        // 2. Capture
                         AccordionRow(
-                            icon: "📷",
-                            title: "Capture ends",
+                            icon: "camera",
+                            title: "Capture",
                             subtitle: isPremiumEnabled ? formatDateTime(endsAt) : "12 hours after start",
                             isExpanded: $isCaptureEndsExpanded
                         ) {
@@ -107,10 +107,10 @@ struct CreateStep2ConfigureView: View {
                             }
                         }
 
-                        // 3. Photos reveal
+                        // 3. Reveal
                         AccordionRow(
-                            icon: "✨",
-                            title: "Photos reveal",
+                            icon: "sparkles",
+                            title: "Reveal",
                             subtitle: isPremiumEnabled ? formatDateTime(releaseAt) : "12 hours after capture",
                             isExpanded: $isRevealExpanded
                         ) {
@@ -128,7 +128,7 @@ struct CreateStep2ConfigureView: View {
 
                         // 4. Filter
                         AccordionRow(
-                            icon: "🎨",
+                            icon: "camera.filters",
                             title: "Filter",
                             subtitle: selectedFilter.displayName,
                             isExpanded: $isFilterExpanded
@@ -136,10 +136,10 @@ struct CreateStep2ConfigureView: View {
                             FilterPickerView(selectedFilter: $selectedFilter)
                         }
 
-                        // 5. Premium Momento
+                        // 5. Premium
                         AccordionRow(
-                            icon: "✦",
-                            title: "Premium Momento",
+                            icon: "crown",
+                            title: "Premium",
                             subtitle: isPremiumEnabled ? "Enabled" : "Off",
                             isExpanded: $isPremiumExpanded
                         ) {
