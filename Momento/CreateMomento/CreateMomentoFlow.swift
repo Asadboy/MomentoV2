@@ -27,6 +27,7 @@ struct CreateMomentoFlow: View {
     @State private var isCreating = false
     @State private var createdEvent: Event?
     @State private var errorMessage: String?
+    @State private var hostName: String = ""
     
     /// Callback when evento is created
     var onEventCreated: ((Event) -> Void)?
@@ -68,6 +69,8 @@ struct CreateMomentoFlow: View {
                         momentoName: momentoName,
                         joinCode: joinCode,
                         startsAt: startsAt,
+                        hostName: hostName,
+                        isPremium: isPremiumEnabled,
                         onDone: { finishFlow() }
                     )
                     .transition(.asymmetric(
@@ -101,6 +104,27 @@ struct CreateMomentoFlow: View {
             Button("OK") { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
+        }
+        .task {
+            await fetchHostName()
+        }
+    }
+
+    // MARK: - Fetch Host Name
+
+    private func fetchHostName() async {
+        guard let userId = supabaseManager.currentUser?.id else { return }
+
+        do {
+            let profile = try await supabaseManager.getUserProfile(userId: userId)
+            await MainActor.run {
+                hostName = profile.displayName ?? profile.username
+            }
+        } catch {
+            print("[CreateMomento] Failed to fetch host name: \(error)")
+            await MainActor.run {
+                hostName = "Host"
+            }
         }
     }
     

@@ -6,133 +6,101 @@
 //
 
 import SwiftUI
-import CoreImage.CIFilterBuiltins
 
 struct CreateStep3ShareView: View {
     let momentoName: String
     let joinCode: String
     let startsAt: Date
+    let hostName: String
+    let isPremium: Bool
     let onDone: () -> Void
 
-    // Auto-calculated end time (12 hours after start)
-    private var endsAt: Date {
-        startsAt.addingTimeInterval(12 * 3600)
-    }
-    
     @State private var copiedCode = false
     @State private var showShareSheet = false
-    
-    private let context = CIContext()
-    private let filter = CIFilter.qrCodeGenerator()
-    
+    @State private var shareImage: UIImage?
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
                 Spacer()
-                
+
                 Text("Step 3 of 3")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
-                
+
                 Spacer()
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
-            
+
             Spacer()
-            
+
             // Main content
-            VStack(spacing: 32) {
+            VStack(spacing: 24) {
                 // Success icon
                 ZStack {
                     Circle()
                         .fill(Color.green.opacity(0.15))
                         .frame(width: 80, height: 80)
-                    
+
                     Image(systemName: "checkmark")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.green)
                 }
-                
+
                 // Title
                 VStack(spacing: 12) {
                     Text("You're all set!")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
-                    
+
                     Text("Share with friends to invite them")
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(.white.opacity(0.6))
                 }
-                
-                // Momento summary card
-                VStack(spacing: 20) {
-                    // Name
-                    Text(momentoName)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    // QR Code
-                    if let qrImage = generateQRCode(from: joinCode) {
-                        Image(uiImage: qrImage)
-                            .interpolation(.none)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 160, height: 160)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                    }
-                    
-                    // Join code
-                    HStack(spacing: 12) {
+
+                // Invite Card
+                InviteCardView(
+                    eventName: momentoName,
+                    joinCode: joinCode,
+                    startDate: startsAt,
+                    hostName: hostName,
+                    isPremium: isPremium
+                )
+                .padding(.horizontal, 30)
+
+                // Copy code button
+                Button(action: copyCode) {
+                    HStack(spacing: 8) {
                         Text(joinCode)
-                            .font(.system(size: 28, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white)
-                            .tracking(4)
-                        
-                        Button(action: copyCode) {
-                            Image(systemName: copiedCode ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(copiedCode ? .green : .white.opacity(0.6))
-                        }
+                            .font(.system(size: 18, weight: .bold, design: .monospaced))
+                            .tracking(2)
+
+                        Image(systemName: copiedCode ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 14, weight: .medium))
                     }
-                    
-                    if copiedCode {
-                        Text("Copied!")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.green)
-                            .transition(.opacity)
-                    }
-                    
-                    // Time info
-                    Text(eventTimeDescription)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                        .multilineTextAlignment(.center)
+                    .foregroundColor(copiedCode ? .green : .white.opacity(0.8))
                 }
-                .padding(24)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.08))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
+
+                if copiedCode {
+                    Text("Copied!")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.green)
+                        .transition(.opacity)
+                }
             }
-            
+
             Spacer()
-            
+
             // Action buttons
             VStack(spacing: 12) {
                 // Share button
-                Button(action: { showShareSheet = true }) {
+                Button(action: shareInvite) {
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 15, weight: .semibold))
-                        
+
                         Text("Share Invite")
                             .font(.system(size: 17, weight: .semibold))
                     }
@@ -142,7 +110,7 @@ struct CreateStep3ShareView: View {
                     .background(Color.white)
                     .cornerRadius(16)
                 }
-                
+
                 // Done button
                 Button(action: onDone) {
                     Text("Done")
@@ -159,74 +127,75 @@ struct CreateStep3ShareView: View {
         }
         .background(backgroundGradient)
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(items: [shareMessage]) { activityType, completed in
-                if completed {
-                    let destination = AnalyticsManager.mapActivityToDestination(activityType)
-                    AnalyticsManager.shared.track(.inviteShared, properties: [
-                        "join_code": joinCode,
-                        "destination": destination,
-                        "is_premium": false
-                    ])
+            if let image = shareImage {
+                ShareSheet(items: [image, shareMessage]) { activityType, completed in
+                    if completed {
+                        let destination = AnalyticsManager.mapActivityToDestination(activityType)
+                        AnalyticsManager.shared.track(.inviteShared, properties: [
+                            "join_code": joinCode,
+                            "destination": destination,
+                            "is_premium": isPremium
+                        ])
+                    }
+                }
+            } else {
+                ShareSheet(items: [shareMessage]) { activityType, completed in
+                    if completed {
+                        let destination = AnalyticsManager.mapActivityToDestination(activityType)
+                        AnalyticsManager.shared.track(.inviteShared, properties: [
+                            "join_code": joinCode,
+                            "destination": destination,
+                            "is_premium": isPremium
+                        ])
+                    }
                 }
             }
         }
     }
-    
-    private var eventTimeDescription: String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d"
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "h:mm a"
-        
-        let startDate = dateFormatter.string(from: startsAt)
-        let startTime = timeFormatter.string(from: startsAt)
-        let endTime = timeFormatter.string(from: endsAt)
-        
-        return "\(startDate) \u{2022} \(startTime) - \(endTime)"
-    }
-    
+
     private var shareMessage: String {
         """
         Join my Momento: \(momentoName)!
-        
+
+        Take photos \u{2192} Wait for reveal \u{2192} See the magic
+
         Code: \(joinCode)
-        
-        Download Momento and enter the code to join.
+        Get the app: momento.app
         """
     }
-    
+
     private func copyCode() {
         UIPasteboard.general.string = joinCode
-        
+
         withAnimation {
             copiedCode = true
         }
-        
+
         // Reset after 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation {
                 copiedCode = false
             }
         }
-        
+
         // Haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
     }
-    
-    private func generateQRCode(from string: String) -> UIImage? {
-        filter.message = Data(string.utf8)
-        
-        guard let outputImage = filter.outputImage else { return nil }
-        
-        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
-        
-        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else { return nil }
-        
-        return UIImage(cgImage: cgImage)
+
+    private func shareInvite() {
+        // Render the invite card image
+        shareImage = InviteCardRenderer.render(
+            eventName: momentoName,
+            joinCode: joinCode,
+            startDate: startsAt,
+            hostName: hostName,
+            isPremium: isPremium
+        )
+
+        showShareSheet = true
     }
-    
+
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
@@ -262,7 +231,8 @@ struct ShareSheet: UIViewControllerRepresentable {
         momentoName: "Sopranos Party",
         joinCode: "SOPRAN",
         startsAt: Date(),
+        hostName: "Asad",
+        isPremium: false,
         onDone: {}
     )
 }
-
