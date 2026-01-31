@@ -5,6 +5,7 @@
 //  Step 3 of Create Momento flow: Share your momento
 //
 
+import Photos
 import SwiftUI
 
 struct CreateStep3ShareView: View {
@@ -222,27 +223,37 @@ struct CreateStep3ShareView: View {
             isPremium: isPremium
         ) else { return }
 
-        // Save to Photos
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        // Request photo library permission before saving
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            DispatchQueue.main.async {
+                guard status == .authorized || status == .limited else {
+                    // Permission denied - don't show success feedback
+                    return
+                }
 
-        // Track the download event
-        AnalyticsManager.shared.track(.inviteCardDownloaded, properties: [
-            "event_name": momentoName
-        ])
+                // Save to Photos
+                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
 
-        // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+                // Track the download event (only on success)
+                AnalyticsManager.shared.track(.inviteCardDownloaded, properties: [
+                    "event_name": momentoName
+                ])
 
-        // Show success feedback
-        withAnimation {
-            showDownloadSuccess = true
-        }
+                // Haptic feedback
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
 
-        // Reset after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation {
-                showDownloadSuccess = false
+                // Show success feedback
+                withAnimation {
+                    showDownloadSuccess = true
+                }
+
+                // Reset after 2 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation {
+                        showDownloadSuccess = false
+                    }
+                }
             }
         }
     }
