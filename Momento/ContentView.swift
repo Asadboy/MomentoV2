@@ -266,6 +266,10 @@ struct ContentView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .onReceive(timer) { now = $0 }
             .task {
+                // Track app opened event
+                AnalyticsManager.shared.track(.appOpened, properties: [
+                    "has_active_evento": !events.filter { $0.currentState(at: now) == .live }.isEmpty
+                ])
                 await loadEvents()
             }
             .refreshable {
