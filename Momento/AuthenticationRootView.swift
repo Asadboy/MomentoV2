@@ -108,7 +108,12 @@ struct AuthenticationRootView: View {
             do {
                 let needsUsername = try await supabaseManager.needsUsernameSelection(userId: userId)
                 await MainActor.run {
-                    appState = needsUsername ? .needsUsername : .authenticated
+                    if needsUsername {
+                        appState = .needsUsername
+                    } else {
+                        appState = .authenticated
+                        identifyUserForAnalytics(userId: userId)
+                    }
                     isCheckingUsername = false
                 }
             } catch {
@@ -116,8 +121,24 @@ struct AuthenticationRootView: View {
                 // Default to authenticated to avoid blocking user
                 await MainActor.run {
                     appState = .authenticated
+                    identifyUserForAnalytics(userId: userId)
                     isCheckingUsername = false
                 }
+            }
+        }
+    }
+
+    private func identifyUserForAnalytics(userId: UUID) {
+        Task {
+            do {
+                let profile = try await supabaseManager.getUserProfile(userId: userId)
+                AnalyticsManager.shared.identify(
+                    userId: userId.uuidString,
+                    username: profile.username,
+                    isPremium: profile.isPremium
+                )
+            } catch {
+                print("❌ Failed to identify user for analytics: \(error)")
             }
         }
     }
