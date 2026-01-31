@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C30858FD2F2E3A1800E11B8C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = C30858FC2F2E3A1800E11B8C /* PostHog */; };
+		C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */; };
+		C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859002F2E3FC600E11B8C /* PostHogConfig.swift */; };
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
@@ -21,7 +24,6 @@
 		C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891B2EB7CAF9003094CB /* TimeFormatter.swift */; };
 		C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891D2EB7CBF0003094CB /* EventManager.swift */; };
 		C34A395E2EDC55360059FA89 /* PhotoRevealCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */; };
-		C34A395F2EDC55360059FA89 /* RevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395C2EDC55360059FA89 /* RevealView.swift */; };
 		C34A39602EDC55360059FA89 /* EmojiReactionPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */; };
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
 		C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D444D2F0A80ED0019CA2C /* SettingsView.swift */; };
@@ -53,7 +55,6 @@
 		C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE77D2EC0F920004B23B1 /* Supabase */; };
 		C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */; };
 		C3C4112E2EFEF5F8002D8DB5 /* PhotoGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112D2EFEF5F8002D8DB5 /* PhotoGalleryView.swift */; };
-		C3C411302EFEF87B002D8DB5 /* FilmRollGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */; };
 		C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */; };
 		C3C570A02F26579F00A8024C /* VerificationCodeInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C5709E2F26579F00A8024C /* VerificationCodeInput.swift */; };
 		C3C570A12F26579F00A8024C /* EventPreviewModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C5709F2F26579F00A8024C /* EventPreviewModal.swift */; };
@@ -82,6 +83,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AnalyticsManager.swift; path = Services/AnalyticsManager.swift; sourceTree = "<group>"; };
+		C30859002F2E3FC600E11B8C /* PostHogConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostHogConfig.swift; path = Config/PostHogConfig.swift; sourceTree = "<group>"; };
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888E72EB75FF2003094CB /* MomentoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888EB2EB75FF2003094CB /* MomentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoTests.swift; sourceTree = "<group>"; };
@@ -99,7 +102,6 @@
 		C348891B2EB7CAF9003094CB /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		C348891D2EB7CBF0003094CB /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
 		C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoRevealCard.swift; sourceTree = "<group>"; };
-		C34A395C2EDC55360059FA89 /* RevealView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RevealView.swift; sourceTree = "<group>"; };
 		C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmojiReactionPicker.swift; sourceTree = "<group>"; };
 		C34A39632EDC55DB0059FA89 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		C34A39682EDC96D90059FA89 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -127,7 +129,6 @@
 		C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SupabaseManager.swift; path = Services/SupabaseManager.swift; sourceTree = "<group>"; };
 		C3C4112B2EF857E8002D8DB5 /* KodakGoldFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KodakGoldFilter.swift; path = Momento/Filters/KodakGoldFilter.swift; sourceTree = "<group>"; };
 		C3C4112D2EFEF5F8002D8DB5 /* PhotoGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoGalleryView.swift; sourceTree = "<group>"; };
-		C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FilmRollGalleryView.swift; sourceTree = "<group>"; };
 		C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RevealStateManager.swift; path = Services/RevealStateManager.swift; sourceTree = "<group>"; };
 		C3C5709E2F26579F00A8024C /* VerificationCodeInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = VerificationCodeInput.swift; path = Components/VerificationCodeInput.swift; sourceTree = "<group>"; };
 		C3C5709F2F26579F00A8024C /* EventPreviewModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = EventPreviewModal.swift; path = Components/EventPreviewModal.swift; sourceTree = "<group>"; };
@@ -145,6 +146,7 @@
 			files = (
 				C3ACE76D2EC0E45B004B23B1 /* PostgREST in Frameworks */,
 				C3ACE76B2EC0E45B004B23B1 /* Functions in Frameworks */,
+				C30858FD2F2E3A1800E11B8C /* PostHog in Frameworks */,
 				C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */,
 				C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */,
 				C3ACE7712EC0E45B004B23B1 /* Storage in Frameworks */,
@@ -220,6 +222,8 @@
 		C348890C2EB7BEAD003094CB /* Momento */ = {
 			isa = PBXGroup;
 			children = (
+				C30859002F2E3FC600E11B8C /* PostHogConfig.swift */,
+				C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */,
 				C372E3B42F26C55A00F905AE /* KeepsakeDetailModal.swift */,
 				C372E3B82F26C55A00F905AE /* KeepsakeGridView.swift */,
 				C372E3B52F26C55A00F905AE /* KeepsakeRevealView.swift */,
@@ -237,7 +241,6 @@
 				C34A39682EDC96D90059FA89 /* Info.plist */,
 				C34A395D2EDC55360059FA89 /* EmojiReactionPicker.swift */,
 				C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */,
-				C34A395C2EDC55360059FA89 /* RevealView.swift */,
 				C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */,
 				C36446BE2EF8200000000005 /* CreateMomento */,
 				C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */,
@@ -253,7 +256,6 @@
 				C34889132EB7C6F5003094CB /* ContentView.swift */,
 				C34889152EB7C7F6003094CB /* Event.swift */,
 				C34889172EB7C8F7003094CB /* EventRow.swift */,
-				C3C4112F2EFEF87A002D8DB5 /* FilmRollGalleryView.swift */,
 				C3STACK042F0B000000000002 /* LikedGalleryView.swift */,
 				C3CARDPREV022F0B00000001 /* CardPreviewView.swift */,
 				C34889192EB7C9F8003094CB /* AddEventSheet.swift */,
@@ -308,6 +310,7 @@
 				C3ACE76E2EC0E45B004B23B1 /* Realtime */,
 				C3ACE7702EC0E45B004B23B1 /* Storage */,
 				C3ACE77D2EC0F920004B23B1 /* Supabase */,
+				C30858FC2F2E3A1800E11B8C /* PostHog */,
 			);
 			productName = Momento;
 			productReference = C34888D72EB75FEF003094CB /* Momento.app */;
@@ -383,6 +386,7 @@
 			mainGroup = C34888CE2EB75FEE003094CB;
 			packageReferences = (
 				C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				C30858FB2F2E3A1800E11B8C /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			productRefGroup = C34888D82EB75FEF003094CB /* Products */;
 			projectDirPath = "";
@@ -435,7 +439,6 @@
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
 				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C3C4112C2EF857E9002D8DB5 /* KodakGoldFilter.swift in Sources */,
-				C3C411302EFEF87B002D8DB5 /* FilmRollGalleryView.swift in Sources */,
 				C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */,
 				C3CARDPREV012F0B00000001 /* CardPreviewView.swift in Sources */,
 				C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */,
@@ -449,8 +452,8 @@
 				C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */,
 				C3C6D43A2F20299100847D38 /* RevealCardView.swift in Sources */,
 				C372E3BB2F26C55A00F905AE /* KeepsakeRevealView.swift in Sources */,
+				C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */,
 				C34A39602EDC55360059FA89 /* EmojiReactionPicker.swift in Sources */,
-				C34A395F2EDC55360059FA89 /* RevealView.swift in Sources */,
 				C3ACE7742EC0F096004B23B1 /* SignInView.swift in Sources */,
 				C3ACE7772EC0F101004B23B1 /* OfflineSyncManager.swift in Sources */,
 				C372E3BC2F26C55A00F905AE /* StatCardView.swift in Sources */,
@@ -464,6 +467,7 @@
 				C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */,
 				C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
+				C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */,
 				C34A395E2EDC55360059FA89 /* PhotoRevealCard.swift in Sources */,
 				C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */,
 				C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */,
@@ -811,6 +815,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		C30858FB2F2E3A1800E11B8C /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.38.0;
+			};
+		};
 		C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase-community/supabase-swift";
@@ -822,6 +834,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C30858FC2F2E3A1800E11B8C /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C30858FB2F2E3A1800E11B8C /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
 		C3ACE7682EC0E45B004B23B1 /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
