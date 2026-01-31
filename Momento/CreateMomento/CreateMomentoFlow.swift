@@ -17,6 +17,10 @@ struct CreateMomentoFlow: View {
     // Form data
     @State private var momentoName = ""
     @State private var startsAt = Date().addingTimeInterval(3600) // 1 hour from now
+    @State private var endsAt = Date().addingTimeInterval(13 * 3600) // 12 hours after start
+    @State private var releaseAt = Date().addingTimeInterval(25 * 3600) // 24 hours after start
+    @State private var selectedFilter: PhotoFilter = .br
+    @State private var isPremiumEnabled = false
     @State private var joinCode = ""
     
     // State
@@ -44,9 +48,13 @@ struct CreateMomentoFlow: View {
                     ))
                     
                 case 2:
-                    CreateStep2TimesView(
-                        momentoName: momentoName,
+                    CreateStep2ConfigureView(
+                        eventName: momentoName,
                         startsAt: $startsAt,
+                        endsAt: $endsAt,
+                        releaseAt: $releaseAt,
+                        selectedFilter: $selectedFilter,
+                        isPremiumEnabled: $isPremiumEnabled,
                         onNext: { createMomento() },
                         onBack: { goToStep(1) }
                     )
@@ -129,8 +137,8 @@ struct CreateMomentoFlow: View {
                 AnalyticsManager.shared.track(.momentoCreated, properties: [
                     "event_id": event.id,
                     "event_name": event.title,
-                    "is_premium": false,
-                    "filter": "BR"
+                    "is_premium": isPremiumEnabled,
+                    "filter": selectedFilter.rawValue
                 ])
 
                 await MainActor.run {
