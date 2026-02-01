@@ -22,13 +22,8 @@ struct RevealView: View {
     
     @State private var photos: [PhotoData] = []
     @State private var currentIndex = 0
-    @State private var revealedIndices: Set<Int> = []
     @State private var isLoading = true
     @State private var showConfetti = false
-    @State private var allRevealed = false
-    @State private var canGoNext = false
-    @State private var showReactionPicker = false
-    @State private var photoReactions: [String: [String: String]] = [:] // [photoId: [userId: emoji]]
     @State private var showGallery = false
     @State private var earnedKeepsake: EarnedKeepsake?
     @State private var showKeepsakeReveal = false
@@ -36,6 +31,10 @@ struct RevealView: View {
     @State private var flowPhase: RevealFlowPhase = .preReveal
     @State private var showButtons = false  // For 2-second delay
     @State private var buttonTimer: Timer?
+
+    private var uniqueContributorCount: Int {
+        Set(photos.compactMap { $0.photographerName }).count
+    }
 
     var body: some View {
         ZStack {
@@ -51,96 +50,44 @@ struct RevealView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             if isLoading {
                 loadingView
             } else if photos.isEmpty {
                 emptyView
             } else {
-                VStack(spacing: 12) {
-                    // Header
-                    headerView
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                    
-                    // Progress indicator (Stories-style segments)
-                    progressView
-                        .padding(.horizontal)
-                    
-                    Spacer(minLength: 8)
-                    
-                    // Main card area - takes remaining space
-                    TabView(selection: $currentIndex) {
-                        ForEach(Array(photos.enumerated()), id: \.offset) { index, photo in
-                            VStack(spacing: 0) {
-                                PhotoRevealCard(
-                                    photoURL: photo.url,
-                                    photographerName: photo.photographerName ?? "Unknown",
-                                    capturedAt: photo.capturedAt,
-                                    isRevealed: revealedIndices.contains(index),
-                                    onReveal: {
-                                        handlePhotoRevealed(at: index)
-                                    }
-                                )
-                            }
-                            .padding(.horizontal, 12)
-                            .tag(index)
-                        }
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
-                    .onChange(of: currentIndex) {
-                        // Hide reaction picker when changing photos
-                        showReactionPicker = false
-                    }
-                    // Tap zones for navigation (invisible overlays on sides)
-                    .overlay(
-                        HStack(spacing: 0) {
-                            // Left tap zone - go previous
-                            Color.clear
-                                .frame(width: 80)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    if currentIndex > 0 {
-                                        goToPrevious()
-                                    }
-                                }
-                            
-                            Spacer()
-                            
-                            // Right tap zone - go next
-                            Color.clear
-                                .frame(width: 80)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    // If revealed and can go next, navigate
-                                    if revealedIndices.contains(currentIndex) && currentIndex < photos.count - 1 {
-                                        goToNext()
-                                    }
-                                }
-                        }
+                // Phase-based content
+                switch flowPhase {
+                case .preReveal:
+                    PreRevealView(
+                        photoCount: photos.count,
+                        contributorCount: uniqueContributorCount,
+                        revealTime: event.releaseAt,
+                        onReveal: startReveal
                     )
-                    
-                    // Reaction area (compact, below card)
-                    if let currentPhoto = photos[safe: currentIndex], revealedIndices.contains(currentIndex) {
-                        reactionArea(for: currentPhoto)
-                            .padding(.horizontal)
-                            .transition(.opacity)
-                    }
-                    
-                    Spacer(minLength: 20)
+                    .transition(.opacity)
+
+                case .viewing:
+                    viewingPhaseContent
+                        .transition(.opacity)
+
+                case .complete:
+                    RevealCompleteView(
+                        onViewGallery: {
+                            HapticsManager.shared.buttonPress()
+                            showGallery = true
+                        },
+                        onClose: { dismiss() }
+                    )
+                    .transition(.opacity)
                 }
             }
-            
+
             // Confetti overlay
             if showConfetti {
                 ConfettiView()
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
-            }
-            
-            // Completion overlay
-            if allRevealed {
-                completionOverlay
             }
 
             // Keepsake reveal overlay
@@ -149,7 +96,7 @@ struct RevealView: View {
                     keepsake: keepsake,
                     onDismiss: {
                         showKeepsakeReveal = false
-                        allRevealed = true
+                        flowPhase = .complete
                     },
                     onViewProfile: {
                         showKeepsakeReveal = false
@@ -168,8 +115,8 @@ struct RevealView: View {
             ProfileView()
         }
         .onDisappear {
-            // Mark reveal as completed if user went through all photos
-            if allRevealed {
+            buttonTimer?.invalidate()
+            if flowPhase == .complete {
                 RevealStateManager.shared.markRevealCompleted(for: event.id)
             }
         }
@@ -224,29 +171,23 @@ struct RevealView: View {
                     .font(.title2)
                     .foregroundColor(.white.opacity(0.8))
             }
-            
+
             Spacer()
-            
+
             VStack(spacing: 4) {
                 Text(event.title)
                     .font(.headline)
                     .foregroundColor(.white)
-                
-                Text("\(photos.count) Momentos")
+
+                Text("\(currentIndex + 1) of \(photos.count)")
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.7))
             }
-            
+
             Spacer()
-            
-            // Skip all button
-            if !allRevealed {
-                Button("Skip All") {
-                    skipToEnd()
-                }
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
-            }
+
+            // Placeholder for symmetry
+            Color.clear.frame(width: 30, height: 30)
         }
     }
     
@@ -262,122 +203,56 @@ struct RevealView: View {
         }
     }
     
-    // MARK: - Reaction Area (Compact)
-    
-    private func reactionArea(for photo: PhotoData) -> some View {
-        HStack(spacing: 16) {
-            // Display existing reactions
-            if let reactions = photoReactions[photo.id], !reactions.isEmpty {
-                EmojiReactionDisplay(reactions: reactions)
-            }
-            
-            Spacer()
-            
-            // Reaction picker or button
-            if showReactionPicker {
-                EmojiReactionPicker { emoji in
-                    addReaction(emoji, to: photo.id)
-                }
-                .transition(.scale.combined(with: .opacity))
-            } else {
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        showReactionPicker.toggle()
-                    }
-                    HapticsManager.shared.light()
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "heart")
-                            .font(.system(size: 18))
-                        Text("React")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule()
-                            .fill(Color.white.opacity(0.15))
+    // MARK: - Viewing Phase
+
+    private var viewingPhaseContent: some View {
+        VStack(spacing: 12) {
+            // Header
+            headerView
+                .padding(.horizontal)
+                .padding(.top, 8)
+
+            // Progress indicator
+            progressView
+                .padding(.horizontal)
+
+            Spacer(minLength: 8)
+
+            // Photo carousel
+            TabView(selection: $currentIndex) {
+                ForEach(Array(photos.enumerated()), id: \.element.id) { index, photo in
+                    PhotoViewCard(
+                        photoURL: photo.url,
+                        photographerName: photo.photographerName ?? "Unknown",
+                        capturedAt: photo.capturedAt,
+                        showButtons: showButtons,
+                        onLike: { handleLike(photo) },
+                        onSave: { handleSave(photo) },
+                        onShare: { handleShare(photo) }
                     )
+                    .padding(.horizontal, 12)
+                    .tag(index)
                 }
             }
-        }
-        .frame(height: 44)
-    }
-    
-    private var completionOverlay: some View {
-        ZStack {
-            // Semi-transparent background
-            Color.black.opacity(0.8)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 30) {
-                // Success icon
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple, Color.blue, Color.cyan],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 120, height: 120)
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(.white)
-                }
-                .shadow(color: .purple.opacity(0.5), radius: 20)
-                
-                VStack(spacing: 12) {
-                    Text("All Momentos Revealed!")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    Text("You've seen all \(photos.count) photos from this event")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                }
-                
-                Button(action: {
-                    HapticsManager.shared.buttonPress()
-                    showGallery = true
-                }) {
-                    Text("View Gallery")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            LinearGradient(
-                                colors: [Color.purple, Color.blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(15)
-                }
-                .padding(.horizontal, 40)
-                .padding(.top, 20)
-                
-                // Close button (smaller, secondary)
-                Button(action: {
-                    dismiss()
-                }) {
-                    Text("Close")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .padding(.top, 12)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .onChange(of: currentIndex) { _, newIndex in
+                onPhotoChanged(to: newIndex)
             }
-            .padding()
+            // Detect swipe past last photo
+            .gesture(
+                DragGesture()
+                    .onEnded { gesture in
+                        // If on last photo and swiping left (to go further)
+                        if currentIndex == photos.count - 1 && gesture.translation.width < -50 {
+                            completeViewing()
+                        }
+                    }
+            )
+
+            Spacer(minLength: 20)
         }
     }
-    
+
     // MARK: - Actions
     
     private func loadPhotos() async {
@@ -404,65 +279,37 @@ struct RevealView: View {
         }
     }
     
-    private func handlePhotoRevealed(at index: Int) {
-        // Mark as revealed
-        revealedIndices.insert(index)
-        
-        // Play reveal haptic
-        HapticsManager.shared.photoReveal()
-        
-        // Enable next button
-        canGoNext = true
-        
-        // Check if all photos revealed
-        if revealedIndices.count == photos.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                completeReveal()
+    private func startReveal() {
+        // Haptic threshold
+        HapticsManager.shared.revealThreshold()
+
+        // Fade transition to viewing
+        withAnimation(.easeInOut(duration: 0.5)) {
+            flowPhase = .viewing
+        }
+
+        // Start button delay timer
+        startButtonTimer()
+    }
+
+    private func startButtonTimer() {
+        showButtons = false
+        buttonTimer?.invalidate()
+        buttonTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+            withAnimation(.easeIn(duration: 0.3)) {
+                showButtons = true
             }
         }
     }
-    
-    private func goToNext() {
-        guard currentIndex < photos.count - 1 else { return }
-        
-        HapticsManager.shared.light()
-        withAnimation {
-            currentIndex += 1
-            canGoNext = revealedIndices.contains(currentIndex)
-        }
+
+    private func onPhotoChanged(to index: Int) {
+        // Reset button timer on each photo
+        startButtonTimer()
     }
-    
-    private func goToPrevious() {
-        guard currentIndex > 0 else { return }
-        
-        HapticsManager.shared.light()
-        withAnimation {
-            currentIndex -= 1
-            canGoNext = true // Can always go forward to already revealed photos
-        }
-    }
-    
-    private func skipToEnd() {
-        HapticsManager.shared.medium()
-        
-        // Reveal all photos
-        for index in 0..<photos.count {
-            revealedIndices.insert(index)
-        }
-        
-        // Go to last photo
-        withAnimation {
-            currentIndex = photos.count - 1
-            canGoNext = true
-        }
-        
-        // Show completion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            completeReveal()
-        }
-    }
-    
-    private func completeReveal() {
+
+    private func completeViewing() {
+        buttonTimer?.invalidate()
+
         // Play celebration haptic
         HapticsManager.shared.celebration()
 
@@ -478,14 +325,12 @@ struct RevealView: View {
             }
 
             await MainActor.run {
-                // Show completion overlay after confetti starts
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation {
-                        // If there's a keepsake, show that instead of completion
                         if earnedKeepsake != nil {
                             showKeepsakeReveal = true
                         } else {
-                            allRevealed = true
+                            flowPhase = .complete
                         }
                     }
                 }
@@ -499,27 +344,20 @@ struct RevealView: View {
             }
         }
     }
-    
-    private func addReaction(_ emoji: String, to photoId: String) {
-        // Get current user ID (for now, use a placeholder)
-        let userId = supabaseManager.currentUser?.id.uuidString ?? "anonymous"
-        
-        // Update local state
-        if photoReactions[photoId] == nil {
-            photoReactions[photoId] = [:]
-        }
-        photoReactions[photoId]?[userId] = emoji
-        
-        // Hide picker after selection
-        withAnimation {
-            showReactionPicker = false
-        }
-        
-        // TODO: Sync to Supabase
-        // For now, reactions are local only
-        // Will persist to database once we add the update method
-        
-        print("✨ Added reaction \(emoji) to photo \(photoId)")
+
+    private func handleLike(_ photo: PhotoData) {
+        HapticsManager.shared.light()
+        print("Liked photo: \(photo.id)")
+    }
+
+    private func handleSave(_ photo: PhotoData) {
+        HapticsManager.shared.light()
+        print("Saved photo: \(photo.id)")
+    }
+
+    private func handleShare(_ photo: PhotoData) {
+        HapticsManager.shared.light()
+        print("Shared photo: \(photo.id)")
     }
 }
 
