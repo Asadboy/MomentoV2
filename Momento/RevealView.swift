@@ -8,6 +8,13 @@
 import SwiftUI
 import Supabase
 
+/// Reveal flow phases
+enum RevealFlowPhase {
+    case preReveal      // Stats + "Reveal" button
+    case viewing        // Photo carousel
+    case complete       // "That was the night."
+}
+
 struct RevealView: View {
     let event: Event
     @Environment(\.dismiss) var dismiss
@@ -26,7 +33,10 @@ struct RevealView: View {
     @State private var earnedKeepsake: EarnedKeepsake?
     @State private var showKeepsakeReveal = false
     @State private var showProfile = false
-    
+    @State private var flowPhase: RevealFlowPhase = .preReveal
+    @State private var showButtons = false  // For 2-second delay
+    @State private var buttonTimer: Timer?
+
     var body: some View {
         ZStack {
             // Background gradient
