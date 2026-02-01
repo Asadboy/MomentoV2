@@ -21,6 +21,8 @@ struct RevealCardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            Spacer(minLength: 16)
+
             // Photo area
             ZStack {
                 // Actual photo (always present, hidden by overlay when unrevealed)
@@ -31,7 +33,6 @@ struct RevealCardView: View {
                     unrevealedOverlay
                         .transition(.opacity)
                 }
-
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -39,40 +40,51 @@ struct RevealCardView: View {
                 revealPhoto()
             }
 
-            // Metadata + action bar (shows after reveal)
-            if showButtons {
-                VStack(spacing: 12) {
-                    // Username and time
-                    HStack {
-                        if let name = photo.photographerName {
-                            Text("@\(name)")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                        }
-                        Text("·")
-                            .opacity(0.5)
-                        Text(formatTime(photo.capturedAt))
+            // Metadata + action bar - always reserve space, fade in content
+            VStack(spacing: 12) {
+                // Username and time
+                HStack {
+                    if let name = photo.photographerName {
+                        Text("@\(name)")
                             .font(.subheadline)
-                        Spacer()
+                            .fontWeight(.medium)
                     }
-                    .foregroundColor(.white.opacity(0.7))
-
-                    // Action buttons
-                    actionBar
+                    Text("·")
+                        .opacity(0.5)
+                    Text(formatTime(photo.capturedAt))
+                        .font(.subheadline)
+                    Spacer()
                 }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                .foregroundColor(.white.opacity(0.7))
+
+                // Action buttons
+                actionBar
             }
+            .padding(.top, 12)
+            .opacity(showButtons ? 1 : 0)
+
+            Spacer(minLength: 16)
         }
         .padding(.horizontal, 16)
         .task {
             await loadImage()
-            // If already revealed (e.g., liked photo), show buttons immediately
+        }
+        .onAppear {
+            // Reset or restore button state when card becomes visible
             if isRevealed {
-                showButtons = true
+                // Already revealed - show buttons after brief delay for smooth appearance
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(.easeIn(duration: 0.2)) {
+                        showButtons = true
+                    }
+                }
+            } else {
+                showButtons = false
             }
         }
         .onDisappear {
             buttonTimer?.invalidate()
+            buttonTimer = nil
         }
     }
 
@@ -101,30 +113,18 @@ struct RevealCardView: View {
     }
 
     private var unrevealedOverlay: some View {
-        ZStack {
-            // Film grain texture (using noise pattern)
-            Canvas { context, size in
-                for _ in 0..<2000 {
-                    let x = CGFloat.random(in: 0..<size.width)
-                    let y = CGFloat.random(in: 0..<size.height)
-                    let gray = CGFloat.random(in: 0.1...0.25)
-                    context.fill(
-                        Path(ellipseIn: CGRect(x: x, y: y, width: 2, height: 2)),
-                        with: .color(Color(white: gray))
-                    )
+        // Solid dark overlay with centered tap hint
+        Rectangle()
+            .fill(Color(white: 0.12))
+            .overlay {
+                VStack(spacing: 8) {
+                    Image(systemName: "hand.tap")
+                        .font(.system(size: 32))
+                    Text("Tap to reveal")
+                        .font(.subheadline)
                 }
+                .foregroundColor(.white.opacity(0.6))
             }
-            .background(Color(white: 0.12))
-
-            // Tap hint
-            VStack(spacing: 8) {
-                Image(systemName: "hand.tap")
-                    .font(.system(size: 32))
-                Text("Tap to reveal")
-                    .font(.subheadline)
-            }
-            .foregroundColor(.white.opacity(0.6))
-        }
     }
 
     private var actionBar: some View {
@@ -181,6 +181,9 @@ struct RevealCardView: View {
     private func startButtonTimer() {
         showButtons = false
         buttonTimer?.invalidate()
+        buttonTimer = nil
+
+        // Schedule timer on main run loop
         buttonTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
             withAnimation(.easeIn(duration: 0.3)) {
                 showButtons = true
