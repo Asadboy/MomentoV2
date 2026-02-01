@@ -348,49 +348,75 @@ struct FeedRevealView: View {
     }
 
     private var pagedPhotoView: some View {
-        VStack(spacing: 0) {
-            // Photo carousel - one at a time
-            TabView(selection: $currentPhotoIndex) {
-                ForEach(viewModel.photos.indices, id: \.self) { index in
-                    let photo = viewModel.photos[index]
-                    RevealCardView(
-                        photo: photo,
-                        isRevealed: Binding(
-                            get: { viewModel.isRevealed(photo.id) },
-                            set: { viewModel.setRevealed(photo.id, $0) }
-                        ),
-                        isLiked: Binding(
-                            get: { viewModel.isLiked(photo.id) },
-                            set: { viewModel.setLiked(photo.id, $0) }
-                        ),
-                        onDownload: { downloadPhoto(photo) }
-                    )
-                    .tag(index)
-                    .onAppear {
-                        viewModel.visiblePhotoIndex = index
-                        viewModel.loadMoreIfNeeded(currentPhoto: photo)
-                    }
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .onChange(of: currentPhotoIndex) { _, newIndex in
-                // Check if at last photo and should show finish
-                if newIndex >= viewModel.photos.count - 1 && !viewModel.isLoadingMore {
-                    // Could auto-advance to complete after last photo
-                }
-            }
-            // Detect swipe past last photo
-            .gesture(
-                DragGesture()
-                    .onEnded { gesture in
-                        if currentPhotoIndex == viewModel.photos.count - 1 && gesture.translation.width < -50 {
-                            HapticsManager.shared.celebration()
-                            withAnimation(.easeInOut(duration: 0.5)) {
-                                flowPhase = .complete
-                            }
+        GeometryReader { geometry in
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.photos.indices, id: \.self) { index in
+                        let photo = viewModel.photos[index]
+                        RevealCardView(
+                            photo: photo,
+                            isRevealed: Binding(
+                                get: { viewModel.isRevealed(photo.id) },
+                                set: { viewModel.setRevealed(photo.id, $0) }
+                            ),
+                            isLiked: Binding(
+                                get: { viewModel.isLiked(photo.id) },
+                                set: { viewModel.setLiked(photo.id, $0) }
+                            ),
+                            onDownload: { downloadPhoto(photo) }
+                        )
+                        .frame(height: geometry.size.height)
+                        .id(index)
+                        .onAppear {
+                            currentPhotoIndex = index
+                            viewModel.visiblePhotoIndex = index
+                            viewModel.loadMoreIfNeeded(currentPhoto: photo)
                         }
                     }
-            )
+
+                    // Completion card at end
+                    completionCard
+                        .frame(height: geometry.size.height)
+                }
+            }
+            .scrollTargetBehavior(.paging)
+        }
+    }
+
+    private var completionCard: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Text("That was the night.")
+                .font(.system(size: 28, weight: .medium, design: .serif))
+                .foregroundColor(.white)
+
+            Text("\(viewModel.likedCount) photos liked")
+                .foregroundColor(.white.opacity(0.6))
+
+            Button {
+                HapticsManager.shared.celebration()
+                Task {
+                    await viewModel.saveLikedPhotos()
+                    AnalyticsManager.shared.track(.revealCompleted, properties: [
+                        "event_id": event.id,
+                        "photos_revealed": viewModel.photos.count,
+                        "photos_liked": viewModel.likedCount
+                    ])
+                    onComplete()
+                }
+            } label: {
+                Text("View Liked Photos")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.white)
+                    .cornerRadius(28)
+            }
+            .padding(.horizontal, 40)
+
+            Spacer()
         }
     }
 

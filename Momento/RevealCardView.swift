@@ -32,47 +32,35 @@ struct RevealCardView: View {
                         .transition(.opacity)
                 }
 
-                // Metadata overlay (shows when revealed)
-                if isRevealed {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                if let name = photo.photographerName {
-                                    Text("@\(name)")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                }
-                                Text(formatTime(photo.capturedAt))
-                                    .font(.caption)
-                                    .opacity(0.8)
-                            }
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(
-                            LinearGradient(
-                                colors: [.clear, .black.opacity(0.6)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                    }
-                    .transition(.opacity)
-                }
             }
-            .frame(maxWidth: .infinity)
-            .aspectRatio(3/4, contentMode: .fit)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .onTapGesture {
                 revealPhoto()
             }
 
-            // Action bar (shows after delay when revealed)
+            // Metadata + action bar (shows after reveal)
             if showButtons {
-                actionBar
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                VStack(spacing: 12) {
+                    // Username and time
+                    HStack {
+                        if let name = photo.photographerName {
+                            Text("@\(name)")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        Text("·")
+                            .opacity(0.5)
+                        Text(formatTime(photo.capturedAt))
+                            .font(.subheadline)
+                        Spacer()
+                    }
+                    .foregroundColor(.white.opacity(0.7))
+
+                    // Action buttons
+                    actionBar
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
         .padding(.horizontal, 16)
