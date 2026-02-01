@@ -80,7 +80,13 @@ class OfflineSyncManager: ObservableObject {
         
         queue.append(queuedPhoto)
         saveQueue()
-        
+
+        // Track photo captured event
+        AnalyticsManager.shared.track(.photoCaptured, properties: [
+            "event_id": eventId.uuidString,
+            "user_photo_count": queue.filter { $0.eventId == eventId }.count
+        ])
+
         // Fire-and-forget: Upload THIS photo immediately (don't wait for queue)
         Task.detached(priority: .userInitiated) {
             await self.uploadQueuedPhoto(queuedPhoto)

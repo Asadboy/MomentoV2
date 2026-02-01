@@ -17,12 +17,17 @@ struct CreateMomentoFlow: View {
     // Form data
     @State private var momentoName = ""
     @State private var startsAt = Date().addingTimeInterval(3600) // 1 hour from now
+    @State private var endsAt = Date().addingTimeInterval(13 * 3600) // 12 hours after start
+    @State private var releaseAt = Date().addingTimeInterval(25 * 3600) // 24 hours after start
+    @State private var selectedFilter: PhotoFilter = .br
+    @State private var isPremiumEnabled = false
     @State private var joinCode = ""
     
     // State
     @State private var isCreating = false
     @State private var createdEvent: Event?
     @State private var errorMessage: String?
+    @State private var hostName: String = ""
     
     /// Callback when evento is created
     var onEventCreated: ((Event) -> Void)?
@@ -44,9 +49,13 @@ struct CreateMomentoFlow: View {
                     ))
                     
                 case 2:
-                    CreateStep2TimesView(
-                        momentoName: momentoName,
+                    CreateStep2ConfigureView(
+                        eventName: momentoName,
                         startsAt: $startsAt,
+                        endsAt: $endsAt,
+                        releaseAt: $releaseAt,
+                        selectedFilter: $selectedFilter,
+                        isPremiumEnabled: $isPremiumEnabled,
                         onNext: { createMomento() },
                         onBack: { goToStep(1) }
                     )
@@ -60,6 +69,8 @@ struct CreateMomentoFlow: View {
                         momentoName: momentoName,
                         joinCode: joinCode,
                         startsAt: startsAt,
+                        hostName: hostName,
+                        isPremium: isPremiumEnabled,
                         onDone: { finishFlow() }
                     )
                     .transition(.asymmetric(
@@ -94,6 +105,27 @@ struct CreateMomentoFlow: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .task {
+            await fetchHostName()
+        }
+    }
+
+    // MARK: - Fetch Host Name
+
+    private func fetchHostName() async {
+        guard let userId = supabaseManager.currentUser?.id else { return }
+
+        do {
+            let profile = try await supabaseManager.getUserProfile(userId: userId)
+            await MainActor.run {
+                hostName = profile.displayName ?? profile.username
+            }
+        } catch {
+            print("[CreateMomento] Failed to fetch host name: \(error)")
+            await MainActor.run {
+                hostName = "Host"
+            }
+        }
     }
     
     // MARK: - Navigation
@@ -124,7 +156,15 @@ struct CreateMomentoFlow: View {
                 )
                 
                 let event = Event(fromSupabase: eventModel)
-                
+
+                // Track momento creation
+                AnalyticsManager.shared.track(.momentoCreated, properties: [
+                    "event_id": event.id,
+                    "event_name": event.title,
+                    "is_premium": isPremiumEnabled,
+                    "filter": selectedFilter.rawValue
+                ])
+
                 await MainActor.run {
                     createdEvent = event
                     isCreating = false

@@ -79,6 +79,12 @@ class FeedRevealViewModel: ObservableObject {
             }
 
             isLoading = false
+
+            // Track reveal started
+            AnalyticsManager.shared.track(.revealStarted, properties: [
+                "event_id": eventId,
+                "photos_to_reveal": photos.count
+            ])
         } catch {
             print("❌ Failed to load photos: \(error)")
             isLoading = false
@@ -283,6 +289,14 @@ struct FeedRevealView: View {
             Button {
                 Task {
                     await viewModel.saveLikedPhotos()
+
+                    // Track reveal completed
+                    AnalyticsManager.shared.track(.revealCompleted, properties: [
+                        "event_id": event.id,
+                        "photos_revealed": viewModel.photos.count,
+                        "photos_liked": viewModel.likedCount
+                    ])
+
                     onComplete()
                 }
             } label: {
@@ -331,6 +345,12 @@ struct FeedRevealView: View {
                     HapticsManager.shared.success()
                     saveAlertMessage = "Saved to camera roll"
                     showingSaveAlert = true
+
+                    // Track photo download
+                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                        "event_id": event.id,
+                        "has_watermark": true
+                    ])
                 }
             } catch {
                 await MainActor.run {

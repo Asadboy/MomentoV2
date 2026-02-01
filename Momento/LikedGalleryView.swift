@@ -68,6 +68,7 @@ struct LikedGalleryView: View {
                 GalleryDetailView(
                     photo: photo,
                     isArchived: selectedTab == .archive,
+                    eventId: event.id,
                     onMoveToLiked: {
                         moveToLiked(photo)
                     },
@@ -241,6 +242,12 @@ struct LikedGalleryView: View {
                     HapticsManager.shared.success()
                     saveAlertMessage = "Saved to camera roll"
                     showingSaveAlert = true
+
+                    // Track photo download
+                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                        "event_id": event.id,
+                        "has_watermark": true
+                    ])
                 }
             } catch {
                 await MainActor.run {
@@ -285,6 +292,15 @@ struct LikedGalleryView: View {
                 HapticsManager.shared.success()
                 saveAlertMessage = "Saved \(savedCount) of \(likedPhotos.count) photos"
                 showingSaveAlert = true
+
+                // Track each downloaded photo
+                for _ in 0..<savedCount {
+                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                        "event_id": event.id,
+                        "has_watermark": true,
+                        "source": "batch_download"
+                    ])
+                }
             }
         }
     }
@@ -332,10 +348,13 @@ struct GalleryThumbnail: View {
 struct GalleryDetailView: View {
     let photo: PhotoData
     let isArchived: Bool
+    let eventId: String
     let onMoveToLiked: () -> Void
     let onSave: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
 
     var body: some View {
         NavigationStack {
@@ -408,6 +427,19 @@ struct GalleryDetailView: View {
                             .foregroundColor(.white)
                             .frame(width: 80)
                         }
+
+                        Button {
+                            loadImageForSharing()
+                        } label: {
+                            VStack(spacing: 4) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 24))
+                                Text("Share")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.white)
+                            .frame(width: 80)
+                        }
                     }
                     .padding(.bottom, 32)
                 }
@@ -425,6 +457,29 @@ struct GalleryDetailView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showShareSheet) {
+            if let image = shareImage {
+                PhotoShareSheet(image: image, eventId: eventId)
+            }
+        }
+    }
+
+    private func loadImageForSharing() {
+        guard let url = photo.url else { return }
+
+        Task {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                guard let image = UIImage(data: data) else { return }
+
+                await MainActor.run {
+                    shareImage = image
+                    showShareSheet = true
+                }
+            } catch {
+                print("Failed to load image for sharing: \(error)")
+            }
+        }
     }
 
     private func formatFilmDate(_ date: Date) -> String {
@@ -432,6 +487,30 @@ struct GalleryDetailView: View {
         formatter.dateFormat = "dd MMM yyyy  HH:mm"
         return formatter.string(from: date).uppercased()
     }
+}
+
+// MARK: - Photo Share Sheet
+
+struct PhotoShareSheet: UIViewControllerRepresentable {
+    let image: UIImage
+    let eventId: String
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        activityVC.completionWithItemsHandler = { activityType, completed, _, _ in
+            if completed {
+                let destination = AnalyticsManager.mapActivityToDestination(activityType)
+                AnalyticsManager.shared.track(.photoShared, properties: [
+                    "event_id": eventId,
+                    "destination": destination,
+                    "has_watermark": true
+                ])
+            }
+        }
+        return activityVC
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {
