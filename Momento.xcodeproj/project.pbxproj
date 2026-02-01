@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1DBAA07BF678BD1C17796F29 /* CreateStep2ConfigureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */; };
 		C30858FD2F2E3A1800E11B8C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = C30858FC2F2E3A1800E11B8C /* PostHog */; };
 		C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */; };
 		C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859002F2E3FC600E11B8C /* PostHogConfig.swift */; };
@@ -39,7 +40,6 @@
 		C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B92EF8200000000002 /* CreateStep1NameView.swift */; };
 		C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */; };
 		C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */; };
-		C36446BE2EF8200000000005 /* CreateStep2ConfigureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BF2EF8200000000005 /* CreateStep2ConfigureView.swift */; };
 		C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B32F26C55A00F905AE /* ProfileView.swift */; };
 		C372E3BA2F26C55A00F905AE /* KeepsakeDetailModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B42F26C55A00F905AE /* KeepsakeDetailModal.swift */; };
 		C372E3BB2F26C55A00F905AE /* KeepsakeRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B52F26C55A00F905AE /* KeepsakeRevealView.swift */; };
@@ -90,6 +90,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CreateStep2ConfigureView.swift; sourceTree = "<group>"; };
 		C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AnalyticsManager.swift; path = Services/AnalyticsManager.swift; sourceTree = "<group>"; };
 		C30859002F2E3FC600E11B8C /* PostHogConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostHogConfig.swift; path = Config/PostHogConfig.swift; sourceTree = "<group>"; };
 		C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = InviteCardRenderer.swift; path = Components/InviteCardRenderer.swift; sourceTree = "<group>"; };
@@ -126,7 +127,6 @@
 		C36446B92EF8200000000002 /* CreateStep1NameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep1NameView.swift; sourceTree = "<group>"; };
 		C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2TimesView.swift; sourceTree = "<group>"; };
 		C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep3ShareView.swift; sourceTree = "<group>"; };
-		C36446BF2EF8200000000005 /* CreateStep2ConfigureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2ConfigureView.swift; sourceTree = "<group>"; };
 		C372E3B32F26C55A00F905AE /* ProfileView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProfileView.swift; path = Profile/ProfileView.swift; sourceTree = "<group>"; };
 		C372E3B42F26C55A00F905AE /* KeepsakeDetailModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeepsakeDetailModal.swift; path = Profile/KeepsakeDetailModal.swift; sourceTree = "<group>"; };
 		C372E3B52F26C55A00F905AE /* KeepsakeRevealView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeepsakeRevealView.swift; path = Profile/KeepsakeRevealView.swift; sourceTree = "<group>"; };
@@ -294,9 +294,9 @@
 			children = (
 				C36446B72EF8200000000001 /* CreateMomentoFlow.swift */,
 				C36446B92EF8200000000002 /* CreateStep1NameView.swift */,
-				C36446BF2EF8200000000005 /* CreateStep2ConfigureView.swift */,
 				C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */,
 				C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */,
+				A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */,
 			);
 			path = CreateMomento;
 			sourceTree = "<group>";
@@ -501,7 +501,7 @@
 				C3C6D43C2F2029A400847D38 /* FeedRevealView.swift in Sources */,
 				C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */,
 				C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */,
-				C36446BE2EF8200000000005 /* CreateStep2ConfigureView.swift in Sources */,
+				1DBAA07BF678BD1C17796F29 /* CreateStep2ConfigureView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
