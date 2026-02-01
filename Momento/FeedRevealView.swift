@@ -149,6 +149,13 @@ class FeedRevealViewModel: ObservableObject {
     }
 }
 
+/// Reveal flow phases
+enum FeedRevealPhase {
+    case preReveal      // Stats + "Reveal" button
+    case viewing        // Photo feed
+    case complete       // "That was the night."
+}
+
 // MARK: - Main View
 
 struct FeedRevealView: View {
@@ -158,6 +165,11 @@ struct FeedRevealView: View {
     @StateObject private var viewModel = FeedRevealViewModel()
     @State private var showingSaveAlert = false
     @State private var saveAlertMessage = ""
+    @State private var flowPhase: FeedRevealPhase = .preReveal
+
+    private var uniqueContributorCount: Int {
+        Set(viewModel.photos.compactMap { $0.photographerName }).count
+    }
 
     var body: some View {
         ZStack {
@@ -168,9 +180,21 @@ struct FeedRevealView: View {
             } else if viewModel.photos.isEmpty {
                 emptyView
             } else {
-                VStack(spacing: 0) {
-                    progressHeader
-                    scrollableFeed
+                switch flowPhase {
+                case .preReveal:
+                    preRevealScreen
+                        .transition(.opacity)
+
+                case .viewing:
+                    VStack(spacing: 0) {
+                        progressHeader
+                        scrollableFeed
+                    }
+                    .transition(.opacity)
+
+                case .complete:
+                    completeScreen
+                        .transition(.opacity)
                 }
             }
         }
@@ -210,6 +234,94 @@ struct FeedRevealView: View {
                 .font(.title2)
                 .foregroundColor(.white)
         }
+    }
+
+    private var preRevealScreen: some View {
+        VStack(spacing: 32) {
+            Spacer()
+
+            // Stats
+            VStack(spacing: 16) {
+                Text("\(viewModel.photos.count) photos")
+                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+
+                Text("\(uniqueContributorCount) people")
+                    .font(.system(size: 24, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+
+            // Ritual line
+            Text("Revealed together at \(formatRevealTime(event.releaseAt))")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.6))
+                .padding(.top, 8)
+
+            Spacer()
+
+            // Reveal button
+            Button {
+                HapticsManager.shared.soft()
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    flowPhase = .viewing
+                }
+            } label: {
+                Text("Reveal")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.black)
+                    .frame(width: 160, height: 56)
+                    .background(Color.white)
+                    .cornerRadius(28)
+            }
+            .padding(.bottom, 60)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var completeScreen: some View {
+        VStack(spacing: 40) {
+            Spacer()
+
+            // Closing message
+            Text("That was the night.")
+                .font(.system(size: 28, weight: .medium, design: .serif))
+                .foregroundColor(.white)
+
+            Spacer()
+
+            // Actions
+            VStack(spacing: 16) {
+                Button {
+                    Task {
+                        await viewModel.saveLikedPhotos()
+                        AnalyticsManager.shared.track(.revealCompleted, properties: [
+                            "event_id": event.id,
+                            "photos_revealed": viewModel.photos.count,
+                            "photos_liked": viewModel.likedCount
+                        ])
+                        onComplete()
+                    }
+                } label: {
+                    Text("View Liked Photos")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color.white)
+                        .cornerRadius(28)
+                }
+                .padding(.horizontal, 40)
+            }
+            .padding(.bottom, 40)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func formatRevealTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mma"
+        return formatter.string(from: date).lowercased()
     }
 
     private var progressHeader: some View {
@@ -275,32 +387,20 @@ struct FeedRevealView: View {
 
     private var completionSection: some View {
         VStack(spacing: 20) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundColor(.green)
-
-            Text("You've seen all \(event.photosTaken) photos!")
+            Text("End of photos")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.5))
 
             Text("\(viewModel.likedCount) photos liked")
                 .foregroundColor(.white.opacity(0.7))
 
             Button {
-                Task {
-                    await viewModel.saveLikedPhotos()
-
-                    // Track reveal completed
-                    AnalyticsManager.shared.track(.revealCompleted, properties: [
-                        "event_id": event.id,
-                        "photos_revealed": viewModel.photos.count,
-                        "photos_liked": viewModel.likedCount
-                    ])
-
-                    onComplete()
+                HapticsManager.shared.celebration()
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    flowPhase = .complete
                 }
             } label: {
-                Text("View Liked Photos")
+                Text("Finish")
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .padding(.horizontal, 32)

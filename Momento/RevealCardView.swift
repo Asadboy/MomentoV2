@@ -16,6 +16,8 @@ struct RevealCardView: View {
 
     @State private var loadedImage: UIImage?
     @State private var isLoadingImage = false
+    @State private var showButtons = false
+    @State private var buttonTimer: Timer?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,8 +39,8 @@ struct RevealCardView: View {
                 revealPhoto()
             }
 
-            // Action bar (only shows when revealed)
-            if isRevealed {
+            // Action bar (shows after delay when revealed)
+            if showButtons {
                 actionBar
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -46,6 +48,13 @@ struct RevealCardView: View {
         .padding(.horizontal, 16)
         .task {
             await loadImage()
+            // If already revealed (e.g., liked photo), show buttons immediately
+            if isRevealed {
+                showButtons = true
+            }
+        }
+        .onDisappear {
+            buttonTimer?.invalidate()
         }
     }
 
@@ -145,6 +154,19 @@ struct RevealCardView: View {
 
         withAnimation(.easeOut(duration: 0.3)) {
             isRevealed = true
+        }
+
+        // Start button delay timer
+        startButtonTimer()
+    }
+
+    private func startButtonTimer() {
+        showButtons = false
+        buttonTimer?.invalidate()
+        buttonTimer = Timer.scheduledTimer(withTimeInterval: 3.5, repeats: false) { _ in
+            withAnimation(.easeIn(duration: 0.3)) {
+                showButtons = true
+            }
         }
     }
 
