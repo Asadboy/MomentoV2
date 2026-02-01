@@ -167,6 +167,7 @@ struct FeedRevealView: View {
     @State private var saveAlertMessage = ""
     @State private var flowPhase: FeedRevealPhase = .preReveal
     @State private var currentPhotoIndex = 0
+    @State private var isScrollLocked = false
 
     private var uniqueContributorCount: Int {
         Set(viewModel.photos.compactMap { $0.photographerName }).count
@@ -363,7 +364,9 @@ struct FeedRevealView: View {
                                 get: { viewModel.isLiked(photo.id) },
                                 set: { viewModel.setLiked(photo.id, $0) }
                             ),
-                            onDownload: { downloadPhoto(photo) }
+                            onDownload: { downloadPhoto(photo) },
+                            onRevealStarted: { isScrollLocked = true },
+                            onButtonsVisible: { isScrollLocked = false }
                         )
                         .frame(height: geometry.size.height)
                         .id(index)
@@ -379,6 +382,7 @@ struct FeedRevealView: View {
                         .frame(height: geometry.size.height)
                 }
             }
+            .scrollDisabled(isScrollLocked)
             .scrollTargetBehavior(.paging)
         }
     }

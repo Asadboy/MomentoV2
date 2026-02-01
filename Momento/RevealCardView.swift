@@ -13,6 +13,8 @@ struct RevealCardView: View {
     @Binding var isRevealed: Bool
     @Binding var isLiked: Bool
     let onDownload: () -> Void
+    var onRevealStarted: (() -> Void)? = nil
+    var onButtonsVisible: (() -> Void)? = nil
 
     @State private var loadedImage: UIImage?
     @State private var isLoadingImage = false
@@ -72,12 +74,9 @@ struct RevealCardView: View {
         .onAppear {
             // Reset or restore button state when card becomes visible
             if isRevealed {
-                // Already revealed - show buttons after brief delay for smooth appearance
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    withAnimation(.easeIn(duration: 0.2)) {
-                        showButtons = true
-                    }
-                }
+                // Already revealed - show buttons immediately, unlock scroll
+                showButtons = true
+                onButtonsVisible?()
             } else {
                 showButtons = false
             }
@@ -169,6 +168,7 @@ struct RevealCardView: View {
         guard !isRevealed else { return }
 
         HapticsManager.shared.light()
+        onRevealStarted?()
 
         withAnimation(.easeOut(duration: 0.3)) {
             isRevealed = true
@@ -188,6 +188,7 @@ struct RevealCardView: View {
             withAnimation(.easeIn(duration: 0.3)) {
                 showButtons = true
             }
+            self.onButtonsVisible?()
         }
     }
 
