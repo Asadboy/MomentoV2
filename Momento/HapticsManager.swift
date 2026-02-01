@@ -87,7 +87,17 @@ class HapticsManager {
             self.medium()
         }
     }
-    
+
+    /// Reveal threshold pattern - ceremonial moment crossing
+    /// Soft pulse that marks the beginning of the reveal journey
+    func revealThreshold() {
+        if #available(iOS 13.0, *) {
+            soft()
+        } else {
+            light()
+        }
+    }
+
     /// Photo reveal pattern - builds anticipation
     /// Light → Medium → Success
     func photoReveal() {
