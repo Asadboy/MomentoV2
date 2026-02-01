@@ -33,7 +33,7 @@ struct RevealCardView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .aspectRatio(4/3, contentMode: .fit)
+            .aspectRatio(3/4, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .onTapGesture {
                 revealPhoto()
@@ -163,7 +163,7 @@ struct RevealCardView: View {
     private func startButtonTimer() {
         showButtons = false
         buttonTimer?.invalidate()
-        buttonTimer = Timer.scheduledTimer(withTimeInterval: 3.5, repeats: false) { _ in
+        buttonTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
             withAnimation(.easeIn(duration: 0.3)) {
                 showButtons = true
             }
