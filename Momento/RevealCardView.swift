@@ -31,6 +31,36 @@ struct RevealCardView: View {
                     unrevealedOverlay
                         .transition(.opacity)
                 }
+
+                // Metadata overlay (shows when revealed)
+                if isRevealed {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                if let name = photo.photographerName {
+                                    Text("@\(name)")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                }
+                                Text(formatTime(photo.capturedAt))
+                                    .font(.caption)
+                                    .opacity(0.8)
+                            }
+                            Spacer()
+                        }
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(
+                            LinearGradient(
+                                colors: [.clear, .black.opacity(0.6)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                    .transition(.opacity)
+                }
             }
             .frame(maxWidth: .infinity)
             .aspectRatio(3/4, contentMode: .fit)
@@ -168,6 +198,12 @@ struct RevealCardView: View {
                 showButtons = true
             }
         }
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mma"
+        return formatter.string(from: date).lowercased()
     }
 
     private func toggleLike() {

@@ -166,6 +166,7 @@ struct FeedRevealView: View {
     @State private var showingSaveAlert = false
     @State private var saveAlertMessage = ""
     @State private var flowPhase: FeedRevealPhase = .preReveal
+    @State private var currentPhotoIndex = 0
 
     private var uniqueContributorCount: Int {
         Set(viewModel.photos.compactMap { $0.photographerName }).count
@@ -188,7 +189,7 @@ struct FeedRevealView: View {
                 case .viewing:
                     VStack(spacing: 0) {
                         progressHeader
-                        scrollableFeed
+                        pagedPhotoView
                     }
                     .transition(.opacity)
 
@@ -240,13 +241,13 @@ struct FeedRevealView: View {
         VStack(spacing: 32) {
             Spacer()
 
-            // Stats
+            // Stats - use event totals, not loaded photos
             VStack(spacing: 16) {
-                Text("\(viewModel.photos.count) photos")
+                Text("\(event.photosTaken) photos")
                     .font(.system(size: 42, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("\(uniqueContributorCount) people")
+                Text("\(event.memberCount) people")
                     .font(.system(size: 24, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -327,7 +328,7 @@ struct FeedRevealView: View {
     private var progressHeader: some View {
         HStack {
             // Show current position out of total event photos
-            Text("\(viewModel.visiblePhotoIndex + 1) of \(event.photosTaken)")
+            Text("\(currentPhotoIndex + 1) of \(event.photosTaken)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
 
@@ -346,9 +347,10 @@ struct FeedRevealView: View {
         .background(Color.black.opacity(0.8))
     }
 
-    private var scrollableFeed: some View {
-        ScrollView {
-            LazyVStack(spacing: 24) {
+    private var pagedPhotoView: some View {
+        VStack(spacing: 0) {
+            // Photo carousel - one at a time
+            TabView(selection: $currentPhotoIndex) {
                 ForEach(viewModel.photos.indices, id: \.self) { index in
                     let photo = viewModel.photos[index]
                     RevealCardView(
@@ -363,25 +365,32 @@ struct FeedRevealView: View {
                         ),
                         onDownload: { downloadPhoto(photo) }
                     )
+                    .tag(index)
                     .onAppear {
                         viewModel.visiblePhotoIndex = index
-                        // Trigger prefetch when nearing end of loaded photos
                         viewModel.loadMoreIfNeeded(currentPhoto: photo)
                     }
                 }
-
-                // Loading indicator when fetching more
-                if viewModel.isLoadingMore {
-                    ProgressView()
-                        .tint(.white)
-                        .padding(.vertical, 20)
-                }
-
-                completionSection
-                    .padding(.top, 24)
-                    .padding(.bottom, 48)
             }
-            .padding(.vertical, 16)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .onChange(of: currentPhotoIndex) { _, newIndex in
+                // Check if at last photo and should show finish
+                if newIndex >= viewModel.photos.count - 1 && !viewModel.isLoadingMore {
+                    // Could auto-advance to complete after last photo
+                }
+            }
+            // Detect swipe past last photo
+            .gesture(
+                DragGesture()
+                    .onEnded { gesture in
+                        if currentPhotoIndex == viewModel.photos.count - 1 && gesture.translation.width < -50 {
+                            HapticsManager.shared.celebration()
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                flowPhase = .complete
+                            }
+                        }
+                    }
+            )
         }
     }
 
