@@ -3,4 +3,54 @@
    uuid = "5591CEFB-0E90-49B3-9C97-F65DC68B01E3"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "248D82D8-E3FA-489C-9F27-5BBAE02C6CD7"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Momento/CreateMomento/CreateMomentoFlow.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "14"
+            endingLineNumber = "14"
+            landmarkName = "CreateMomentoFlow"
+            landmarkType = "14">
+            <Locations>
+               <Location
+                  uuid = "248D82D8-E3FA-489C-9F27-5BBAE02C6CD7 - 60e6314ab440cfad"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "property wrapper backing initializer of Momento.CreateMomentoFlow.currentStep : Swift.Int"
+                  moduleName = "Momento"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/asad/Documents/Momento/Momento/CreateMomento/CreateMomentoFlow.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0"
+                  offsetFromSymbolStart = "20">
+               </Location>
+               <Location
+                  uuid = "248D82D8-E3FA-489C-9F27-5BBAE02C6CD7 - 61da8e5e9ae02b6b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Momento.CreateMomentoFlow.init(onEventCreated: Swift.Optional&lt;(Momento.Event) -&gt; ()&gt;) -&gt; Momento.CreateMomentoFlow"
+                  moduleName = "Momento"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/asad/Documents/Momento/Momento/CreateMomento/CreateMomentoFlow.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "15"
+                  endingLineNumber = "15"
+                  offsetFromSymbolStart = "524">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

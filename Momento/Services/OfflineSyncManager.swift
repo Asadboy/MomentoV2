@@ -49,7 +49,7 @@ class OfflineSyncManager: ObservableObject {
     @Published var activeUploads = 0
     
     private let supabaseManager = SupabaseManager.shared
-    private let kodakFilter = KodakGoldFilter()  // Film filter
+    private let filmFilter = BethanReynoldsFilter()  // Film filter
     private let maxRetries = 3
     private let maxConcurrentUploads = 3  // Upload 3 photos at once
     private let queueFileName = "upload_queue.json"
@@ -242,8 +242,8 @@ class OfflineSyncManager: ObservableObject {
         // Step 1: Resize image to max 1200px on longest side
         let resizedImage = resizeImage(image, maxDimension: 1200)
         
-        // Step 2: Apply Kodak Gold 35mm film filter 🎞️
-        let filteredImage = kodakFilter.apply(to: resizedImage)
+        // Step 2: Apply film filter
+        let filteredImage = filmFilter.apply(to: resizedImage)
         
         // Step 3: Compress to 0.5 quality (~150-300KB)
         guard let imageData = filteredImage.jpegData(compressionQuality: 0.5) else {
