@@ -1,7 +1,7 @@
 # Database Schema Rework Plan
 
 **Date:** 2026-02-02
-**Status:** In Progress - Awaiting New Schema Proposal
+**Status:** SUPERSEDED - See `Docs/Momento-Backend-Stack.md` for final schema and implementation plan
 
 ## Context
 
