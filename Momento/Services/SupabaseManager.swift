@@ -324,12 +324,9 @@ class SupabaseManager: ObservableObject {
         
         // Auto-join the creator
         let member = EventMember(
-            id: UUID(),
             eventId: event.id,
             userId: userId,
-            joinedAt: Date(),
-            invitedBy: nil,
-            role: "creator"
+            joinedAt: Date()
         )
         
         try await client
@@ -366,12 +363,9 @@ class SupabaseManager: ObservableObject {
 
         // Join the event
         let member = EventMember(
-            id: UUID(),
             eventId: event.id,
             userId: userId,
-            joinedAt: Date(),
-            invitedBy: nil,
-            role: "member"
+            joinedAt: Date()
         )
 
         try await client
@@ -1229,21 +1223,15 @@ struct EventModel: Codable, Identifiable {
     }
 }
 
-struct EventMember: Codable, Identifiable {
-    let id: UUID
+struct EventMember: Codable {
     let eventId: UUID
     let userId: UUID
     let joinedAt: Date
-    var invitedBy: UUID?
-    var role: String
-    
+
     enum CodingKeys: String, CodingKey {
-        case id
         case eventId = "event_id"
         case userId = "user_id"
         case joinedAt = "joined_at"
-        case invitedBy = "invited_by"
-        case role
     }
 }
 
