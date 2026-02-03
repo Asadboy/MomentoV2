@@ -833,133 +833,57 @@ class SupabaseManager: ObservableObject {
     /// Get all stats for the user's profile
     func getProfileStats() async throws -> ProfileStats {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw NSError(domain: "MomentoError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not logged in"])
         }
 
-        // Get user profile for created_at (user number calculation)
-        let profile = try await getUserProfile(userId: userId)
-
-        // 1. Moments captured (photos taken)
-        let photosResponse = try await client
-            .from("photos")
-            .select("id", head: true, count: .exact)
+        // Events joined
+        let eventsJoined = try await client
+            .from("event_members")
+            .select("*", head: true, count: .exact)
             .eq("user_id", value: userId.uuidString)
             .execute()
-        let momentsCaptured = photosResponse.count ?? 0
+            .count ?? 0
 
-        // 2. Photos loved (likes)
-        let likedResponse = try await client
+        // Photos taken
+        let photosTaken = try await client
+            .from("photos")
+            .select("*", head: true, count: .exact)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .count ?? 0
+
+        // Photos liked
+        let photosLiked = try await client
             .from("photo_likes")
-            .select("photo_id", head: true, count: .exact)
+            .select("*", head: true, count: .exact)
             .eq("user_id", value: userId.uuidString)
             .execute()
-        let photosLoved = likedResponse.count ?? 0
+            .count ?? 0
 
-        // 3. Momentos shared (events joined)
-        let eventsResponse = try await client
-            .from("event_members")
-            .select("id", head: true, count: .exact)
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-        let momentosShared = eventsResponse.count ?? 0
-
-        // 4. First Momento date
-        let firstEventMembers: [EventMember] = try await client
-            .from("event_members")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .order("joined_at", ascending: true)
-            .limit(1)
-            .execute()
-            .value
-        let firstMomentoDate = firstEventMembers.first?.joinedAt
-
-        // 5. Friends captured with (unique co-attendees)
-        let myEventMembers: [EventMember] = try await client
-            .from("event_members")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-            .value
-
-        let myEventIds = myEventMembers.map { $0.eventId.uuidString }
-        var friendsSet = Set<String>()
-
-        if !myEventIds.isEmpty {
-            let allMembers: [EventMember] = try await client
-                .from("event_members")
-                .select()
-                .in("event_id", values: myEventIds)
-                .execute()
-                .value
-
-            for member in allMembers where member.userId != userId {
-                friendsSet.insert(member.userId.uuidString)
-            }
-        }
-        let friendsCapturedWith = friendsSet.count
-
-        // 6. Most active Momento (event with most photos by user)
-        let userPhotos: [PhotoModel] = try await client
-            .from("photos")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-            .value
-
-        var photoCountByEvent: [UUID: Int] = [:]
-        for photo in userPhotos {
-            photoCountByEvent[photo.eventId, default: 0] += 1
-        }
-
-        var mostActiveMomento: String? = nil
-        if let topEventId = photoCountByEvent.max(by: { $0.value < $1.value })?.key {
-            let events: [EventModel] = try await client
-                .from("events")
-                .select()
-                .eq("id", value: topEventId.uuidString)
-                .execute()
-                .value
-            mostActiveMomento = events.first?.name
-        }
-
-        // 7. Most recent Momento
-        let recentEventMembers: [EventMember] = try await client
-            .from("event_members")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .order("joined_at", ascending: false)
-            .limit(1)
-            .execute()
-            .value
-
-        var mostRecentMomento: String? = nil
-        if let recentMember = recentEventMembers.first {
-            let events: [EventModel] = try await client
-                .from("events")
-                .select()
-                .eq("id", value: recentMember.eventId.uuidString)
-                .execute()
-                .value
-            mostRecentMomento = events.first?.name
-        }
-
-        // 8. User number (count of profiles created before this user)
-        let userNumberResponse = try await client
+        // User number
+        let profile = try await client
             .from("profiles")
-            .select("id", head: true, count: .exact)
-            .lte("created_at", value: ISO8601DateFormatter().string(from: profile.createdAt))
+            .select("created_at")
+            .eq("id", value: userId.uuidString)
+            .single()
             .execute()
-        let userNumber = userNumberResponse.count ?? 1
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let profileData = try decoder.decode([String: String].self, from: profile.data)
+        let createdAt = profileData["created_at"] ?? ""
+
+        let userNumber = try await client
+            .from("profiles")
+            .select("*", head: true, count: .exact)
+            .lte("created_at", value: createdAt)
+            .execute()
+            .count ?? 0
 
         return ProfileStats(
-            momentsCaptured: momentsCaptured,
-            photosLoved: photosLoved,
-            momentosShared: momentosShared,
-            firstMomentoDate: firstMomentoDate,
-            friendsCapturedWith: friendsCapturedWith,
-            mostActiveMomento: mostActiveMomento,
-            mostRecentMomento: mostRecentMomento,
+            eventsJoined: eventsJoined,
+            photosTaken: photosTaken,
+            photosLiked: photosLiked,
             userNumber: userNumber
         )
     }
@@ -1072,17 +996,8 @@ struct PhotoLike: Codable {
 
 /// User profile statistics for display
 struct ProfileStats {
-    // Activity stats
-    let momentsCaptured: Int
-    let photosLoved: Int
-    let momentosShared: Int
-
-    // Journey stats
-    let firstMomentoDate: Date?
-    let friendsCapturedWith: Int
-    let mostActiveMomento: String?
-    let mostRecentMomento: String?
-
-    // Identity
+    let eventsJoined: Int
+    let photosTaken: Int
+    let photosLiked: Int
     let userNumber: Int
 }

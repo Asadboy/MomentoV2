@@ -169,14 +169,6 @@ struct ProfileView: View {
                 .tracking(1.2)
 
             StatsGridView(stats: stats)
-
-            Text("JOURNEY")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white.opacity(0.3))
-                .tracking(1.2)
-                .padding(.top, 6)
-
-            JourneyStatsView(stats: stats)
         }
     }
 
