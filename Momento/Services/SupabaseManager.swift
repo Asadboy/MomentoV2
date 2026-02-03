@@ -548,9 +548,11 @@ class SupabaseManager: ObservableObject {
             userId: userId,
             storagePath: fileName,
             capturedAt: Date(),
-            capturedByUsername: username,
-            isRevealed: false,
-            uploadStatus: "uploaded"
+            username: username,
+            width: nil,
+            height: nil,
+            uploadStatus: "uploaded",
+            isFlagged: false
         )
         
         try await client
@@ -587,15 +589,15 @@ class SupabaseManager: ObservableObject {
             let userId: UUID
             let storagePath: String
             let capturedAt: Date
-            let capturedByUsername: String?
-            
+            let username: String?
+
             enum CodingKeys: String, CodingKey {
                 case id
                 case eventId = "event_id"
                 case userId = "user_id"
                 case storagePath = "storage_path"
                 case capturedAt = "captured_at"
-                case capturedByUsername = "captured_by_username"
+                case username
             }
         }
         
@@ -620,10 +622,10 @@ class SupabaseManager: ObservableObject {
                 id: photo.id.uuidString,
                 url: signedURL,
                 capturedAt: photo.capturedAt,
-                photographerName: photo.capturedByUsername ?? "Unknown"
+                photographerName: photo.username ?? "Unknown"
             ))
         }
-        
+
         print("📸 Loaded \(photoDataArray.count) photos with signed URLs")
         return photoDataArray
     }
@@ -649,7 +651,7 @@ class SupabaseManager: ObservableObject {
             let userId: UUID
             let storagePath: String
             let capturedAt: Date
-            let capturedByUsername: String?
+            let username: String?
 
             enum CodingKeys: String, CodingKey {
                 case id
@@ -657,7 +659,7 @@ class SupabaseManager: ObservableObject {
                 case userId = "user_id"
                 case storagePath = "storage_path"
                 case capturedAt = "captured_at"
-                case capturedByUsername = "captured_by_username"
+                case username
             }
         }
 
@@ -686,7 +688,7 @@ class SupabaseManager: ObservableObject {
                         id: photo.id.uuidString,
                         url: signedURL,
                         capturedAt: photo.capturedAt,
-                        photographerName: photo.capturedByUsername ?? "Unknown"
+                        photographerName: photo.username ?? "Unknown"
                     )
                     return (index, photoData)
                 }
@@ -799,7 +801,7 @@ class SupabaseManager: ObservableObject {
                 id: photo.id.uuidString,
                 url: signedURL,
                 capturedAt: photo.capturedAt,
-                photographerName: photo.capturedByUsername ?? "Unknown"
+                photographerName: photo.username
             ))
         }
 
@@ -861,7 +863,7 @@ class SupabaseManager: ObservableObject {
                 id: photo.id.uuidString,
                 url: signedURL,
                 capturedAt: photo.capturedAt,
-                photographerName: photo.capturedByUsername ?? "Unknown"
+                photographerName: photo.username
             ))
         }
 
@@ -1241,19 +1243,23 @@ struct PhotoModel: Codable, Identifiable {
     let userId: UUID
     let storagePath: String
     let capturedAt: Date
-    var capturedByUsername: String?
-    var isRevealed: Bool
+    var username: String
+    var width: Int?
+    var height: Int?
     var uploadStatus: String
-    
+    var isFlagged: Bool
+
     enum CodingKeys: String, CodingKey {
         case id
         case eventId = "event_id"
         case userId = "user_id"
         case storagePath = "storage_path"
         case capturedAt = "captured_at"
-        case capturedByUsername = "captured_by_username"
-        case isRevealed = "is_revealed"
+        case username
+        case width
+        case height
         case uploadStatus = "upload_status"
+        case isFlagged = "is_flagged"
     }
 }
 
