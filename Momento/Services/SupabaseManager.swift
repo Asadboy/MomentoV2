@@ -500,10 +500,32 @@ class SupabaseManager: ObservableObject {
         print("✅ Left event")
     }
     
+    // MARK: - Event Counts (computed from related tables)
+
+    /// Get the number of members in an event (computed from event_members table)
+    func getEventMemberCount(eventId: UUID) async throws -> Int {
+        try await client
+            .from("event_members")
+            .select("*", head: true, count: .exact)
+            .eq("event_id", value: eventId.uuidString)
+            .execute()
+            .count ?? 0
+    }
+
+    /// Get the number of photos in an event (computed from photos table)
+    func getEventPhotoCount(eventId: UUID) async throws -> Int {
+        try await client
+            .from("photos")
+            .select("*", head: true, count: .exact)
+            .eq("event_id", value: eventId.uuidString)
+            .execute()
+            .count ?? 0
+    }
+
     // MARK: - Photo Management
-    
+
     /// Upload a photo to an event
-    func uploadPhoto(image: Data, eventId: UUID) async throws -> PhotoModel {
+    func uploadPhoto(image: Data, eventId: UUID, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
             print("❌ [uploadPhoto] User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
@@ -549,8 +571,8 @@ class SupabaseManager: ObservableObject {
             storagePath: fileName,
             capturedAt: Date(),
             username: username,
-            width: nil,
-            height: nil,
+            width: width,
+            height: height,
             uploadStatus: "uploaded",
             isFlagged: false
         )
