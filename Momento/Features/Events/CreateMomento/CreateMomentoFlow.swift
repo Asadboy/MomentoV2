@@ -55,7 +55,6 @@ struct CreateMomentoFlow: View {
                         endsAt: $endsAt,
                         releaseAt: $releaseAt,
                         selectedFilter: $selectedFilter,
-                        isPremiumEnabled: $isPremiumEnabled,
                         onNext: { createMomento() },
                         onBack: { goToStep(1) }
                     )

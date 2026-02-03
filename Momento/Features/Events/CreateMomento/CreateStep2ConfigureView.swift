@@ -6,27 +6,14 @@ struct CreateStep2ConfigureView: View {
     @Binding var endsAt: Date
     @Binding var releaseAt: Date
     @Binding var selectedFilter: PhotoFilter
-    @Binding var isPremiumEnabled: Bool
     let onNext: () -> Void
     let onBack: () -> Void
 
     // Accordion expansion states
     @State private var isStartsExpanded = false
-    @State private var isCaptureEndsExpanded = false
-    @State private var isRevealExpanded = false
     @State private var isFilterExpanded = false
-    @State private var isPremiumExpanded = false
 
-    private let premiumGold = Color(red: 0.85, green: 0.65, blue: 0.3)
     private let royalPurple = Color(red: 0.5, green: 0.0, blue: 0.8)
-
-    // Keywords that trigger auto-expand of premium row
-    private let specialKeywords = ["birthday", "bday", "wedding", "trip", "festival", "holiday", "hen", "stag", "reunion", "anniversary"]
-
-    private var shouldAutoExpandPremium: Bool {
-        let lowercaseName = eventName.lowercased()
-        return specialKeywords.contains { lowercaseName.contains($0) }
-    }
 
     var body: some View {
         ZStack {
@@ -73,10 +60,10 @@ struct CreateStep2ConfigureView: View {
                 .padding(.top, 24)
                 .padding(.bottom, 24)
 
-                // Accordion rows
+                // Rows
                 ScrollView {
                     VStack(spacing: 0) {
-                        // 1. Start
+                        // 1. Start - expandable with date picker
                         AccordionRow(
                             icon: "calendar",
                             title: "Start",
@@ -88,45 +75,21 @@ struct CreateStep2ConfigureView: View {
                                 .labelsHidden()
                         }
 
-                        // 2. Capture
-                        AccordionRow(
+                        // 2. Capture ends - non-expandable info row
+                        ConfigInfoRow(
                             icon: "camera",
-                            title: "Capture",
-                            subtitle: isPremiumEnabled ? formatDateTime(endsAt) : "12 hours after start",
-                            isExpanded: $isCaptureEndsExpanded
-                        ) {
-                            if isPremiumEnabled {
-                                DatePicker("", selection: $endsAt, in: startsAt..., displayedComponents: [.date, .hourAndMinute])
-                                    .datePickerStyle(.wheel)
-                                    .labelsHidden()
-                            } else {
-                                LockedSettingView(
-                                    calculatedTime: formatDateTime(startsAt.addingTimeInterval(12 * 3600)),
-                                    onPremiumTapped: scrollToPremium
-                                )
-                            }
-                        }
+                            title: "Capture ends",
+                            subtitle: formatDateTime(endsAt)
+                        )
 
-                        // 3. Reveal
-                        AccordionRow(
+                        // 3. Reveal - non-expandable info row
+                        ConfigInfoRow(
                             icon: "sparkles",
                             title: "Reveal",
-                            subtitle: isPremiumEnabled ? formatDateTime(releaseAt) : "12 hours after capture",
-                            isExpanded: $isRevealExpanded
-                        ) {
-                            if isPremiumEnabled {
-                                DatePicker("", selection: $releaseAt, in: endsAt..., displayedComponents: [.date, .hourAndMinute])
-                                    .datePickerStyle(.wheel)
-                                    .labelsHidden()
-                            } else {
-                                LockedSettingView(
-                                    calculatedTime: formatDateTime(startsAt.addingTimeInterval(24 * 3600)),
-                                    onPremiumTapped: scrollToPremium
-                                )
-                            }
-                        }
+                            subtitle: formatDateTime(releaseAt)
+                        )
 
-                        // 4. Filter
+                        // 4. Filter - expandable with filter picker
                         AccordionRow(
                             icon: "camera.filters",
                             title: "Filter",
@@ -134,42 +97,6 @@ struct CreateStep2ConfigureView: View {
                             isExpanded: $isFilterExpanded
                         ) {
                             FilterPickerView(selectedFilter: $selectedFilter)
-                        }
-
-                        // 5. Premium
-                        AccordionRow(
-                            icon: "crown",
-                            title: "Premium",
-                            subtitle: isPremiumEnabled ? "Enabled" : "Off",
-                            isExpanded: $isPremiumExpanded
-                        ) {
-                            PremiumRowView(
-                                isPremiumEnabled: $isPremiumEnabled,
-                                onEnableTapped: {
-                                    isPremiumEnabled.toggle()
-                                    if isPremiumEnabled {
-                                        AnalyticsManager.shared.track(.premiumEnabled, properties: [
-                                            "event_name": eventName
-                                        ])
-                                    }
-                                }
-                            )
-                        }
-                        .onAppear {
-                            // Track when premium row is viewed
-                            AnalyticsManager.shared.track(.premiumRowViewed, properties: [
-                                "event_name": eventName,
-                                "is_special_keyword": shouldAutoExpandPremium
-                            ])
-
-                            // Auto-expand for special events
-                            if shouldAutoExpandPremium {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    withAnimation {
-                                        isPremiumExpanded = true
-                                    }
-                                }
-                            }
                         }
                     }
                     .background(Color.white.opacity(0.03))
@@ -181,33 +108,21 @@ struct CreateStep2ConfigureView: View {
 
                 // Next button
                 Button(action: onNext) {
-                    HStack {
-                        Text("Next")
-                        if isPremiumEnabled {
-                            Text("• £7.99")
-                                .foregroundColor(premiumGold)
-                        }
-                    }
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        isPremiumEnabled
-                            ? premiumGold
-                            : royalPurple
-                    )
-                    .cornerRadius(14)
+                    Text("Next")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(royalPurple)
+                        .cornerRadius(14)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 40)
             }
         }
         .onChange(of: startsAt) { _, newValue in
-            if !isPremiumEnabled {
-                endsAt = newValue.addingTimeInterval(12 * 3600)
-                releaseAt = newValue.addingTimeInterval(24 * 3600)
-            }
+            endsAt = newValue.addingTimeInterval(12 * 3600)
+            releaseAt = newValue.addingTimeInterval(24 * 3600)
         }
     }
 
@@ -216,14 +131,36 @@ struct CreateStep2ConfigureView: View {
         formatter.dateFormat = "EEE d MMM • h:mm a"
         return formatter.string(from: date)
     }
+}
 
-    private func scrollToPremium() {
-        withAnimation(.spring(response: 0.3)) {
-            isPremiumExpanded = true
-            isCaptureEndsExpanded = false
-            isRevealExpanded = false
+// MARK: - Non-expandable info row (matches AccordionRow header style without chevron or tap)
+
+private struct ConfigInfoRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.white.opacity(0.8))
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                Text(subtitle)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+            Spacer()
         }
-        HapticsManager.shared.light()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.white.opacity(0.05))
     }
 }
 
@@ -234,7 +171,6 @@ struct CreateStep2ConfigureView: View {
         endsAt: .constant(Date().addingTimeInterval(12 * 3600)),
         releaseAt: .constant(Date().addingTimeInterval(24 * 3600)),
         selectedFilter: .constant(.br),
-        isPremiumEnabled: .constant(false),
         onNext: {},
         onBack: {}
     )
