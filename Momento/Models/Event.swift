@@ -55,6 +55,8 @@ struct Event: Identifiable, Hashable {
     var endsAt: Date
     var releaseAt: Date
     var isPremium: Bool
+    var memberCount: Int
+    var photoCount: Int
     var joinCode: String?
 
     init(
@@ -65,6 +67,8 @@ struct Event: Identifiable, Hashable {
         endsAt: Date,
         releaseAt: Date,
         isPremium: Bool = false,
+        memberCount: Int = 0,
+        photoCount: Int = 0,
         joinCode: String? = nil
     ) {
         self.id = id
@@ -74,6 +78,8 @@ struct Event: Identifiable, Hashable {
         self.endsAt = endsAt
         self.releaseAt = releaseAt
         self.isPremium = isPremium
+        self.memberCount = memberCount
+        self.photoCount = photoCount
         self.joinCode = joinCode
     }
 
@@ -110,6 +116,8 @@ extension Event {
             endsAt: eventModel.endsAt,
             releaseAt: eventModel.releaseAt,
             isPremium: eventModel.isPremium,
+            memberCount: eventModel.memberCount,
+            photoCount: eventModel.photoCount,
             joinCode: eventModel.joinCode
         )
     }

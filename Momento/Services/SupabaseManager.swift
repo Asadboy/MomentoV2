@@ -312,6 +312,8 @@ class SupabaseManager: ObservableObject {
             releaseAt: releaseAt,
             isPremium: false,
             isDeleted: false,
+            memberCount: 0,
+            photoCount: 0,
             createdAt: Date()
         )
         
@@ -941,6 +943,8 @@ struct EventModel: Codable, Identifiable {
     let releaseAt: Date
     var isPremium: Bool
     var isDeleted: Bool
+    var memberCount: Int
+    var photoCount: Int
     let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
@@ -953,6 +957,8 @@ struct EventModel: Codable, Identifiable {
         case releaseAt = "release_at"
         case isPremium = "is_premium"
         case isDeleted = "is_deleted"
+        case memberCount = "member_count"
+        case photoCount = "photo_count"
         case createdAt = "created_at"
     }
 }
