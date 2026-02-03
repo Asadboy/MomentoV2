@@ -70,6 +70,12 @@ struct ContentView: View {
     /// Tracks liked photo count per revealed event (event ID -> count)
     @State private var likedCounts: [String: Int] = [:]
 
+    /// Tracks member count per event (event ID -> count)
+    @State private var memberCounts: [String: Int] = [:]
+
+    /// Tracks photo count per event (event ID -> count)
+    @State private var photoCounts: [String: Int] = [:]
+
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
     
@@ -183,6 +189,8 @@ struct ContentView: View {
                                 now: now,
                                 userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
                                 likedCount: likedCounts[event.id] ?? 0,
+                                memberCount: memberCounts[event.id] ?? 0,
+                                photoCount: photoCounts[event.id] ?? 0,
                                 onTap: {
                                     handleEventTap(event)
                                 },
@@ -408,13 +416,23 @@ struct ContentView: View {
             let eventModels = try await supabaseManager.getMyEvents()
             let loadedEvents = eventModels.map { Event(fromSupabase: $0) }
 
-            // Fetch liked counts for revealed events
+            // Fetch counts for all events
             var likeCounts: [String: Int] = [:]
+            var members: [String: Int] = [:]
+            var photos: [String: Int] = [:]
 
-            for event in loadedEvents where event.currentState() == .revealed {
+            for event in loadedEvents {
                 if let eventUUID = UUID(uuidString: event.id) {
-                    if let count = try? await supabaseManager.getLikedPhotoCount(eventId: eventUUID) {
-                        likeCounts[event.id] = count
+                    if let mc = try? await supabaseManager.getEventMemberCount(eventId: eventUUID) {
+                        members[event.id] = mc
+                    }
+                    if let pc = try? await supabaseManager.getEventPhotoCount(eventId: eventUUID) {
+                        photos[event.id] = pc
+                    }
+                    if event.currentState() == .revealed {
+                        if let lc = try? await supabaseManager.getLikedPhotoCount(eventId: eventUUID) {
+                            likeCounts[event.id] = lc
+                        }
                     }
                 }
             }
@@ -422,6 +440,8 @@ struct ContentView: View {
             await MainActor.run {
                 events = loadedEvents
                 likedCounts = likeCounts
+                memberCounts = members
+                photoCounts = photos
                 isLoadingEvents = false
                 isRefreshing = false
             }

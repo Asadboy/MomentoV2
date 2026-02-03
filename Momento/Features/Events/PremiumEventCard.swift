@@ -16,6 +16,8 @@ struct PremiumEventCard: View {
     let now: Date
     var userHasCompletedReveal: Bool = false
     var likedCount: Int = 0
+    var memberCount: Int = 0
+    var photoCount: Int = 0
     let onTap: () -> Void
     let onLongPress: () -> Void
     
@@ -190,11 +192,16 @@ struct PremiumEventCard: View {
                     // State-specific subtitle
                     stateSubtitle
                     
-                    // Metadata badges - counts fetched separately
+                    // Metadata badges
                     HStack(spacing: 8) {
                         MetadataBadge(
                             icon: "person.2.fill",
-                            value: "--",
+                            value: "\(memberCount)",
+                            color: .white.opacity(0.6)
+                        )
+                        MetadataBadge(
+                            icon: "photo.fill",
+                            value: "\(photoCount)",
                             color: .white.opacity(0.6)
                         )
                     }

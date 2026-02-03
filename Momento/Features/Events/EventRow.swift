@@ -14,6 +14,7 @@ import SwiftUI
 struct EventRow: View {
     let event: Event
     let now: Date   // Injected time source so row updates when parent timer ticks
+    var memberCount: Int = 0
     
     // MARK: - Computed Properties
     
@@ -101,12 +102,13 @@ struct EventRow: View {
                     .foregroundColor(isLive ? royalPurple : Color(white: 0.7)) // Light grey, purple when live
                     .monospacedDigit()
                 
-                // Badges row - will show counts fetched separately
+                // Badges row
                 HStack(spacing: 8) {
-                    // Members badge placeholder
                     HStack(spacing: 5) {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 11, weight: .medium))
+                        Text("\(memberCount)")
+                            .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundColor(Color(white: 0.75))
                     .padding(.horizontal, 10)
