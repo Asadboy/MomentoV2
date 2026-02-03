@@ -2,25 +2,18 @@
 //  LikedGalleryView.swift
 //  Momento
 //
-//  Gallery view showing liked and archived photos with download functionality.
+//  Gallery view showing liked photos with download functionality.
 //
 
 import SwiftUI
 import Photos
-
-enum GalleryTab: String, CaseIterable {
-    case liked = "Liked"
-    case archive = "Archive"
-}
 
 struct LikedGalleryView: View {
     let event: Event
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var supabaseManager = SupabaseManager.shared
-    @State private var selectedTab: GalleryTab = .liked
     @State private var likedPhotos: [PhotoData] = []
-    @State private var archivedPhotos: [PhotoData] = []
     @State private var isLoading = true
     @State private var selectedPhoto: PhotoData?
     @State private var showingSaveAlert = false
@@ -32,10 +25,6 @@ struct LikedGalleryView: View {
         GridItem(.flexible(), spacing: 2)
     ]
 
-    private var currentPhotos: [PhotoData] {
-        selectedTab == .liked ? likedPhotos : archivedPhotos
-    }
-
     var body: some View {
         NavigationStack {
             ZStack {
@@ -44,9 +33,6 @@ struct LikedGalleryView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Tab picker
-                    tabPicker
-
                     if isLoading {
                         loadingView
                     } else {
@@ -67,11 +53,7 @@ struct LikedGalleryView: View {
             .sheet(item: $selectedPhoto) { photo in
                 GalleryDetailView(
                     photo: photo,
-                    isArchived: selectedTab == .archive,
                     eventId: event.id,
-                    onMoveToLiked: {
-                        moveToLiked(photo)
-                    },
                     onSave: {
                         saveToPhotos(photo)
                     }
@@ -91,16 +73,6 @@ struct LikedGalleryView: View {
 
     // MARK: - Subviews
 
-    private var tabPicker: some View {
-        Picker("Gallery", selection: $selectedTab) {
-            ForEach(GalleryTab.allCases, id: \.self) { tab in
-                Text(tab.rawValue).tag(tab)
-            }
-        }
-        .pickerStyle(.segmented)
-        .padding()
-    }
-
     private var loadingView: some View {
         VStack {
             Spacer()
@@ -112,12 +84,12 @@ struct LikedGalleryView: View {
 
     private var photoGridView: some View {
         ScrollView {
-            if currentPhotos.isEmpty {
+            if likedPhotos.isEmpty {
                 emptyStateView
             } else {
                 LazyVGrid(columns: columns, spacing: 2) {
-                    ForEach(currentPhotos) { photo in
-                        GalleryThumbnail(photo: photo, isArchive: selectedTab == .archive)
+                    ForEach(likedPhotos) { photo in
+                        GalleryThumbnail(photo: photo)
                             .onTapGesture {
                                 selectedPhoto = photo
                             }
@@ -125,29 +97,25 @@ struct LikedGalleryView: View {
                 }
                 .padding(.horizontal, 2)
 
-                if selectedTab == .liked && !likedPhotos.isEmpty {
-                    downloadAllButton
-                        .padding(.vertical, 24)
-                }
+                downloadAllButton
+                    .padding(.vertical, 24)
             }
         }
     }
 
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: selectedTab == .liked ? "heart.slash" : "archivebox")
+            Image(systemName: "heart.slash")
                 .font(.system(size: 48))
                 .foregroundColor(.white.opacity(0.4))
 
-            Text(selectedTab == .liked ? "No liked photos yet" : "No archived photos")
+            Text("No liked photos yet")
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.6))
 
-            if selectedTab == .liked {
-                Text("Swipe right on photos to like them")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.4))
-            }
+            Text("Swipe right on photos to like them")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.4))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, 100)
@@ -179,36 +147,16 @@ struct LikedGalleryView: View {
         }
 
         do {
-            async let liked = supabaseManager.getLikedPhotos(eventId: eventUUID)
-            async let archived = supabaseManager.getArchivedPhotos(eventId: eventUUID)
-
-            let (likedResult, archivedResult) = try await (liked, archived)
+            let result = try await supabaseManager.getLikedPhotos(eventId: eventUUID)
 
             await MainActor.run {
-                likedPhotos = likedResult
-                archivedPhotos = archivedResult
+                likedPhotos = result
                 isLoading = false
             }
         } catch {
             print("❌ Failed to load photos: \(error)")
             await MainActor.run {
                 isLoading = false
-            }
-        }
-    }
-
-    private func moveToLiked(_ photo: PhotoData) {
-        guard let photoUUID = UUID(uuidString: photo.id) else { return }
-
-        Task {
-            try? await supabaseManager.setPhotoInteraction(photoId: photoUUID, status: .liked)
-
-            await MainActor.run {
-                // Move from archived to liked
-                archivedPhotos.removeAll { $0.id == photo.id }
-                likedPhotos.append(photo)
-                likedPhotos.sort { $0.capturedAt < $1.capturedAt }
-                selectedPhoto = nil
             }
         }
     }
@@ -310,7 +258,6 @@ struct LikedGalleryView: View {
 
 struct GalleryThumbnail: View {
     let photo: PhotoData
-    let isArchive: Bool
 
     var body: some View {
         AsyncImage(url: photo.url) { phase in
@@ -327,7 +274,6 @@ struct GalleryThumbnail: View {
                     .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
                     .aspectRatio(1, contentMode: .fill)
                     .clipped()
-                    .opacity(isArchive ? 0.5 : 1.0)
             case .failure:
                 Rectangle()
                     .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
@@ -347,9 +293,7 @@ struct GalleryThumbnail: View {
 
 struct GalleryDetailView: View {
     let photo: PhotoData
-    let isArchived: Bool
     let eventId: String
-    let onMoveToLiked: () -> Void
     let onSave: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -400,21 +344,6 @@ struct GalleryDetailView: View {
 
                     // Action buttons
                     HStack(spacing: 24) {
-                        if isArchived {
-                            Button {
-                                onMoveToLiked()
-                            } label: {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "heart.fill")
-                                        .font(.system(size: 24))
-                                    Text("Like")
-                                        .font(.caption)
-                                }
-                                .foregroundColor(.white)
-                                .frame(width: 80)
-                            }
-                        }
-
                         Button {
                             onSave()
                         } label: {

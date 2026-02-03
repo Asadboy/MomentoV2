@@ -743,27 +743,26 @@ class SupabaseManager: ObservableObject {
         }
     }
 
-    // MARK: - Photo Interactions (Like/Archive)
+    // MARK: - Photo Likes
 
-    /// Record a photo interaction (like or archive)
-    func setPhotoInteraction(photoId: UUID, status: InteractionStatus) async throws {
-        guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-
-        // Upsert: insert or update if exists
-        let interaction = [
-            "photo_id": AnyJSON.string(photoId.uuidString),
-            "user_id": AnyJSON.string(userId.uuidString),
-            "status": AnyJSON.string(status.rawValue)
-        ]
-
+    /// Like a photo
+    func likePhoto(photoId: UUID) async throws {
+        guard let userId = currentUser?.id else { return }
         try await client
-            .from("photo_interactions")
-            .upsert(interaction, onConflict: "photo_id,user_id")
+            .from("photo_likes")
+            .insert(["photo_id": photoId.uuidString, "user_id": userId.uuidString])
             .execute()
+    }
 
-        print("✅ Photo \(status.rawValue): \(photoId.uuidString.prefix(8))")
+    /// Unlike a photo
+    func unlikePhoto(photoId: UUID) async throws {
+        guard let userId = currentUser?.id else { return }
+        try await client
+            .from("photo_likes")
+            .delete()
+            .eq("photo_id", value: photoId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
     }
 
     /// Get user's liked photos for an event
@@ -778,17 +777,16 @@ class SupabaseManager: ObservableObject {
 
         if photoIds.isEmpty { return [] }
 
-        // Get user's liked interactions for these photos
-        let interactions: [PhotoInteraction] = try await client
-            .from("photo_interactions")
+        // Get user's likes for these photos
+        let likes: [PhotoLike] = try await client
+            .from("photo_likes")
             .select()
             .eq("user_id", value: userId.uuidString)
-            .eq("status", value: "liked")
             .in("photo_id", values: photoIds)
             .execute()
             .value
 
-        let likedPhotoIds = Set(interactions.map { $0.photoId.uuidString })
+        let likedPhotoIds = Set(likes.map { $0.photoId.uuidString })
 
         // Filter and convert to PhotoData with signed URLs
         var likedPhotos: [PhotoData] = []
@@ -819,55 +817,15 @@ class SupabaseManager: ObservableObject {
 
         if photoIds.isEmpty { return 0 }
 
-        let interactions: [PhotoInteraction] = try await client
-            .from("photo_interactions")
+        let likes: [PhotoLike] = try await client
+            .from("photo_likes")
             .select()
             .eq("user_id", value: userId.uuidString)
-            .eq("status", value: "liked")
             .in("photo_id", values: photoIds)
             .execute()
             .value
 
-        return interactions.count
-    }
-
-    /// Get user's archived photos for an event
-    func getArchivedPhotos(eventId: UUID) async throws -> [PhotoData] {
-        guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-
-        let photos = try await getPhotos(eventId: eventId)
-        let photoIds = photos.map { $0.id.uuidString }
-
-        if photoIds.isEmpty { return [] }
-
-        let interactions: [PhotoInteraction] = try await client
-            .from("photo_interactions")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .eq("status", value: "archived")
-            .in("photo_id", values: photoIds)
-            .execute()
-            .value
-
-        let archivedPhotoIds = Set(interactions.map { $0.photoId.uuidString })
-
-        var archivedPhotos: [PhotoData] = []
-        for photo in photos where archivedPhotoIds.contains(photo.id.uuidString) {
-            let signedURL = try? await client.storage
-                .from("momento-photos")
-                .createSignedURL(path: photo.storagePath, expiresIn: 604800)
-
-            archivedPhotos.append(PhotoData(
-                id: photo.id.uuidString,
-                url: signedURL,
-                capturedAt: photo.capturedAt,
-                photographerName: photo.username
-            ))
-        }
-
-        return archivedPhotos.sorted { $0.capturedAt < $1.capturedAt }
+        return likes.count
     }
 
     // MARK: - Reveal Progress
@@ -1050,12 +1008,11 @@ class SupabaseManager: ObservableObject {
             .execute()
         let momentsCaptured = photosResponse.count ?? 0
 
-        // 2. Photos loved (liked interactions)
+        // 2. Photos loved (likes)
         let likedResponse = try await client
-            .from("photo_interactions")
-            .select("id", head: true, count: .exact)
+            .from("photo_likes")
+            .select("photo_id", head: true, count: .exact)
             .eq("user_id", value: userId.uuidString)
-            .eq("status", value: "liked")
             .execute()
         let photosLoved = likedResponse.count ?? 0
 
@@ -1271,25 +1228,15 @@ struct PhotoData: Identifiable {
     let photographerName: String?
 }
 
-/// Photo interaction status (liked or archived)
-enum InteractionStatus: String, Codable {
-    case liked
-    case archived
-}
-
-/// User's interaction with a photo (like/archive)
-struct PhotoInteraction: Codable, Identifiable {
-    let id: UUID
+/// A user's like on a photo
+struct PhotoLike: Codable {
     let photoId: UUID
     let userId: UUID
-    let status: InteractionStatus
     let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
         case photoId = "photo_id"
         case userId = "user_id"
-        case status
         case createdAt = "created_at"
     }
 }

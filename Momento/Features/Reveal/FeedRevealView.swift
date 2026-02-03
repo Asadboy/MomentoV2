@@ -143,7 +143,7 @@ class FeedRevealViewModel: ObservableObject {
             guard let photoUUID = UUID(uuidString: photoId) else { continue }
 
             if isLiked {
-                try? await supabaseManager.setPhotoInteraction(photoId: photoUUID, status: .liked)
+                try? await supabaseManager.likePhoto(photoId: photoUUID)
             }
         }
     }
