@@ -5,15 +5,13 @@ struct InviteCardRenderer {
         eventName: String,
         joinCode: String,
         startDate: Date,
-        hostName: String,
-        isPremium: Bool
+        hostName: String
     ) -> UIImage? {
         let card = InviteCardView(
             eventName: eventName,
             joinCode: joinCode,
             startDate: startDate,
-            hostName: hostName,
-            isPremium: isPremium
+            hostName: hostName
         )
         .frame(width: 320)
         .padding(24)

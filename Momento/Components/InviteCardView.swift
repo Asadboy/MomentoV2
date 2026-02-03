@@ -6,22 +6,9 @@ struct InviteCardView: View {
     let joinCode: String
     let startDate: Date
     let hostName: String
-    let isPremium: Bool
-
-    private let premiumGold = Color(red: 0.85, green: 0.65, blue: 0.3)
 
     var body: some View {
         VStack(spacing: 0) {
-            // Premium badge (only if premium)
-            if isPremium {
-                Text("✦ PREMIUM ✦")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(premiumGold)
-                    .tracking(2)
-                    .padding(.top, 20)
-                    .padding(.bottom, 8)
-            }
-
             // Event name
             Text(eventName)
                 .font(.system(size: 24, weight: .bold))
@@ -29,7 +16,7 @@ struct InviteCardView: View {
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .padding(.horizontal, 24)
-                .padding(.top, isPremium ? 0 : 24)
+                .padding(.top, 24)
 
             // QR Code
             if let qrImage = generateQRCode(from: joinCode) {
@@ -80,31 +67,19 @@ struct InviteCardView: View {
         .cornerRadius(20)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(isPremium ? premiumGold.opacity(0.5) : Color.white.opacity(0.1), lineWidth: isPremium ? 2 : 1)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
-        .shadow(color: isPremium ? premiumGold.opacity(0.3) : Color.clear, radius: 20, x: 0, y: 10)
     }
 
     private var cardGradient: LinearGradient {
-        if isPremium {
-            return LinearGradient(
-                colors: [
-                    Color(red: 0.15, green: 0.1, blue: 0.05),
-                    Color(red: 0.1, green: 0.08, blue: 0.12)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        } else {
-            return LinearGradient(
-                colors: [
-                    Color(red: 0.15, green: 0.05, blue: 0.25),
-                    Color(red: 0.08, green: 0.06, blue: 0.15)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
+        LinearGradient(
+            colors: [
+                Color(red: 0.15, green: 0.05, blue: 0.25),
+                Color(red: 0.08, green: 0.06, blue: 0.15)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     private func formatStartDate(_ date: Date) -> String {
@@ -134,24 +109,12 @@ struct InviteCardView: View {
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        VStack(spacing: 20) {
-            InviteCardView(
-                eventName: "Asad's Birthday",
-                joinCode: "ABC123",
-                startDate: Date(),
-                hostName: "Asad",
-                isPremium: false
-            )
-            .padding(.horizontal, 30)
-
-            InviteCardView(
-                eventName: "Wedding Weekend",
-                joinCode: "WED456",
-                startDate: Date(),
-                hostName: "Sarah",
-                isPremium: true
-            )
-            .padding(.horizontal, 30)
-        }
+        InviteCardView(
+            eventName: "Asad's Birthday",
+            joinCode: "ABC123",
+            startDate: Date(),
+            hostName: "Asad"
+        )
+        .padding(.horizontal, 30)
     }
 }

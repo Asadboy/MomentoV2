@@ -13,7 +13,6 @@ struct CreateStep3ShareView: View {
     let joinCode: String
     let startsAt: Date
     let hostName: String
-    let isPremium: Bool
     let onDone: () -> Void
 
     @State private var copiedCode = false
@@ -67,8 +66,7 @@ struct CreateStep3ShareView: View {
                     eventName: momentoName,
                     joinCode: joinCode,
                     startDate: startsAt,
-                    hostName: hostName,
-                    isPremium: isPremium
+                    hostName: hostName
                 )
                 .padding(.horizontal, 30)
 
@@ -150,8 +148,7 @@ struct CreateStep3ShareView: View {
                         let destination = AnalyticsManager.mapActivityToDestination(activityType)
                         AnalyticsManager.shared.track(.inviteShared, properties: [
                             "join_code": joinCode,
-                            "destination": destination,
-                            "is_premium": isPremium
+                            "destination": destination
                         ])
                     }
                 }
@@ -161,8 +158,7 @@ struct CreateStep3ShareView: View {
                         let destination = AnalyticsManager.mapActivityToDestination(activityType)
                         AnalyticsManager.shared.track(.inviteShared, properties: [
                             "join_code": joinCode,
-                            "destination": destination,
-                            "is_premium": isPremium
+                            "destination": destination
                         ])
                     }
                 }
@@ -206,8 +202,7 @@ struct CreateStep3ShareView: View {
             eventName: momentoName,
             joinCode: joinCode,
             startDate: startsAt,
-            hostName: hostName,
-            isPremium: isPremium
+            hostName: hostName
         )
 
         showShareSheet = true
@@ -219,8 +214,7 @@ struct CreateStep3ShareView: View {
             eventName: momentoName,
             joinCode: joinCode,
             startDate: startsAt,
-            hostName: hostName,
-            isPremium: isPremium
+            hostName: hostName
         ) else { return }
 
         // Request photo library permission before saving
@@ -294,7 +288,6 @@ struct ShareSheet: UIViewControllerRepresentable {
         joinCode: "SOPRAN",
         startsAt: Date(),
         hostName: "Asad",
-        isPremium: false,
         onDone: {}
     )
 }

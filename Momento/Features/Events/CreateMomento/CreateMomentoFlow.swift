@@ -20,7 +20,6 @@ struct CreateMomentoFlow: View {
     @State private var endsAt = Date().addingTimeInterval(13 * 3600) // 12 hours after start
     @State private var releaseAt = Date().addingTimeInterval(25 * 3600) // 24 hours after start
     @State private var selectedFilter: PhotoFilter = .br
-    @State private var isPremiumEnabled = false
     @State private var joinCode = ""
     
     // State
@@ -69,7 +68,6 @@ struct CreateMomentoFlow: View {
                         joinCode: joinCode,
                         startsAt: startsAt,
                         hostName: hostName,
-                        isPremium: isPremiumEnabled,
                         onDone: { finishFlow() }
                     )
                     .transition(.asymmetric(
@@ -160,7 +158,6 @@ struct CreateMomentoFlow: View {
                 AnalyticsManager.shared.track(.momentoCreated, properties: [
                     "event_id": event.id,
                     "event_name": event.name,
-                    "is_premium": isPremiumEnabled,
                     "filter": selectedFilter.rawValue
                 ])
 

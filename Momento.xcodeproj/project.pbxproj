@@ -12,9 +12,7 @@
 		C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */; };
 		C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859002F2E3FC600E11B8C /* PostHogConfig.swift */; };
 		C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */; };
-		C30859092F2E4D7400E11B8C /* LockedSettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859032F2E4D7400E11B8C /* LockedSettingView.swift */; };
 		C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859042F2E4D7400E11B8C /* AccordionRow.swift */; };
-		C308590B2F2E4D7400E11B8C /* PremiumRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859052F2E4D7400E11B8C /* PremiumRowView.swift */; };
 		C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859062F2E4D7400E11B8C /* FilterPickerView.swift */; };
 		C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859072F2E4D7400E11B8C /* InviteCardView.swift */; };
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
@@ -37,7 +35,6 @@
 		C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */; };
 		C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B72EF8200000000001 /* CreateMomentoFlow.swift */; };
 		C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B92EF8200000000002 /* CreateStep1NameView.swift */; };
-		C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */; };
 		C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */; };
 		C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B32F26C55A00F905AE /* ProfileView.swift */; };
 		C372E3BC2F26C55A00F905AE /* StatCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B62F26C55A00F905AE /* StatCardView.swift */; };
@@ -90,9 +87,7 @@
 		C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsManager.swift; sourceTree = "<group>"; };
 		C30859002F2E3FC600E11B8C /* PostHogConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogConfig.swift; sourceTree = "<group>"; };
 		C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardRenderer.swift; sourceTree = "<group>"; };
-		C30859032F2E4D7400E11B8C /* LockedSettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockedSettingView.swift; sourceTree = "<group>"; };
 		C30859042F2E4D7400E11B8C /* AccordionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccordionRow.swift; sourceTree = "<group>"; };
-		C30859052F2E4D7400E11B8C /* PremiumRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumRowView.swift; sourceTree = "<group>"; };
 		C30859062F2E4D7400E11B8C /* FilterPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPickerView.swift; sourceTree = "<group>"; };
 		C30859072F2E4D7400E11B8C /* InviteCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardView.swift; sourceTree = "<group>"; };
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -120,7 +115,6 @@
 		C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameSelectionView.swift; sourceTree = "<group>"; };
 		C36446B72EF8200000000001 /* CreateMomentoFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMomentoFlow.swift; sourceTree = "<group>"; };
 		C36446B92EF8200000000002 /* CreateStep1NameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep1NameView.swift; sourceTree = "<group>"; };
-		C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2TimesView.swift; sourceTree = "<group>"; };
 		C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep3ShareView.swift; sourceTree = "<group>"; };
 		C372E3B32F26C55A00F905AE /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		C372E3B62F26C55A00F905AE /* StatCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCardView.swift; sourceTree = "<group>"; };
@@ -299,7 +293,6 @@
 			children = (
 				C36446B72EF8200000000001 /* CreateMomentoFlow.swift */,
 				C36446B92EF8200000000002 /* CreateStep1NameView.swift */,
-				C36446BB2EF8200000000003 /* CreateStep2TimesView.swift */,
 				C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */,
 				A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */,
 			);
@@ -369,8 +362,6 @@
 				C30859062F2E4D7400E11B8C /* FilterPickerView.swift */,
 				C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */,
 				C30859072F2E4D7400E11B8C /* InviteCardView.swift */,
-				C30859032F2E4D7400E11B8C /* LockedSettingView.swift */,
-				C30859052F2E4D7400E11B8C /* PremiumRowView.swift */,
 				C3C5709E2F26579F00A8024C /* VerificationCodeInput.swift */,
 			);
 			path = Components;
@@ -549,12 +540,10 @@
 				C3CARDPREV012F0B00000001 /* CardPreviewView.swift in Sources */,
 				C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */,
 				C3C570A02F26579F00A8024C /* VerificationCodeInput.swift in Sources */,
-				C30859092F2E4D7400E11B8C /* LockedSettingView.swift in Sources */,
 				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
 				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
-				C308590B2F2E4D7400E11B8C /* PremiumRowView.swift in Sources */,
 				C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
 				C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */,
@@ -579,7 +568,6 @@
 				C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */,
 				C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */,
 				C3C6D43C2F2029A400847D38 /* FeedRevealView.swift in Sources */,
-				C36446BA2EF8200000000003 /* CreateStep2TimesView.swift in Sources */,
 				C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */,
 				1DBAA07BF678BD1C17796F29 /* CreateStep2ConfigureView.swift in Sources */,
 			);
