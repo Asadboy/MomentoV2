@@ -54,7 +54,7 @@ struct LikedGalleryView: View {
                     }
                 }
             }
-            .navigationTitle(event.title)
+            .navigationTitle(event.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -515,13 +515,11 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
 
 #Preview {
     let event = Event(
-        title: "Test Event",
+        name: "Test Event",
         coverEmoji: "🎉",
         startsAt: Date().addingTimeInterval(-86400),
         endsAt: Date().addingTimeInterval(-43200),
         releaseAt: Date().addingTimeInterval(-3600),
-        memberCount: 5,
-        photosTaken: 10,
         joinCode: "TEST"
     )
 

@@ -528,10 +528,7 @@ struct ContentView: View {
             // Queue for upload to Supabase (with offline support)
             let queuedPhoto = try syncManager.queuePhoto(image: image, eventId: eventUUID)
             
-            // Update event's photosTaken count optimistically
-            if let index = events.firstIndex(where: { $0.id == event.id }) {
-                events[index].photosTaken += 1
-            }
+            // Photo count is now computed server-side, no local increment needed
             
             print("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             print("   Pending uploads: \(syncManager.pendingCount)")

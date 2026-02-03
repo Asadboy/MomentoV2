@@ -182,7 +182,7 @@ struct PremiumEventCard: View {
                 // Left: Event info
                 VStack(alignment: .leading, spacing: 8) {
                     // Title
-                    Text(event.title)
+                    Text(event.name)
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
                         .lineLimit(1)
@@ -190,23 +190,13 @@ struct PremiumEventCard: View {
                     // State-specific subtitle
                     stateSubtitle
                     
-                    // Metadata badges
+                    // Metadata badges - counts fetched separately
                     HStack(spacing: 8) {
-                        // Members
                         MetadataBadge(
                             icon: "person.2.fill",
-                            value: "\(event.memberCount)",
+                            value: "--",
                             color: .white.opacity(0.6)
                         )
-                        
-                        // Photos taken (only show if > 0)
-                        if event.photosTaken > 0 {
-                            MetadataBadge(
-                                icon: "photo.fill",
-                                value: "\(event.photosTaken)",
-                                color: royalPurple
-                            )
-                        }
                     }
                 }
                 
@@ -380,18 +370,7 @@ struct PremiumEventCard: View {
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundColor(royalPurple)
                 
-                // Photo counter badge
-                if event.photosTaken > 0 {
-                    Text("\(event.photosTaken)")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(royalPurple)
-                        )
-                }
+                // Photo counter badge - count fetched separately
             }
         }
         .onAppear {
@@ -520,14 +499,13 @@ struct PremiumEventCard: View {
     /// Hype-building subtitle for upcoming events
     private var upcomingSubtitleText: String {
         let hours = secondsUntilStart / 3600
-        let memberText = event.memberCount == 1 ? "Just you" : "\(event.memberCount) friends ready"
 
         if hours <= 3 {
-            return "\(memberText) • Almost time!"
+            return "Almost time!"
         } else if hours <= 12 {
-            return "\(memberText) • Invite more!"
+            return "Invite more!"
         } else {
-            return "\(memberText) • Rally your crew"
+            return "Rally your crew"
         }
     }
 
@@ -565,7 +543,7 @@ struct PremiumEventCard: View {
                 Circle()
                     .fill(Color.green)
                     .frame(width: 6, height: 6)
-                Text("Live now\(event.photosTaken > 0 ? " • \(event.photosTaken) taken" : "")")
+                Text("Live now")
                     .font(.system(size: 13, weight: .semibold))
             }
             .foregroundColor(.green)
@@ -632,29 +610,26 @@ private struct MetadataBadge: View {
         // Countdown state
         PremiumEventCard(
             event: Event(
-                title: "Joe's 26th",
+                name: "Joe's 26th",
                 coverEmoji: "\u{1F382}",
                 startsAt: now.addingTimeInterval(3600 * 12),
                 endsAt: now.addingTimeInterval(3600 * 20),
-                releaseAt: now.addingTimeInterval(3600 * 44),
-                memberCount: 12,
-                photosTaken: 0
+                releaseAt: now.addingTimeInterval(3600 * 44)
             ),
             now: now,
             onTap: {},
             onLongPress: {}
         )
-        
+
         // Live state
         PremiumEventCard(
             event: Event(
-                title: "NYE House Party",
+                name: "NYE House Party",
                 coverEmoji: "\u{1F389}",
                 startsAt: now.addingTimeInterval(-3600),
                 endsAt: now.addingTimeInterval(3600 * 5),
                 releaseAt: now.addingTimeInterval(3600 * 29),
-                memberCount: 28,
-                photosTaken: 15
+                isPremium: true
             ),
             now: now,
             onTap: {},

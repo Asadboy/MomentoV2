@@ -26,75 +26,61 @@ struct CardPreviewView: View {
     // Mock events for each state
     private var upcomingEvent: Event {
         Event(
-            title: "Joe's 26th Birthday",
+            name: "Joe's 26th Birthday",
             coverEmoji: "\u{1F382}",
-            startsAt: now.addingTimeInterval(3600 * 8),  // 8 hours - "Starts tonight"
+            startsAt: now.addingTimeInterval(3600 * 8),
             endsAt: now.addingTimeInterval(3600 * 16),
-            releaseAt: now.addingTimeInterval(3600 * 40),
-            memberCount: 12,
-            photosTaken: 0
+            releaseAt: now.addingTimeInterval(3600 * 40)
         )
     }
 
     private var almostLiveEvent: Event {
         Event(
-            title: "Team Dinner",
+            name: "Team Dinner",
             coverEmoji: "\u{1F37D}",
-            startsAt: now.addingTimeInterval(3600 * 2),  // 2 hours - "Almost live"
+            startsAt: now.addingTimeInterval(3600 * 2),
             endsAt: now.addingTimeInterval(3600 * 8),
-            releaseAt: now.addingTimeInterval(3600 * 32),
-            memberCount: 6,
-            photosTaken: 0
+            releaseAt: now.addingTimeInterval(3600 * 32)
         )
     }
 
     private var liveEvent: Event {
         Event(
-            title: "NYE House Party",
+            name: "NYE House Party",
             coverEmoji: "\u{1F389}",
-            startsAt: now.addingTimeInterval(-3600),  // Started 1 hour ago
+            startsAt: now.addingTimeInterval(-3600),
             endsAt: now.addingTimeInterval(3600 * 5),
-            releaseAt: now.addingTimeInterval(3600 * 29),
-            memberCount: 28,
-            photosTaken: 23
+            releaseAt: now.addingTimeInterval(3600 * 29)
         )
     }
 
     private var processingEvent: Event {
         Event(
-            title: "Beach Day",
+            name: "Beach Day",
             coverEmoji: "\u{1F3D6}",
-            startsAt: now.addingTimeInterval(-3600 * 10),  // Started 10 hours ago
-            endsAt: now.addingTimeInterval(-3600 * 2),      // Ended 2 hours ago
-            releaseAt: now.addingTimeInterval(3600 * 4),    // Reveals in 4 hours
-            memberCount: 8,
-            photosTaken: 45
+            startsAt: now.addingTimeInterval(-3600 * 10),
+            endsAt: now.addingTimeInterval(-3600 * 2),
+            releaseAt: now.addingTimeInterval(3600 * 4)
         )
     }
 
     private var readyToRevealEvent: Event {
         Event(
-            title: "Graduation Party",
+            name: "Graduation Party",
             coverEmoji: "\u{1F393}",
             startsAt: now.addingTimeInterval(-3600 * 48),
             endsAt: now.addingTimeInterval(-3600 * 40),
-            releaseAt: now.addingTimeInterval(-3600 * 2),  // Released 2 hours ago
-            memberCount: 35,
-            photosTaken: 89,
-            isRevealed: false  // User hasn't completed reveal
+            releaseAt: now.addingTimeInterval(-3600 * 2)
         )
     }
 
     private var revealedEvent: Event {
         Event(
-            title: "Sopranos Marathon",
+            name: "Sopranos Marathon",
             coverEmoji: "\u{1F37B}",
             startsAt: now.addingTimeInterval(-3600 * 72),
             endsAt: now.addingTimeInterval(-3600 * 64),
-            releaseAt: now.addingTimeInterval(-3600 * 24),
-            memberCount: 7,
-            photosTaken: 47,  // More photos = feels like a richer memory
-            isRevealed: true
+            releaseAt: now.addingTimeInterval(-3600 * 24)
         )
     }
 

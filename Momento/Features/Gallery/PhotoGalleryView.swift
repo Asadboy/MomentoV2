@@ -45,7 +45,7 @@ struct PhotoGalleryView: View {
                     }
                 }
             }
-            .navigationTitle(event.title)
+            .navigationTitle(event.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(Color.black, for: .navigationBar)
@@ -60,7 +60,7 @@ struct PhotoGalleryView: View {
                 
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 2) {
-                        Text(event.title)
+                        Text(event.name)
                             .font(.headline)
                             .foregroundColor(.white)
                         Text("\(photos.count) photos")
@@ -327,15 +327,12 @@ struct PhotoDetailView: View {
     PhotoGalleryView(
         event: Event(
             id: UUID().uuidString,
-            title: "Beach Party 2025",
+            name: "Beach Party 2025",
             coverEmoji: "🏖️",
             startsAt: Date(),
             endsAt: Date(),
             releaseAt: Date(),
-            memberCount: 5,
-            photosTaken: 12,
-            joinCode: "ABC123",
-            isRevealed: true
+            joinCode: "ABC123"
         ),
         photos: [
             PhotoData(id: "1", url: URL(string: "https://picsum.photos/400/600"), capturedAt: Date(), photographerName: "Sarah"),

@@ -83,7 +83,7 @@ struct EventRow: View {
             VStack(alignment: .leading, spacing: 8) {
                 // Event title with camera concept
                 HStack(spacing: 6) {
-                    Text(event.title)
+                    Text(event.name)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(Color(white: 0.9)) // Light grey for better readability
                     
@@ -101,36 +101,19 @@ struct EventRow: View {
                     .foregroundColor(isLive ? royalPurple : Color(white: 0.7)) // Light grey, purple when live
                     .monospacedDigit()
                 
-                // Badges row - members and photos taken
+                // Badges row - will show counts fetched separately
                 HStack(spacing: 8) {
-                    // Members badge
+                    // Members badge placeholder
                     HStack(spacing: 5) {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 11, weight: .medium))
-                        Text("\(event.memberCount)")
-                            .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundColor(Color(white: 0.75)) // Light grey for better readability
+                    .foregroundColor(Color(white: 0.75))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(
                         Capsule()
                             .fill(Color.white.opacity(0.1))
-                    )
-                    
-                    // Photos taken badge
-                    HStack(spacing: 5) {
-                        Image(systemName: "photo.stack.fill")
-                            .font(.system(size: 11, weight: .medium))
-                        Text("\(event.photosTaken)")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundColor(royalPurple)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        Capsule()
-                            .fill(royalPurple.opacity(0.2))
                     )
                 }
             }
@@ -156,7 +139,7 @@ struct EventRow: View {
         )
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(event.title), \(subtitle), \(event.memberCount) members, \(event.photosTaken) photos taken")
+        .accessibilityLabel("\(event.name), \(subtitle)")
     }
 }
 
@@ -164,13 +147,11 @@ struct EventRow: View {
     let now = Date()
     return EventRow(
         event: Event(
-            title: "Preview Party",
+            name: "Preview Party",
             coverEmoji: "\u{1F389}",
             startsAt: now,
             endsAt: now.addingTimeInterval(6 * 3600),
             releaseAt: now.addingTimeInterval(24 * 3600),
-            memberCount: 10,
-            photosTaken: 7,
             joinCode: "PREVIEW"
         ),
         now: now

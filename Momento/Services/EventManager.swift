@@ -25,27 +25,23 @@ class EventManager: ObservableObject {
     
     /// Creates a new event and adds it to the events array
     /// - Parameters:
-    ///   - title: Event title (will be trimmed)
+    ///   - name: Event name (will be trimmed)
     ///   - emoji: Cover emoji for the event
     ///   - startsAt: When the event starts
-    ///   - memberCount: Number of members (optional, defaults to random)
-    func addEvent(title: String, emoji: String, startsAt: Date, memberCount: Int? = nil) {
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else { return }
+    func addEvent(name: String, emoji: String, startsAt: Date) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
 
         // Auto-calculate event times from start
         let endsAt = startsAt.addingTimeInterval(12 * 3600)  // +12 hours
         let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
-        
+
         let event = Event(
-            title: trimmedTitle,
+            name: trimmedName,
             coverEmoji: emoji,
             startsAt: startsAt,
             endsAt: endsAt,
-            releaseAt: releaseAt,
-            memberCount: memberCount ?? Int.random(in: 2...30),
-            photosTaken: 0,
-            joinCode: nil
+            releaseAt: releaseAt
         )
         events.append(event)
     }

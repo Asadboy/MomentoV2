@@ -150,7 +150,7 @@ struct CreateMomentoFlow: View {
         Task {
             do {
                 let eventModel = try await supabaseManager.createEvent(
-                    title: momentoName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    name: momentoName.trimmingCharacters(in: .whitespacesAndNewlines),
                     startsAt: startsAt,
                     joinCode: joinCode
                 )
@@ -160,7 +160,7 @@ struct CreateMomentoFlow: View {
                 // Track momento creation
                 AnalyticsManager.shared.track(.momentoCreated, properties: [
                     "event_id": event.id,
-                    "event_name": event.title,
+                    "event_name": event.name,
                     "is_premium": isPremiumEnabled,
                     "filter": selectedFilter.rawValue
                 ])

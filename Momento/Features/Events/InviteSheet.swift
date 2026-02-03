@@ -27,7 +27,7 @@ struct InviteSheet: View {
     
     private var shareText: String {
         """
-        Join my Momento "\(event.title)"! 📸
+        Join my Momento "\(event.name)"! 📸
         
         Use code: \(event.joinCode ?? "INVITE")
         
@@ -52,7 +52,7 @@ struct InviteSheet: View {
                 VStack(spacing: 32) {
                     // Event info header
                     VStack(spacing: 12) {
-                        Text(event.title)
+                        Text(event.name)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
@@ -61,8 +61,6 @@ struct InviteSheet: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "person.2.fill")
                                     .font(.system(size: 12))
-                                Text("\(event.memberCount) members")
-                                    .font(.system(size: 14, weight: .medium))
                             }
                             .foregroundColor(.white.opacity(0.7))
                             
@@ -257,13 +255,11 @@ struct InviteSheet: View {
     let now = Date()
     return InviteSheet(
         event: Event(
-            title: "NYE House Party",
+            name: "NYE House Party",
             coverEmoji: "\u{1F389}",
             startsAt: now,
             endsAt: now.addingTimeInterval(6 * 3600),
             releaseAt: now.addingTimeInterval(24 * 3600),
-            memberCount: 28,
-            photosTaken: 15,
             joinCode: "NYE2025"
         ),
         onDismiss: {}

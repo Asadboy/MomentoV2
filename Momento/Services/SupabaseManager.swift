@@ -285,11 +285,11 @@ class SupabaseManager: ObservableObject {
     
     /// Create a new event (auto-calculates end and reveal times)
     /// - Parameters:
-    ///   - title: Event name
+    ///   - name: Event name
     ///   - startsAt: When the event begins (photos accepted for 12h, reveal at 24h)
     ///   - joinCode: Unique code for joining
     /// - Returns: The created EventModel
-    func createEvent(title: String, startsAt: Date, joinCode: String) async throws -> EventModel {
+    func createEvent(name: String, startsAt: Date, joinCode: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
             print("[createEvent] Error: User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
@@ -298,23 +298,21 @@ class SupabaseManager: ObservableObject {
         // Auto-calculate event times from start
         let endsAt = startsAt.addingTimeInterval(12 * 3600)  // +12 hours
         let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
-        
-        print("[createEvent] Creating: \(title)")
+
+        print("[createEvent] Creating: \(name)")
         print("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")
-        
+
         let event = EventModel(
             id: UUID(),
-            title: title,
+            name: name,
             creatorId: userId,
             joinCode: joinCode,
             startsAt: startsAt,
             endsAt: endsAt,
             releaseAt: releaseAt,
-            isRevealed: false,
-            memberCount: 1,
-            photoCount: 0,
-            createdAt: Date(),
-            isDeleted: false
+            isPremium: false,
+            isDeleted: false,
+            createdAt: Date()
         )
         
         try await client
@@ -339,7 +337,7 @@ class SupabaseManager: ObservableObject {
             .insert(member)
             .execute()
         
-        print("[createEvent] Success: \(title) with code \(joinCode)")
+        print("[createEvent] Success: \(name) with code \(joinCode)")
         return event
     }
     
@@ -387,7 +385,7 @@ class SupabaseManager: ObservableObject {
             "join_method": "code"
         ])
 
-        print("✅ Joined event: \(event.title)")
+        print("✅ Joined event: \(event.name)")
         return event
     }
 
@@ -1139,7 +1137,7 @@ class SupabaseManager: ObservableObject {
                 .eq("id", value: topEventId.uuidString)
                 .execute()
                 .value
-            mostActiveMomento = events.first?.title
+            mostActiveMomento = events.first?.name
         }
 
         // 8. Most recent Momento
@@ -1160,7 +1158,7 @@ class SupabaseManager: ObservableObject {
                 .eq("id", value: recentMember.eventId.uuidString)
                 .execute()
                 .value
-            mostRecentMomento = events.first?.title
+            mostRecentMomento = events.first?.name
         }
 
         // 9. User number (count of profiles created before this user)
@@ -1207,31 +1205,27 @@ struct UserProfile: Codable {
 
 struct EventModel: Codable, Identifiable {
     let id: UUID
-    let title: String
+    let name: String
     let creatorId: UUID
     let joinCode: String
-    let startsAt: Date      // When event goes live (photos can be taken)
-    let endsAt: Date        // When photo-taking stops
-    let releaseAt: Date     // When photos are revealed (typically 24h after endsAt)
-    var isRevealed: Bool
-    var memberCount: Int
-    var photoCount: Int
-    let createdAt: Date
+    let startsAt: Date
+    let endsAt: Date
+    let releaseAt: Date
+    var isPremium: Bool
     var isDeleted: Bool
+    let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
         case id
-        case title
+        case name
         case creatorId = "creator_id"
         case joinCode = "join_code"
         case startsAt = "starts_at"
         case endsAt = "ends_at"
         case releaseAt = "release_at"
-        case isRevealed = "is_revealed"
-        case memberCount = "member_count"
-        case photoCount = "photo_count"
-        case createdAt = "created_at"
+        case isPremium = "is_premium"
         case isDeleted = "is_deleted"
+        case createdAt = "created_at"
     }
 }
 

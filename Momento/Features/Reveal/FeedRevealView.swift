@@ -242,15 +242,11 @@ struct FeedRevealView: View {
         VStack(spacing: 32) {
             Spacer()
 
-            // Stats - use event totals, not loaded photos
+            // Stats - counts fetched separately
             VStack(spacing: 16) {
-                Text("\(event.photosTaken) photos")
+                Text("Photos")
                     .font(.system(size: 42, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-
-                Text("\(event.memberCount) people")
-                    .font(.system(size: 24, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.8))
             }
 
             // Ritual line
@@ -328,8 +324,8 @@ struct FeedRevealView: View {
 
     private var progressHeader: some View {
         HStack {
-            // Show current position out of total event photos
-            Text("\(currentPhotoIndex + 1) of \(event.photosTaken)")
+            // Show current position out of loaded photos
+            Text("\(currentPhotoIndex + 1) of \(viewModel.photos.count)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
 
@@ -503,13 +499,11 @@ struct FeedRevealView: View {
 
 #Preview {
     let event = Event(
-        title: "London Trip",
+        name: "London Trip",
         coverEmoji: "🇬🇧",
         startsAt: Date().addingTimeInterval(-86400),
         endsAt: Date().addingTimeInterval(-43200),
         releaseAt: Date().addingTimeInterval(-3600),
-        memberCount: 11,
-        photosTaken: 200,
         joinCode: "LONDON"
     )
 

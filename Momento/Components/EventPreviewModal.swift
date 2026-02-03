@@ -52,13 +52,9 @@ struct EventPreviewModal: View {
         }
     }
 
-    /// Member count text - humanized
+    /// Member count text - placeholder until fetched separately
     private var memberText: String {
-        if event.memberCount == 1 {
-            return "1 person here"
-        } else {
-            return "\(event.memberCount) people here"
-        }
+        return "People here"
     }
 
     var body: some View {
@@ -70,7 +66,7 @@ struct EventPreviewModal: View {
                 .padding(.top, 4)
 
             // Event title - the hero
-            Text(event.title)
+            Text(event.name)
                 .font(.system(size: 26, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
@@ -166,13 +162,11 @@ struct EventPreviewModal: View {
 
         EventPreviewModal(
             event: Event(
-                title: "Joe's 26th Birthday",
+                name: "Joe's 26th Birthday",
                 coverEmoji: "",
                 startsAt: Date().addingTimeInterval(3600 * 8),
                 endsAt: Date().addingTimeInterval(3600 * 20),
-                releaseAt: Date().addingTimeInterval(3600 * 44),
-                memberCount: 8,
-                photosTaken: 0
+                releaseAt: Date().addingTimeInterval(3600 * 44)
             ),
             onJoin: {},
             onCancel: {}

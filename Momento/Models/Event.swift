@@ -53,51 +53,43 @@ struct EventPhoto: Identifiable {
 /// Conforms to Identifiable for SwiftUI list usage and Hashable for comparison
 struct Event: Identifiable, Hashable {
     let id: String
-    var title: String
+    var name: String
     var coverEmoji: String
-    var startsAt: Date      // When event goes live (photos can be taken)
-    var endsAt: Date        // When photo-taking stops
-    var releaseAt: Date     // When photos are revealed
-    var memberCount: Int
-    var photosTaken: Int    // Number of photos taken in this disposable camera event
-    var joinCode: String?   // Join code for sharing
-    var isRevealed: Bool = false
-    
+    var startsAt: Date
+    var endsAt: Date
+    var releaseAt: Date
+    var isPremium: Bool
+    var joinCode: String?
+
     init(
         id: String = UUID().uuidString,
-        title: String,
+        name: String,
         coverEmoji: String,
         startsAt: Date,
         endsAt: Date,
         releaseAt: Date,
-        memberCount: Int,
-        photosTaken: Int,
-        joinCode: String? = nil,
-        isRevealed: Bool = false
+        isPremium: Bool = false,
+        joinCode: String? = nil
     ) {
         self.id = id
-        self.title = title
+        self.name = name
         self.coverEmoji = coverEmoji
         self.startsAt = startsAt
         self.endsAt = endsAt
         self.releaseAt = releaseAt
-        self.memberCount = memberCount
-        self.photosTaken = photosTaken
+        self.isPremium = isPremium
         self.joinCode = joinCode
-        self.isRevealed = isRevealed
     }
-    
-    /// Current state of the event based on time
+
     enum State {
-        case upcoming   // Before startsAt
-        case live       // Between startsAt and endsAt (photos can be taken)
-        case processing // Between endsAt and releaseAt (waiting for reveal)
-        case revealed   // After releaseAt or isRevealed == true
+        case upcoming
+        case live
+        case processing
+        case revealed
     }
-    
-    /// Get the current state of the event
+
     func currentState(at now: Date = .now) -> State {
-        if isRevealed || now >= releaseAt {
+        if now >= releaseAt {
             return .revealed
         } else if now >= endsAt {
             return .processing
@@ -116,15 +108,13 @@ extension Event {
     init(fromSupabase eventModel: EventModel) {
         self.init(
             id: eventModel.id.uuidString,
-            title: eventModel.title,
-            coverEmoji: "\u{1F4F8}", // Camera emoji
+            name: eventModel.name,
+            coverEmoji: "\u{1F4F8}",
             startsAt: eventModel.startsAt,
             endsAt: eventModel.endsAt,
             releaseAt: eventModel.releaseAt,
-            memberCount: eventModel.memberCount,
-            photosTaken: eventModel.photoCount,
-            joinCode: eventModel.joinCode,
-            isRevealed: eventModel.isRevealed
+            isPremium: eventModel.isPremium,
+            joinCode: eventModel.joinCode
         )
     }
 }
@@ -134,43 +124,37 @@ extension Event {
 /// - Returns: Array of sample Event objects
 func makeFakeEvents(now: Date = .now) -> [Event] {
     let calendar = Calendar.current
-    
+
     return [
         // Upcoming state - starts in 12 hours
         Event(
-            title: "Joe's 26th",
+            name: "Joe's 26th",
             coverEmoji: "\u{1F382}", // cake
             startsAt: calendar.date(byAdding: .hour, value: 12, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: 20, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: 44, to: now)!,
-            memberCount: 12,
-            photosTaken: 0,
             joinCode: "JOE26"
         ),
-        
+
         // Live state - started 30 minutes ago, ends in 6 hours
         Event(
-            title: "NYE House Party",
+            name: "NYE House Party",
             coverEmoji: "\u{1F389}", // party popper
             startsAt: calendar.date(byAdding: .minute, value: -30, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: 6, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: 30, to: now)!,
-            memberCount: 28,
-            photosTaken: 23,
+            isPremium: true,
             joinCode: "NYE2025"
         ),
-        
+
         // Revealed state - event ended, photos revealed
         Event(
-            title: "Sopranos Party",
+            name: "Sopranos Party",
             coverEmoji: "\u{1F37B}", // beers
             startsAt: calendar.date(byAdding: .hour, value: -30, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: -20, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: -2, to: now)!,
-            memberCount: 7,
-            photosTaken: 15,
-            joinCode: "SOPRANO",
-            isRevealed: true
+            joinCode: "SOPRANO"
         )
     ]
 }

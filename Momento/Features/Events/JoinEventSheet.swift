@@ -818,6 +818,6 @@ struct CornerShape: Shape {
 
 #Preview {
     JoinEventSheet(isPresented: .constant(true)) { event in
-        print("Joined event: \(event.title)")
+        print("Joined event: \(event.name)")
     }
 }

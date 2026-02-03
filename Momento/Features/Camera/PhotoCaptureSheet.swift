@@ -50,7 +50,7 @@ struct PhotoCaptureSheet: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                     
-                    Text("Please allow camera access to take photos for \(event.title)")
+                    Text("Please allow camera access to take photos for \(event.name)")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
@@ -126,17 +126,15 @@ struct PhotoCaptureSheet: View {
     return PhotoCaptureSheet(
         isPresented: .constant(true),
         event: Event(
-            title: "Test Event",
+            name: "Test Event",
             coverEmoji: "\u{1F4F8}",
             startsAt: now,
             endsAt: now.addingTimeInterval(6 * 3600),
             releaseAt: now.addingTimeInterval(24 * 3600),
-            memberCount: 10,
-            photosTaken: 5,
             joinCode: "TEST"
         ),
         onPhotoCaptured: { image, event in
-            print("Photo captured for \(event.title)")
+            print("Photo captured for \(event.name)")
         }
     )
 }
