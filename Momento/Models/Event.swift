@@ -17,7 +17,6 @@ struct PhotoMetadata: Codable {
     let eventID: String
     let capturedAt: Date
     var capturedBy: String?
-    var isRevealed: Bool
 }
 
 /// Represents a photo taken at an event
@@ -26,16 +25,14 @@ struct EventPhoto: Identifiable {
     let eventID: String
     let fileURL: URL
     let capturedAt: Date
-    var isRevealed: Bool
     var capturedBy: String?
     var image: UIImage?
-    
+
     init(
         id: String = UUID().uuidString,
         eventID: String,
         fileURL: URL,
         capturedAt: Date = .now,
-        isRevealed: Bool = false,
         capturedBy: String? = nil,
         image: UIImage? = nil
     ) {
@@ -43,7 +40,6 @@ struct EventPhoto: Identifiable {
         self.eventID = eventID
         self.fileURL = fileURL
         self.capturedAt = capturedAt
-        self.isRevealed = isRevealed
         self.capturedBy = capturedBy
         self.image = image
     }

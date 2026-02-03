@@ -61,8 +61,7 @@ final class PhotoStorageManager {
             photoID: photoID,
             eventID: event.id,
             capturedAt: capturedAt,
-            capturedBy: capturedBy,
-            isRevealed: false
+            capturedBy: capturedBy
         )
         
         let metadataData = try encoder.encode(metadata)
@@ -77,7 +76,6 @@ final class PhotoStorageManager {
             eventID: event.id,
             fileURL: photoURL,
             capturedAt: capturedAt,
-            isRevealed: false,
             capturedBy: capturedBy,
             image: image
         )
@@ -92,15 +90,6 @@ final class PhotoStorageManager {
         
         let data = try Data(contentsOf: metadataURL)
         return try decoder.decode(PhotoMetadata.self, from: data)
-    }
-    
-    /// Updates the reveal status and persists it to disk
-    func updateRevealStatus(for photo: EventPhoto, isRevealed: Bool) throws {
-        var metadata = try metadata(for: photo)
-        metadata.isRevealed = isRevealed
-        let metadataURL = photo.fileURL.deletingPathExtension().appendingPathExtension("json")
-        let data = try encoder.encode(metadata)
-        try data.write(to: metadataURL, options: .atomic)
     }
     
     /// Loads an image from disk for a given photo reference
