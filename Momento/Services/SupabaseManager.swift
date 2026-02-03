@@ -191,14 +191,10 @@ class SupabaseManager: ObservableObject {
         let profile = UserProfile(
             id: userId,
             username: username.lowercased(),
-            firstName: nil,
-            lastName: nil,
             displayName: username,
             avatarUrl: nil,
-            isPremium: false,
-            totalEventsJoined: 0,
-            createdAt: Date(),
-            updatedAt: Date()
+            deviceToken: nil,
+            createdAt: Date()
         )
         
         try await client
@@ -1194,26 +1190,18 @@ class SupabaseManager: ObservableObject {
 struct UserProfile: Codable {
     let id: UUID
     let username: String
-    var firstName: String?
-    var lastName: String?
     var displayName: String?
     var avatarUrl: String?
-    var isPremium: Bool
-    var totalEventsJoined: Int
+    var deviceToken: String?
     let createdAt: Date
-    var updatedAt: Date
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case username
-        case firstName = "first_name"
-        case lastName = "last_name"
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
-        case isPremium = "is_premium"
-        case totalEventsJoined = "total_events_joined"
+        case deviceToken = "device_token"
         case createdAt = "created_at"
-        case updatedAt = "updated_at"
     }
 }
 

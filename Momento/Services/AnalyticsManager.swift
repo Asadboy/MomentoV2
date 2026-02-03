@@ -30,8 +30,6 @@ final class AnalyticsManager {
 
     private var isConfigured = false
     private var userId: String?
-    private var isPremiumUser: Bool = false
-
     private init() {}
 
     func configure() {
@@ -50,23 +48,12 @@ final class AnalyticsManager {
         isConfigured = true
     }
 
-    func identify(userId: String, username: String, isPremium: Bool) {
+    func identify(userId: String, username: String) {
         self.userId = userId
-        self.isPremiumUser = isPremium
 
         PostHogSDK.shared.identify(userId, userProperties: [
-            "username": username,
-            "is_premium_user": isPremium
+            "username": username
         ])
-    }
-
-    func updatePremiumStatus(_ isPremium: Bool) {
-        self.isPremiumUser = isPremium
-        if isPremium {
-            PostHogSDK.shared.capture("$set", properties: [
-                "$set": ["is_premium_user": true]
-            ])
-        }
     }
 
     func track(_ event: AnalyticsEvent, properties: [String: Any] = [:]) {
@@ -74,7 +61,6 @@ final class AnalyticsManager {
         if let userId = userId {
             props["user_id"] = userId
         }
-        props["is_premium_user"] = isPremiumUser
 
         PostHogSDK.shared.capture(event.rawValue, properties: props)
     }
@@ -82,7 +68,6 @@ final class AnalyticsManager {
     func reset() {
         PostHogSDK.shared.reset()
         userId = nil
-        isPremiumUser = false
     }
 
     static func mapActivityToDestination(_ activity: UIActivity.ActivityType?) -> String {

@@ -134,8 +134,7 @@ struct AuthenticationRootView: View {
                 let profile = try await supabaseManager.getUserProfile(userId: userId)
                 AnalyticsManager.shared.identify(
                     userId: userId.uuidString,
-                    username: profile.username,
-                    isPremium: profile.isPremium
+                    username: profile.username
                 )
             } catch {
                 print("❌ Failed to identify user for analytics: \(error)")
