@@ -159,8 +159,8 @@ struct CardPreviewView: View {
                             )
                         }
 
-                        // 5. Revealed - Premium keepsake
-                        cardSection(title: "5. Revealed", subtitle: "Your memories - premium keepsake") {
+                        // 5. Revealed
+                        cardSection(title: "5. Revealed", subtitle: "Your memories are ready") {
                             PremiumEventCard(
                                 event: revealedEvent,
                                 now: now,

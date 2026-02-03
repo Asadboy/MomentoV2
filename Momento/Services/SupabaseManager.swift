@@ -828,167 +828,6 @@ class SupabaseManager: ObservableObject {
         return likes.count
     }
 
-    // MARK: - Reveal Progress
-
-    /// Get user's reveal progress for an event
-    func getRevealProgress(eventId: UUID) async throws -> UserRevealProgress? {
-        guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-
-        let progress: [UserRevealProgress] = try await client
-            .from("user_reveal_progress")
-            .select()
-            .eq("event_id", value: eventId.uuidString)
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-            .value
-
-        return progress.first
-    }
-
-    /// Update user's reveal progress (current position in swipe stack)
-    func updateRevealProgress(eventId: UUID, lastPhotoIndex: Int, completed: Bool) async throws {
-        guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-
-        let progress = [
-            "event_id": AnyJSON.string(eventId.uuidString),
-            "user_id": AnyJSON.string(userId.uuidString),
-            "last_photo_index": AnyJSON.integer(lastPhotoIndex),
-            "completed": AnyJSON.bool(completed),
-            "updated_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date()))
-        ]
-
-        try await client
-            .from("user_reveal_progress")
-            .upsert(progress, onConflict: "event_id,user_id")
-            .execute()
-
-        print("✅ Progress updated: \(lastPhotoIndex), completed: \(completed)")
-    }
-
-    // MARK: - Keepsakes
-
-    /// Get all keepsakes the user has earned
-    func getUserKeepsakes() async throws -> [EarnedKeepsake] {
-        guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-
-        // Get user's earned keepsakes
-        let userKeepsakes: [UserKeepsake] = try await client
-            .from("user_keepsakes")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-            .value
-
-        if userKeepsakes.isEmpty {
-            return []
-        }
-
-        // Get keepsake definitions
-        let keepsakeIds = userKeepsakes.map { $0.keepsakeId.uuidString }
-        let keepsakes: [Keepsake] = try await client
-            .from("keepsakes")
-            .select()
-            .in("id", values: keepsakeIds)
-            .execute()
-            .value
-
-        // Get total user count for rarity calculation
-        let totalUsersResponse = try await client
-            .from("profiles")
-            .select("id", head: true, count: .exact)
-            .execute()
-        let totalUsers = max(totalUsersResponse.count ?? 1, 1)
-
-        // Get count of users who have each keepsake
-        var earnedKeepsakes: [EarnedKeepsake] = []
-
-        for userKeepsake in userKeepsakes {
-            guard let keepsake = keepsakes.first(where: { $0.id == userKeepsake.keepsakeId }) else {
-                continue
-            }
-
-            // Count users with this keepsake
-            let countResponse = try await client
-                .from("user_keepsakes")
-                .select("id", head: true, count: .exact)
-                .eq("keepsake_id", value: keepsake.id.uuidString)
-                .execute()
-            let usersWithKeepsake = countResponse.count ?? 1
-
-            let rarityPercentage = (Double(usersWithKeepsake) / Double(totalUsers)) * 100
-
-            earnedKeepsakes.append(EarnedKeepsake(
-                id: userKeepsake.id,
-                keepsake: keepsake,
-                earnedAt: userKeepsake.earnedAt,
-                rarityPercentage: rarityPercentage
-            ))
-        }
-
-        return earnedKeepsakes.sorted { $0.earnedAt > $1.earnedAt }
-    }
-
-    /// Check if user has a keepsake for a specific event
-    func hasKeepsakeForEvent(eventId: UUID) async throws -> EarnedKeepsake? {
-        guard let userId = currentUser?.id else {
-            return nil
-        }
-
-        // Find keepsake linked to this event
-        let keepsakes: [Keepsake] = try await client
-            .from("keepsakes")
-            .select()
-            .eq("event_id", value: eventId.uuidString)
-            .execute()
-            .value
-
-        guard let keepsake = keepsakes.first else {
-            return nil
-        }
-
-        // Check if user has earned it
-        let userKeepsakes: [UserKeepsake] = try await client
-            .from("user_keepsakes")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .eq("keepsake_id", value: keepsake.id.uuidString)
-            .execute()
-            .value
-
-        guard let userKeepsake = userKeepsakes.first else {
-            return nil
-        }
-
-        // Get rarity
-        let totalUsersResponse = try await client
-            .from("profiles")
-            .select("id", head: true, count: .exact)
-            .execute()
-        let totalUsers = max(totalUsersResponse.count ?? 1, 1)
-
-        let countResponse = try await client
-            .from("user_keepsakes")
-            .select("id", head: true, count: .exact)
-            .eq("keepsake_id", value: keepsake.id.uuidString)
-            .execute()
-        let usersWithKeepsake = countResponse.count ?? 1
-
-        let rarityPercentage = (Double(usersWithKeepsake) / Double(totalUsers)) * 100
-
-        return EarnedKeepsake(
-            id: userKeepsake.id,
-            keepsake: keepsake,
-            earnedAt: userKeepsake.earnedAt,
-            rarityPercentage: rarityPercentage
-        )
-    }
-
     // MARK: - Profile Stats
 
     /// Get all stats for the user's profile
@@ -1016,16 +855,7 @@ class SupabaseManager: ObservableObject {
             .execute()
         let photosLoved = likedResponse.count ?? 0
 
-        // 3. Reveals completed
-        let revealsResponse = try await client
-            .from("user_reveal_progress")
-            .select("id", head: true, count: .exact)
-            .eq("user_id", value: userId.uuidString)
-            .eq("completed", value: true)
-            .execute()
-        let revealsCompleted = revealsResponse.count ?? 0
-
-        // 4. Momentos shared (events joined)
+        // 3. Momentos shared (events joined)
         let eventsResponse = try await client
             .from("event_members")
             .select("id", head: true, count: .exact)
@@ -1033,7 +863,7 @@ class SupabaseManager: ObservableObject {
             .execute()
         let momentosShared = eventsResponse.count ?? 0
 
-        // 5. First Momento date
+        // 4. First Momento date
         let firstEventMembers: [EventMember] = try await client
             .from("event_members")
             .select()
@@ -1044,7 +874,7 @@ class SupabaseManager: ObservableObject {
             .value
         let firstMomentoDate = firstEventMembers.first?.joinedAt
 
-        // 6. Friends captured with (unique co-attendees)
+        // 5. Friends captured with (unique co-attendees)
         let myEventMembers: [EventMember] = try await client
             .from("event_members")
             .select()
@@ -1069,7 +899,7 @@ class SupabaseManager: ObservableObject {
         }
         let friendsCapturedWith = friendsSet.count
 
-        // 7. Most active Momento (event with most photos by user)
+        // 6. Most active Momento (event with most photos by user)
         let userPhotos: [PhotoModel] = try await client
             .from("photos")
             .select()
@@ -1093,7 +923,7 @@ class SupabaseManager: ObservableObject {
             mostActiveMomento = events.first?.name
         }
 
-        // 8. Most recent Momento
+        // 7. Most recent Momento
         let recentEventMembers: [EventMember] = try await client
             .from("event_members")
             .select()
@@ -1114,7 +944,7 @@ class SupabaseManager: ObservableObject {
             mostRecentMomento = events.first?.name
         }
 
-        // 9. User number (count of profiles created before this user)
+        // 8. User number (count of profiles created before this user)
         let userNumberResponse = try await client
             .from("profiles")
             .select("id", head: true, count: .exact)
@@ -1125,7 +955,6 @@ class SupabaseManager: ObservableObject {
         return ProfileStats(
             momentsCaptured: momentsCaptured,
             photosLoved: photosLoved,
-            revealsCompleted: revealsCompleted,
             momentosShared: momentosShared,
             firstMomentoDate: firstMomentoDate,
             friendsCapturedWith: friendsCapturedWith,
@@ -1241,75 +1070,11 @@ struct PhotoLike: Codable {
     }
 }
 
-/// User's progress through reveal swipe stack
-struct UserRevealProgress: Codable, Identifiable {
-    let id: UUID
-    let eventId: UUID
-    let userId: UUID
-    var lastPhotoIndex: Int
-    var completed: Bool
-    var updatedAt: Date
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case eventId = "event_id"
-        case userId = "user_id"
-        case lastPhotoIndex = "last_photo_index"
-        case completed
-        case updatedAt = "updated_at"
-    }
-}
-
-// MARK: - Keepsake Models
-
-/// A keepsake definition (badge/collectible)
-struct Keepsake: Codable, Identifiable {
-    let id: UUID
-    let name: String
-    let artworkUrl: String
-    let flavourText: String
-    let eventId: UUID?
-    let createdAt: Date
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case artworkUrl = "artwork_url"
-        case flavourText = "flavour_text"
-        case eventId = "event_id"
-        case createdAt = "created_at"
-    }
-}
-
-/// A user's earned keepsake
-struct UserKeepsake: Codable, Identifiable {
-    let id: UUID
-    let userId: UUID
-    let keepsakeId: UUID
-    let earnedAt: Date
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case userId = "user_id"
-        case keepsakeId = "keepsake_id"
-        case earnedAt = "earned_at"
-    }
-}
-
-/// Combined keepsake with earning info for display
-struct EarnedKeepsake: Identifiable {
-    let id: UUID
-    let keepsake: Keepsake
-    let earnedAt: Date
-    let rarityPercentage: Double
-}
-
 /// User profile statistics for display
 struct ProfileStats {
     // Activity stats
     let momentsCaptured: Int
     let photosLoved: Int
-    let revealsCompleted: Int
     let momentosShared: Int
 
     // Journey stats

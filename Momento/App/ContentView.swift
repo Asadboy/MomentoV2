@@ -357,7 +357,7 @@ struct ContentView: View {
         case .revealed:
             // Check if user has already completed the reveal swipe
             selectedEventForReveal = event
-            checkRevealProgress(for: event)
+            showReveal(for: event)
         }
     }
     
@@ -379,35 +379,15 @@ struct ContentView: View {
         }
     }
 
-    /// Check reveal progress and show appropriate view
-    private func checkRevealProgress(for event: Event) {
-        guard let eventUUID = UUID(uuidString: event.id) else {
+    /// Show appropriate reveal view based on local completion status
+    private func showReveal(for event: Event) {
+        let completed = revealCompletionStatus[event.id] ?? false
+        if completed {
+            HapticsManager.shared.light()
+            showLikedGallery = true
+        } else {
+            HapticsManager.shared.unlock()
             showStackReveal = true
-            return
-        }
-
-        Task {
-            do {
-                if let progress = try await supabaseManager.getRevealProgress(eventId: eventUUID),
-                   progress.completed {
-                    // Already completed - show liked gallery
-                    await MainActor.run {
-                        HapticsManager.shared.light()
-                        showLikedGallery = true
-                    }
-                } else {
-                    // Not completed - show stack reveal
-                    await MainActor.run {
-                        HapticsManager.shared.unlock()
-                        showStackReveal = true
-                    }
-                }
-            } catch {
-                // On error, default to stack reveal
-                await MainActor.run {
-                    showStackReveal = true
-                }
-            }
         }
     }
     
@@ -428,18 +408,11 @@ struct ContentView: View {
             let eventModels = try await supabaseManager.getMyEvents()
             let loadedEvents = eventModels.map { Event(fromSupabase: $0) }
 
-            // Fetch reveal progress and liked counts for revealed events
-            var completionStatus: [String: Bool] = [:]
+            // Fetch liked counts for revealed events
             var likeCounts: [String: Int] = [:]
 
             for event in loadedEvents where event.currentState() == .revealed {
                 if let eventUUID = UUID(uuidString: event.id) {
-                    // Fetch reveal progress
-                    if let progress = try? await supabaseManager.getRevealProgress(eventId: eventUUID) {
-                        completionStatus[event.id] = progress.completed
-                    }
-
-                    // Fetch liked count
                     if let count = try? await supabaseManager.getLikedPhotoCount(eventId: eventUUID) {
                         likeCounts[event.id] = count
                     }
@@ -448,7 +421,6 @@ struct ContentView: View {
 
             await MainActor.run {
                 events = loadedEvents
-                revealCompletionStatus = completionStatus
                 likedCounts = likeCounts
                 isLoadingEvents = false
                 isRefreshing = false

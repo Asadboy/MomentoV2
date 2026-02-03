@@ -32,12 +32,6 @@ struct StatsGridView: View {
             )
 
             StatCardView(
-                value: "\(stats.revealsCompleted)",
-                label: "Reveals completed",
-                icon: "sparkles"
-            )
-
-            StatCardView(
                 value: "\(stats.momentosShared)",
                 label: "Shared Momentos",
                 icon: "person.2.fill"
@@ -155,7 +149,6 @@ struct JourneyStatRow: View {
                 StatsGridView(stats: ProfileStats(
                     momentsCaptured: 42,
                     photosLoved: 18,
-                    revealsCompleted: 6,
                     momentosShared: 8,
                     firstMomentoDate: Date().addingTimeInterval(-90 * 24 * 3600),
                     friendsCapturedWith: 23,
@@ -166,7 +159,6 @@ struct JourneyStatRow: View {
                 JourneyStatsView(stats: ProfileStats(
                     momentsCaptured: 42,
                     photosLoved: 18,
-                    revealsCompleted: 6,
                     momentosShared: 8,
                     firstMomentoDate: Date().addingTimeInterval(-90 * 24 * 3600),
                     friendsCapturedWith: 23,

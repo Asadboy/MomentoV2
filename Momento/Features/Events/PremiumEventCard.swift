@@ -110,7 +110,7 @@ struct PremiumEventCard: View {
         Color(red: 0.85, green: 0.65, blue: 0.3)
     }
 
-    // Premium silver for completed/keepsake momentos
+    // Premium silver for completed momentos
     private var premiumSilver: Color {
         Color(red: 0.75, green: 0.78, blue: 0.85)
     }
@@ -146,7 +146,7 @@ struct PremiumEventCard: View {
                 endPoint: .bottom
             )
         case .revealed:
-            // Premium silver for keepsake feel
+            // Premium silver for revealed momentos
             return LinearGradient(
                 colors: [premiumSilver.opacity(0.6), premiumSilver.opacity(0.3)],
                 startPoint: .topLeading,
@@ -169,7 +169,7 @@ struct PremiumEventCard: View {
         switch eventState {
         case .readyToReveal: return Color.purple.opacity(0.6)
         case .live: return royalPurple.opacity(0.4)
-        case .revealed: return premiumSilver.opacity(0.3)  // Subtle silver glow for keepsake feel
+        case .revealed: return premiumSilver.opacity(0.3)  // Subtle silver glow for revealed feel
         default: return Color.clear
         }
     }

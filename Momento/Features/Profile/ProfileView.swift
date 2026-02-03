@@ -2,7 +2,7 @@
 //  ProfileView.swift
 //  Momento
 //
-//  User profile screen with stats and keepsakes
+//  User profile screen with stats
 //
 
 import SwiftUI
@@ -14,8 +14,6 @@ struct ProfileView: View {
     @State private var username: String?
     @State private var userNumber: Int?
     @State private var stats: ProfileStats?
-    @State private var keepsakes: [EarnedKeepsake] = []
-    @State private var selectedKeepsake: EarnedKeepsake?
     @State private var isLoading = true
     @State private var isLoggingOut = false
     @State private var showLogoutConfirmation = false
@@ -53,11 +51,6 @@ struct ProfileView: View {
                             // Stats section
                             if let stats = stats {
                                 statsSection(stats: stats)
-                            }
-
-                            // Keepsakes section (hidden if empty)
-                            if !keepsakes.isEmpty {
-                                keepsakesSection
                             }
 
                             Spacer(minLength: 40)
@@ -98,11 +91,6 @@ struct ProfileView: View {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
-            }
-            .sheet(item: $selectedKeepsake) { keepsake in
-                KeepsakeDetailModal(keepsake: keepsake)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
             }
             .task {
                 await loadProfileData()
@@ -192,22 +180,6 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Keepsakes Section
-
-    private var keepsakesSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("KEEPSAKES")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white.opacity(0.3))
-                .tracking(1.2)
-
-            KeepsakeGridView(
-                keepsakes: keepsakes,
-                selectedKeepsake: $selectedKeepsake
-            )
-        }
-    }
-
     // MARK: - Sign Out Button
 
     private var signOutButton: some View {
@@ -256,14 +228,10 @@ struct ProfileView: View {
             // Load stats
             let profileStats = try await supabaseManager.getProfileStats()
 
-            // Load keepsakes
-            let earnedKeepsakes = try await supabaseManager.getUserKeepsakes()
-
             await MainActor.run {
                 self.username = profile.username
                 self.userNumber = profileStats.userNumber
                 self.stats = profileStats
-                self.keepsakes = earnedKeepsakes
                 self.isLoading = false
             }
         } catch {
