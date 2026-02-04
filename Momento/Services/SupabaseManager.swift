@@ -298,6 +298,7 @@ class SupabaseManager: ObservableObject {
         // Auto-calculate event times from start
         let endsAt = startsAt.addingTimeInterval(12 * 3600)  // +12 hours
         let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
+        let expiresAt = releaseAt.addingTimeInterval(30 * 24 * 3600) // +30 days (launch grace period)
 
         print("[createEvent] Creating: \(name)")
         print("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")
@@ -314,6 +315,9 @@ class SupabaseManager: ObservableObject {
             isDeleted: false,
             memberCount: 0,
             photoCount: 0,
+            expiresAt: expiresAt,
+            premiumPurchasedAt: nil,
+            premiumTransactionId: nil,
             createdAt: Date()
         )
         
@@ -945,6 +949,9 @@ struct EventModel: Codable, Identifiable {
     var isDeleted: Bool
     var memberCount: Int
     var photoCount: Int
+    var expiresAt: Date?
+    var premiumPurchasedAt: Date?
+    var premiumTransactionId: String?
     let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
@@ -959,6 +966,9 @@ struct EventModel: Codable, Identifiable {
         case isDeleted = "is_deleted"
         case memberCount = "member_count"
         case photoCount = "photo_count"
+        case expiresAt = "expires_at"
+        case premiumPurchasedAt = "premium_purchased_at"
+        case premiumTransactionId = "premium_transaction_id"
         case createdAt = "created_at"
     }
 }

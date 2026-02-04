@@ -171,6 +171,9 @@ struct LikedGalleryView: View {
                     throw NSError(domain: "LikedGalleryView", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create image"])
                 }
 
+                // Apply watermark on free events
+                let saveImage = event.isPremium ? image : WatermarkRenderer.apply(to: image)
+
                 // Request photo library access
                 let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
                 guard status == .authorized || status == .limited else {
@@ -183,7 +186,7 @@ struct LikedGalleryView: View {
 
                 // Save to camera roll
                 try await PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                    PHAssetChangeRequest.creationRequestForAsset(from: saveImage)
                 }
 
                 await MainActor.run {
@@ -194,7 +197,7 @@ struct LikedGalleryView: View {
                     // Track photo download
                     AnalyticsManager.shared.track(.photoDownloaded, properties: [
                         "event_id": event.id,
-                        "has_watermark": true
+                        "has_watermark": !event.isPremium
                     ])
                 }
             } catch {
@@ -227,8 +230,11 @@ struct LikedGalleryView: View {
                     let (data, _) = try await URLSession.shared.data(from: url)
                     guard let image = UIImage(data: data) else { continue }
 
+                    // Apply watermark on free events
+                    let saveImage = event.isPremium ? image : WatermarkRenderer.apply(to: image)
+
                     try await PHPhotoLibrary.shared().performChanges {
-                        PHAssetChangeRequest.creationRequestForAsset(from: image)
+                        PHAssetChangeRequest.creationRequestForAsset(from: saveImage)
                     }
                     savedCount += 1
                 } catch {
@@ -245,7 +251,7 @@ struct LikedGalleryView: View {
                 for _ in 0..<savedCount {
                     AnalyticsManager.shared.track(.photoDownloaded, properties: [
                         "event_id": event.id,
-                        "has_watermark": true,
+                        "has_watermark": !event.isPremium,
                         "source": "batch_download"
                     ])
                 }

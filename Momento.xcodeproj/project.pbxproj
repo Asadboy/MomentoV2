@@ -15,6 +15,7 @@
 		C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859042F2E4D7400E11B8C /* AccordionRow.swift */; };
 		C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859062F2E4D7400E11B8C /* FilterPickerView.swift */; };
 		C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859072F2E4D7400E11B8C /* InviteCardView.swift */; };
+		C30ABBD82F336D09005B782B /* WatermarkRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30ABBD72F336D09005B782B /* WatermarkRenderer.swift */; };
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
@@ -90,6 +91,7 @@
 		C30859042F2E4D7400E11B8C /* AccordionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccordionRow.swift; sourceTree = "<group>"; };
 		C30859062F2E4D7400E11B8C /* FilterPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPickerView.swift; sourceTree = "<group>"; };
 		C30859072F2E4D7400E11B8C /* InviteCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardView.swift; sourceTree = "<group>"; };
+		C30ABBD72F336D09005B782B /* WatermarkRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WatermarkRenderer.swift; sourceTree = "<group>"; };
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888E72EB75FF2003094CB /* MomentoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888EB2EB75FF2003094CB /* MomentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoTests.swift; sourceTree = "<group>"; };
@@ -225,6 +227,24 @@
 			path = Momento;
 			sourceTree = "<group>";
 		};
+		C36446BE2EF8200000000005 /* CreateMomento */ = {
+			isa = PBXGroup;
+			children = (
+				C36446B72EF8200000000001 /* CreateMomentoFlow.swift */,
+				C36446B92EF8200000000002 /* CreateStep1NameView.swift */,
+				C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */,
+				A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */,
+			);
+			path = CreateMomento;
+			sourceTree = "<group>";
+		};
+		C3ACE77C2EC0F920004B23B1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C3APPGROUP001 /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -232,19 +252,6 @@
 				C34889132EB7C6F5003094CB /* ContentView.swift */,
 			);
 			path = App;
-			sourceTree = "<group>";
-		};
-		C3FEATGROUP001 /* Features */ = {
-			isa = PBXGroup;
-			children = (
-				C3AUTHGROUP001 /* Auth */,
-				C3CAMGROUP001 /* Camera */,
-				C3EVTGROUP001 /* Events */,
-				C3GALGROUP001 /* Gallery */,
-				C3PROFGROUP001 /* Profile */,
-				C3REVGROUP001 /* Reveal */,
-			);
-			path = Features;
 			sourceTree = "<group>";
 		};
 		C3AUTHGROUP001 /* Auth */ = {
@@ -267,12 +274,27 @@
 			path = Camera;
 			sourceTree = "<group>";
 		};
-		C3FILTGROUP001 /* Filters */ = {
+		C3COMPGROUP001 /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				C3C4112B2EF857E8002D8DB5 /* BethanReynoldsFilter.swift */,
+				C30859042F2E4D7400E11B8C /* AccordionRow.swift */,
+				C3C5709F2F26579F00A8024C /* EventPreviewModal.swift */,
+				C30859062F2E4D7400E11B8C /* FilterPickerView.swift */,
+				C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */,
+				C30859072F2E4D7400E11B8C /* InviteCardView.swift */,
+				C3C5709E2F26579F00A8024C /* VerificationCodeInput.swift */,
+				C30ABBD72F336D09005B782B /* WatermarkRenderer.swift */,
 			);
-			path = Filters;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		C3CONFGROUP001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				C30859002F2E3FC600E11B8C /* PostHogConfig.swift */,
+				C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		C3EVTGROUP001 /* Events */ = {
@@ -288,15 +310,25 @@
 			path = Events;
 			sourceTree = "<group>";
 		};
-		C36446BE2EF8200000000005 /* CreateMomento */ = {
+		C3FEATGROUP001 /* Features */ = {
 			isa = PBXGroup;
 			children = (
-				C36446B72EF8200000000001 /* CreateMomentoFlow.swift */,
-				C36446B92EF8200000000002 /* CreateStep1NameView.swift */,
-				C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */,
-				A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */,
+				C3AUTHGROUP001 /* Auth */,
+				C3CAMGROUP001 /* Camera */,
+				C3EVTGROUP001 /* Events */,
+				C3GALGROUP001 /* Gallery */,
+				C3PROFGROUP001 /* Profile */,
+				C3REVGROUP001 /* Reveal */,
 			);
-			path = CreateMomento;
+			path = Features;
+			sourceTree = "<group>";
+		};
+		C3FILTGROUP001 /* Filters */ = {
+			isa = PBXGroup;
+			children = (
+				C3C4112B2EF857E8002D8DB5 /* BethanReynoldsFilter.swift */,
+			);
+			path = Filters;
 			sourceTree = "<group>";
 		};
 		C3GALGROUP001 /* Gallery */ = {
@@ -306,6 +338,15 @@
 				C3STACK042F0B000000000002 /* LikedGalleryView.swift */,
 			);
 			path = Gallery;
+			sourceTree = "<group>";
+		};
+		C3MODELGROUP001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				C34889152EB7C7F6003094CB /* Event.swift */,
+				C348891B2EB7CAF9003094CB /* TimeFormatter.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		C3PROFGROUP001 /* Profile */ = {
@@ -343,44 +384,6 @@
 				C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		C3MODELGROUP001 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				C34889152EB7C7F6003094CB /* Event.swift */,
-				C348891B2EB7CAF9003094CB /* TimeFormatter.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		C3COMPGROUP001 /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				C30859042F2E4D7400E11B8C /* AccordionRow.swift */,
-				C3C5709F2F26579F00A8024C /* EventPreviewModal.swift */,
-				C30859062F2E4D7400E11B8C /* FilterPickerView.swift */,
-				C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */,
-				C30859072F2E4D7400E11B8C /* InviteCardView.swift */,
-				C3C5709E2F26579F00A8024C /* VerificationCodeInput.swift */,
-			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		C3CONFGROUP001 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				C30859002F2E3FC600E11B8C /* PostHogConfig.swift */,
-				C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */,
-			);
-			path = Config;
-			sourceTree = "<group>";
-		};
-		C3ACE77C2EC0F920004B23B1 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -560,6 +563,7 @@
 				C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */,
 				C34D444E2F0A80EE0019CA2C /* SettingsView.swift in Sources */,
 				C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */,
+				C30ABBD82F336D09005B782B /* WatermarkRenderer.swift in Sources */,
 				C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
 				C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */,

@@ -58,6 +58,8 @@ struct Event: Identifiable, Hashable {
     var memberCount: Int
     var photoCount: Int
     var joinCode: String?
+    var creatorId: String?
+    var expiresAt: Date?
 
     init(
         id: String = UUID().uuidString,
@@ -69,7 +71,9 @@ struct Event: Identifiable, Hashable {
         isPremium: Bool = false,
         memberCount: Int = 0,
         photoCount: Int = 0,
-        joinCode: String? = nil
+        joinCode: String? = nil,
+        creatorId: String? = nil,
+        expiresAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -81,6 +85,8 @@ struct Event: Identifiable, Hashable {
         self.memberCount = memberCount
         self.photoCount = photoCount
         self.joinCode = joinCode
+        self.creatorId = creatorId
+        self.expiresAt = expiresAt
     }
 
     enum State {
@@ -118,7 +124,9 @@ extension Event {
             isPremium: eventModel.isPremium,
             memberCount: eventModel.memberCount,
             photoCount: eventModel.photoCount,
-            joinCode: eventModel.joinCode
+            joinCode: eventModel.joinCode,
+            creatorId: eventModel.creatorId.uuidString,
+            expiresAt: eventModel.expiresAt
         )
     }
 }
