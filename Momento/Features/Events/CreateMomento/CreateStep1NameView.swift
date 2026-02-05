@@ -15,8 +15,8 @@ struct CreateStep1NameView: View {
     @FocusState private var isNameFocused: Bool
     @State private var showSuggestions = true
 
-    // Glow colors
-    private let glowGold = Color(red: 0.85, green: 0.65, blue: 0.3)
+    // Glow colors (reveal palette: blue + purple)
+    private let glowBlue = Color(red: 0.0, green: 0.6, blue: 1.0)
     private let glowPurple = Color(red: 0.5, green: 0.0, blue: 0.8)
     
     var body: some View {
@@ -57,7 +57,7 @@ struct CreateStep1NameView: View {
 
                     Text("What are you capturing?")
                         .font(.system(size: 16, weight: .regular))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.5))
                 }
                 
                 // Name input with glow effect
@@ -67,7 +67,7 @@ struct CreateStep1NameView: View {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(
                                 LinearGradient(
-                                    colors: [glowGold.opacity(0.3), glowPurple.opacity(0.3)],
+                                    colors: [glowBlue.opacity(0.3), glowPurple.opacity(0.3)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -83,7 +83,7 @@ struct CreateStep1NameView: View {
                                 Text("e.g. Sopranos Party")
                                     .foregroundColor(.white.opacity(0.3))
                             }
-                            .font(.system(size: momentoName.isEmpty ? 24 : 30, weight: .bold))
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .focused($isNameFocused)
@@ -93,14 +93,13 @@ struct CreateStep1NameView: View {
                                     onNext()
                                 }
                             }
-                            .animation(.easeInOut(duration: 0.15), value: momentoName.isEmpty)
 
                         // Underline with glow when focused
                         Rectangle()
                             .fill(
                                 isNameFocused
                                     ? LinearGradient(
-                                        colors: [glowGold, glowPurple],
+                                        colors: [glowBlue, glowPurple],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                       )
@@ -113,7 +112,6 @@ struct CreateStep1NameView: View {
                             .frame(height: 2)
                             .frame(maxWidth: 280)
                             .animation(.easeInOut(duration: 0.2), value: isNameFocused)
-                            .animation(.easeInOut(duration: 0.2), value: momentoName.isEmpty)
                     }
                 }
                 .padding(.horizontal, 40)
@@ -168,10 +166,8 @@ struct CreateStep1NameView: View {
         }
         .background(backgroundGradient)
         .onAppear {
-            // Auto-focus the text field
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                isNameFocused = true
-            }
+            // Auto-focus the text field immediately
+            isNameFocused = true
         }
     }
     
@@ -195,13 +191,13 @@ struct CreateStep1NameView: View {
                 endPoint: .bottomTrailing
             )
 
-            // Ambient glow orb in upper portion
+            // Ambient glow orb in upper portion (blue + purple reveal colors)
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
                             glowPurple.opacity(0.25),
-                            glowGold.opacity(0.1),
+                            glowBlue.opacity(0.1),
                             Color.clear
                         ],
                         center: .center,

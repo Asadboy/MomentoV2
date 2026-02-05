@@ -5,7 +5,6 @@
 //  Step 3 of Create Momento flow: Share your momento
 //
 
-import Photos
 import SwiftUI
 
 struct CreateStep3ShareView: View {
@@ -18,7 +17,6 @@ struct CreateStep3ShareView: View {
     @State private var copiedCode = false
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
-    @State private var showDownloadSuccess = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -72,21 +70,25 @@ struct CreateStep3ShareView: View {
 
                 // Copy code button
                 Button(action: copyCode) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 12) {
                         Text(joinCode)
-                            .font(.system(size: 18, weight: .bold, design: .monospaced))
-                            .tracking(2)
+                            .font(.system(size: 20, weight: .bold, design: .monospaced))
+                            .tracking(3)
 
-                        Image(systemName: copiedCode ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 14, weight: .medium))
+                        Image(systemName: copiedCode ? "checkmark.circle.fill" : "doc.on.doc")
+                            .font(.system(size: 18, weight: .medium))
                     }
-                    .foregroundColor(copiedCode ? .green : .white.opacity(0.8))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(copiedCode ? 0.2 : 0.1))
+                    .cornerRadius(16)
                 }
 
                 if copiedCode {
-                    Text("Copied!")
+                    Text("Copied to clipboard")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.green)
+                        .foregroundColor(.white.opacity(0.6))
                         .transition(.opacity)
                 }
             }
@@ -94,7 +96,7 @@ struct CreateStep3ShareView: View {
             Spacer()
 
             // Action buttons
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 // Share button
                 Button(action: shareInvite) {
                     HStack(spacing: 8) {
@@ -108,36 +110,18 @@ struct CreateStep3ShareView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(Color.white)
-                    .cornerRadius(16)
-                }
-
-                // Download Card button
-                Button(action: downloadCard) {
-                    HStack(spacing: 8) {
-                        Image(systemName: showDownloadSuccess ? "checkmark" : "arrow.down.to.line")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text(showDownloadSuccess ? "Saved!" : "Download Card")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                    .foregroundColor(showDownloadSuccess ? .green : .white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color.white.opacity(0.15))
-                    .cornerRadius(16)
+                    .cornerRadius(28)
                 }
 
                 // Done button
                 Button(action: onDone) {
                     Text("Done")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(16)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
                 }
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
         .background(backgroundGradient)
@@ -206,50 +190,6 @@ struct CreateStep3ShareView: View {
         )
 
         showShareSheet = true
-    }
-
-    private func downloadCard() {
-        // Render the invite card image
-        guard let image = InviteCardRenderer.render(
-            eventName: momentoName,
-            joinCode: joinCode,
-            startDate: startsAt,
-            hostName: hostName
-        ) else { return }
-
-        // Request photo library permission before saving
-        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-            DispatchQueue.main.async {
-                guard status == .authorized || status == .limited else {
-                    // Permission denied - don't show success feedback
-                    return
-                }
-
-                // Save to Photos
-                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-
-                // Track the download event (only on success)
-                AnalyticsManager.shared.track(.inviteCardDownloaded, properties: [
-                    "event_name": momentoName
-                ])
-
-                // Haptic feedback
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
-
-                // Show success feedback
-                withAnimation {
-                    showDownloadSuccess = true
-                }
-
-                // Reset after 2 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation {
-                        showDownloadSuccess = false
-                    }
-                }
-            }
-        }
     }
 
     private var backgroundGradient: some View {

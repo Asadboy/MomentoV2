@@ -11,25 +11,25 @@ struct StatCardView: View {
     let value: String
     let label: String
     let icon: String
-    var isHero: Bool = false
+    var isHero: Bool = false  // Kept for API compatibility
 
-    private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
-    }
+    // Reveal colors (blue + purple)
+    private let glowBlue = Color(red: 0.0, green: 0.6, blue: 1.0)
+    private let glowPurple = Color(red: 0.5, green: 0.0, blue: 0.8)
 
     var body: some View {
         VStack(spacing: 6) {
-            // Icon - dimmed for subtlety
+            // Icon
             Image(systemName: icon)
-                .font(.system(size: isHero ? 18 : 14, weight: .medium))
-                .foregroundColor(royalPurple.opacity(isHero ? 0.9 : 0.6))
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(glowPurple.opacity(0.7))
 
-            // Value - hero stat is larger and brighter
+            // Value
             Text(value)
-                .font(.system(size: isHero ? 28 : 22, weight: .bold))
-                .foregroundColor(.white.opacity(isHero ? 1.0 : 0.85))
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.white)
 
-            // Label - muted
+            // Label
             Text(label)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.white.opacity(0.4))
@@ -41,12 +41,18 @@ struct StatCardView: View {
         .padding(.vertical, 14)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(red: isHero ? 0.14 : 0.12, green: isHero ? 0.11 : 0.1, blue: isHero ? 0.18 : 0.16))
-                .shadow(color: isHero ? royalPurple.opacity(0.15) : Color.clear, radius: 8, x: 0, y: 2)
+                .fill(Color(red: 0.12, green: 0.1, blue: 0.16))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(royalPurple.opacity(isHero ? 0.25 : 0.08), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [glowBlue.opacity(0.3), glowPurple.opacity(0.3)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
         )
     }
 }
@@ -56,8 +62,8 @@ struct StatCardView: View {
         Color.black.ignoresSafeArea()
 
         HStack(spacing: 12) {
-            StatCardView(value: "42", label: "Moments captured", icon: "camera.fill", isHero: true)
-            StatCardView(value: "18", label: "Moments loved", icon: "heart.fill")
+            StatCardView(value: "42", label: "Photos taken", icon: "camera.fill")
+            StatCardView(value: "18", label: "Photos liked", icon: "heart.fill")
         }
         .padding()
     }

@@ -71,15 +71,9 @@ struct InviteCardView: View {
         )
     }
 
-    private var cardGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(red: 0.15, green: 0.05, blue: 0.25),
-                Color(red: 0.08, green: 0.06, blue: 0.15)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    // Same background as event cards - neutral, not special
+    private var cardGradient: Color {
+        Color(red: 0.12, green: 0.1, blue: 0.16)
     }
 
     private func formatStartDate(_ date: Date) -> String {

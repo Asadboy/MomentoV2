@@ -9,114 +9,115 @@ struct CreateStep2ConfigureView: View {
     let onNext: () -> Void
     let onBack: () -> Void
 
-    // Accordion expansion states
-    @State private var isStartsExpanded = false
-    @State private var isFilterExpanded = false
-
-    private let royalPurple = Color(red: 0.5, green: 0.0, blue: 0.8)
+    // Glow colors (reveal palette: blue + purple)
+    private let glowBlue = Color(red: 0.0, green: 0.6, blue: 1.0)
+    private let glowPurple = Color(red: 0.5, green: 0.0, blue: 0.8)
 
     var body: some View {
         ZStack {
-            // Background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.12),
-                    Color(red: 0.08, green: 0.06, blue: 0.15)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            backgroundGradient
 
             VStack(spacing: 0) {
                 // Header
                 HStack {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
                     }
 
                     Spacer()
 
                     Text("Step 2 of 3")
-                        .font(.system(size: 14))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
+
+                    Spacer()
+
+                    // Invisible spacer for balance
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.clear)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, 20)
 
-                // Title
-                VStack(spacing: 8) {
-                    Text("Set the vibe")
-                        .font(.system(size: 28, weight: .bold))
+                Spacer()
+
+                // Main content
+                VStack(spacing: 28) {
+                    // Title only - no subtitle
+                    Text("When does it start?")
+                        .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("\"\(eventName)\"")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white.opacity(0.6))
-                        .lineLimit(1)
-                }
-                .padding(.top, 24)
-                .padding(.bottom, 24)
+                    // Date/Time picker - the hero
+                    ZStack {
+                        // Subtle glow behind picker
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [glowBlue.opacity(0.15), glowPurple.opacity(0.15)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(height: 200)
+                            .blur(radius: 40)
 
-                // Rows
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // 1. Start - expandable with date picker
-                        AccordionRow(
-                            icon: "calendar",
-                            title: "Start",
-                            subtitle: formatDateTime(startsAt),
-                            isExpanded: $isStartsExpanded
-                        ) {
-                            DatePicker("", selection: $startsAt, displayedComponents: [.date, .hourAndMinute])
-                                .datePickerStyle(.wheel)
-                                .labelsHidden()
-                        }
-
-                        // 2. Capture ends - non-expandable info row
-                        ConfigInfoRow(
-                            icon: "camera",
-                            title: "Capture ends",
-                            subtitle: formatDateTime(endsAt)
-                        )
-
-                        // 3. Reveal - non-expandable info row
-                        ConfigInfoRow(
-                            icon: "sparkles",
-                            title: "Reveal",
-                            subtitle: formatDateTime(releaseAt)
-                        )
-
-                        // 4. Filter - expandable with filter picker
-                        AccordionRow(
-                            icon: "camera.filters",
-                            title: "Filter",
-                            subtitle: selectedFilter.displayName,
-                            isExpanded: $isFilterExpanded
-                        ) {
-                            FilterPickerView(selectedFilter: $selectedFilter)
-                        }
+                        DatePicker("", selection: $startsAt, displayedComponents: [.date, .hourAndMinute])
+                            .datePickerStyle(.wheel)
+                            .labelsHidden()
+                            .colorScheme(.dark)
                     }
-                    .background(Color.white.opacity(0.03))
-                    .cornerRadius(16)
                     .padding(.horizontal, 20)
+
+                    // How it works - one calm block, no icons
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("How it works")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
+
+                        Text("Capture for 12 hours")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+
+                        Text("Reveal together at \(formatTime(releaseAt))")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 40)
+
+                    // Filter - feels optional
+                    VStack(spacing: 10) {
+                        Text("Filter")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.3))
+
+                        FilterPickerView(selectedFilter: $selectedFilter)
+                            .padding(.horizontal, 50)
+                    }
                 }
 
                 Spacer()
 
                 // Next button
                 Button(action: onNext) {
-                    Text("Next")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(royalPurple)
-                        .cornerRadius(14)
+                    HStack(spacing: 8) {
+                        Text("Next")
+                            .font(.system(size: 17, weight: .semibold))
+
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.white)
+                    .cornerRadius(28)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 40)
             }
         }
@@ -126,41 +127,43 @@ struct CreateStep2ConfigureView: View {
         }
     }
 
-    private func formatDateTime(_ date: Date) -> String {
+    private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEE d MMM • h:mm a"
+        formatter.dateFormat = "EEEE 'at' h:mm a"
         return formatter.string(from: date)
     }
-}
 
-// MARK: - Non-expandable info row (matches AccordionRow header style without chevron or tap)
+    private var backgroundGradient: some View {
+        ZStack {
+            // Base gradient
+            LinearGradient(
+                colors: [
+                    Color(red: 0.05, green: 0.05, blue: 0.12),
+                    Color(red: 0.08, green: 0.06, blue: 0.15)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
 
-private struct ConfigInfoRow: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white.opacity(0.8))
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                Text(subtitle)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-
-            Spacer()
+            // Ambient glow orb (blue + purple reveal colors)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            glowPurple.opacity(0.2),
+                            glowBlue.opacity(0.08),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 20,
+                        endRadius: 200
+                    )
+                )
+                .frame(width: 400, height: 400)
+                .offset(x: 50, y: -200)
+                .blur(radius: 60)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(Color.white.opacity(0.05))
+        .ignoresSafeArea()
     }
 }
 

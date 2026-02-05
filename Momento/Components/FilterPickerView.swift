@@ -22,25 +22,19 @@ struct FilterPickerView: View {
     @Binding var selectedFilter: PhotoFilter
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                ForEach(PhotoFilter.allCases, id: \.self) { filter in
-                    FilterOptionView(
-                        filter: filter,
-                        isSelected: selectedFilter == filter,
-                        onTap: {
-                            withAnimation(.spring(response: 0.3)) {
-                                selectedFilter = filter
-                            }
-                            HapticsManager.shared.selectionChanged()
+        HStack(spacing: 16) {
+            ForEach(PhotoFilter.allCases, id: \.self) { filter in
+                FilterOptionView(
+                    filter: filter,
+                    isSelected: selectedFilter == filter,
+                    onTap: {
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedFilter = filter
                         }
-                    )
-                }
+                        HapticsManager.shared.selectionChanged()
+                    }
+                )
             }
-
-            Text(selectedFilter.description)
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.5))
         }
     }
 }
@@ -52,25 +46,21 @@ struct FilterOptionView: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 8) {
-                // Filter preview thumbnail
-                RoundedRectangle(cornerRadius: 8)
+            VStack(spacing: 6) {
+                // Filter preview thumbnail - smaller, subtle
+                RoundedRectangle(cornerRadius: 10)
                     .fill(filterPreviewGradient)
-                    .frame(width: 60, height: 60)
+                    .frame(width: 50, height: 50)
+                    .opacity(isSelected ? 1.0 : 0.5)
                     .overlay(
-                        Text(filter.displayName)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 10)
                             .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
                     )
 
-                // Selection indicator dot
-                Circle()
-                    .fill(isSelected ? Color.white : Color.white.opacity(0.3))
-                    .frame(width: 8, height: 8)
+                // Label - subtle
+                Text(filter.displayName)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(isSelected ? 0.8 : 0.4))
             }
         }
         .frame(maxWidth: .infinity)

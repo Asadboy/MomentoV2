@@ -163,7 +163,7 @@ struct ProfileView: View {
 
     private func statsSection(stats: ProfileStats) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("ACTIVITY")
+            Text("STATS")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.white.opacity(0.3))
                 .tracking(1.2)

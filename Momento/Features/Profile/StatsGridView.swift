@@ -20,8 +20,7 @@ struct StatsGridView: View {
             StatCardView(
                 value: "\(stats.eventsJoined)",
                 label: "Events joined",
-                icon: "person.2.fill",
-                isHero: true
+                icon: "person.2.fill"
             )
 
             StatCardView(
@@ -34,6 +33,12 @@ struct StatsGridView: View {
                 value: "\(stats.photosLiked)",
                 label: "Photos liked",
                 icon: "heart.fill"
+            )
+
+            StatCardView(
+                value: "—",
+                label: "Coming soon",
+                icon: "sparkles"
             )
         }
     }
