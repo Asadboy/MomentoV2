@@ -71,25 +71,29 @@ struct PremiumEventCard: View {
     }
     
     private var progress: Double {
+        let value: Double
         switch eventState {
         case .upcoming:
             // Progress toward event start (assume event was created 24h before start)
             let totalSeconds = 24.0 * 3600.0
             let remaining = Double(secondsUntilStart)
-            return max(0, 1.0 - (remaining / totalSeconds))
+            value = 1.0 - (remaining / totalSeconds)
         case .live:
             // Progress through the event
             let totalSeconds = event.endsAt.timeIntervalSince(event.startsAt)
             let elapsed = now.timeIntervalSince(event.startsAt)
-            return totalSeconds > 0 ? min(1.0, elapsed / totalSeconds) : 0
+            value = totalSeconds > 0 ? elapsed / totalSeconds : 0
         case .processing:
             // Progress toward reveal
             let totalSeconds = event.releaseAt.timeIntervalSince(event.endsAt)
             let elapsed = now.timeIntervalSince(event.endsAt)
-            return totalSeconds > 0 ? min(1.0, elapsed / totalSeconds) : 0
+            value = totalSeconds > 0 ? elapsed / totalSeconds : 0
         default:
             return 1.0
         }
+        // Clamp to valid range — NaN or infinite values become 0
+        guard value.isFinite else { return 0 }
+        return min(1.0, max(0, value))
     }
     
     private func formatCompactTime(_ seconds: Int) -> String {

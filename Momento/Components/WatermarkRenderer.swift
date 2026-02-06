@@ -15,7 +15,9 @@ enum WatermarkRenderer {
     /// Applies the "momento" watermark to the bottom-right corner of the image.
     /// Returns a new image with the watermark composited. Original is not modified.
     static func apply(to image: UIImage) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: image.size)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
 
         return renderer.image { context in
             // Draw the original photo

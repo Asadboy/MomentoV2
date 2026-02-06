@@ -13,7 +13,7 @@ struct CreateStep1NameView: View {
     let onCancel: () -> Void
 
     @FocusState private var isNameFocused: Bool
-    @State private var showSuggestions = true
+    @State private var showSuggestions = false
 
     // Glow colors (reveal palette: blue + purple)
     private let glowBlue = Color(red: 0.0, green: 0.6, blue: 1.0)
@@ -166,8 +166,10 @@ struct CreateStep1NameView: View {
         }
         .background(backgroundGradient)
         .onAppear {
-            // Auto-focus the text field immediately
-            isNameFocused = true
+            // Delay focus slightly so the view layout settles before keyboard appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isNameFocused = true
+            }
         }
     }
     
