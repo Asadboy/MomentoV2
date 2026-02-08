@@ -12,6 +12,8 @@ struct MomentoApp: App {
     init() {
         // Initialize PostHog analytics on app launch
         AnalyticsManager.shared.configure()
+        // Initialize RevenueCat for in-app purchases
+        PurchaseManager.shared.configure()
     }
 
     var body: some Scene {

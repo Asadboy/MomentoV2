@@ -63,6 +63,10 @@
 		C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C6D43D2F2029F700847D38 /* ImageCacheManager.swift */; };
 		C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK042F0B000000000002 /* LikedGalleryView.swift */; };
 		C3DBGL012F3A6B1200A1C2D3 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */; };
+		C3RC00012F4D000000000001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = C3RC00002F4D000000000001 /* RevenueCat */; };
+		C3RC00032F4D000000000002 /* PurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3RC00022F4D000000000002 /* PurchaseManager.swift */; };
+		C3RC00052F4D000000000003 /* RevenueCatConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3RC00042F4D000000000003 /* RevenueCatConfig.swift */; };
+		C3RC00072F4D000000000004 /* PremiumUpgradeModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3RC00062F4D000000000004 /* PremiumUpgradeModal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -137,6 +141,9 @@
 		C3C6D43D2F2029F700847D38 /* ImageCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheManager.swift; sourceTree = "<group>"; };
 		C3STACK042F0B000000000002 /* LikedGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikedGalleryView.swift; sourceTree = "<group>"; };
 		C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		C3RC00022F4D000000000002 /* PurchaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseManager.swift; sourceTree = "<group>"; };
+		C3RC00042F4D000000000003 /* RevenueCatConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatConfig.swift; sourceTree = "<group>"; };
+		C3RC00062F4D000000000004 /* PremiumUpgradeModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumUpgradeModal.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -151,6 +158,7 @@
 				C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */,
 				C3ACE7712EC0E45B004B23B1 /* Storage in Frameworks */,
 				C3ACE76F2EC0E45B004B23B1 /* Realtime in Frameworks */,
+				C3RC00012F4D000000000001 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,6 +299,7 @@
 			children = (
 				C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */,
 				C30859002F2E3FC600E11B8C /* PostHogConfig.swift */,
+				C3RC00042F4D000000000003 /* RevenueCatConfig.swift */,
 				C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */,
 			);
 			path = Config;
@@ -304,6 +313,7 @@
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
 				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
+				C3RC00062F4D000000000004 /* PremiumUpgradeModal.swift */,
 				C36446BE2EF8200000000005 /* CreateMomento */,
 			);
 			path = Events;
@@ -377,6 +387,7 @@
 				C3C6D43D2F2029F700847D38 /* ImageCacheManager.swift */,
 				C3ACE7762EC0F101004B23B1 /* OfflineSyncManager.swift */,
 				C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */,
+				C3RC00022F4D000000000002 /* PurchaseManager.swift */,
 				C3C411312EFEF88E002D8DB5 /* RevealStateManager.swift */,
 				C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */,
 			);
@@ -407,6 +418,7 @@
 				C3ACE7702EC0E45B004B23B1 /* Storage */,
 				C3ACE77D2EC0F920004B23B1 /* Supabase */,
 				C30858FC2F2E3A1800E11B8C /* PostHog */,
+				C3RC00002F4D000000000001 /* RevenueCat */,
 			);
 			productName = Momento;
 			productReference = C34888D72EB75FEF003094CB /* Momento.app */;
@@ -483,6 +495,7 @@
 			packageReferences = (
 				C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				C30858FB2F2E3A1800E11B8C /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				C3RC00082F4D000000000005 /* XCRemoteSwiftPackageReference "purchases-ios" */,
 			);
 			productRefGroup = C34888D82EB75FEF003094CB /* Products */;
 			projectDirPath = "";
@@ -570,6 +583,9 @@
 				C3C6D43C2F2029A400847D38 /* FeedRevealView.swift in Sources */,
 				C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */,
 				1DBAA07BF678BD1C17796F29 /* CreateStep2ConfigureView.swift in Sources */,
+				C3RC00032F4D000000000002 /* PurchaseManager.swift in Sources */,
+				C3RC00052F4D000000000003 /* RevenueCatConfig.swift in Sources */,
+				C3RC00072F4D000000000004 /* PremiumUpgradeModal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -927,6 +943,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		C3RC00082F4D000000000005 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.43.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -964,6 +988,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		C3RC00002F4D000000000001 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3RC00082F4D000000000005 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

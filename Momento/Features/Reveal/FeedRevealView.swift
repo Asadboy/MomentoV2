@@ -165,6 +165,7 @@ struct FeedRevealView: View {
     @StateObject private var viewModel = FeedRevealViewModel()
     @State private var showingSaveAlert = false
     @State private var saveAlertMessage = ""
+    @State private var isPurchasing = false
     @State private var flowPhase: FeedRevealPhase = .preReveal
     @State private var currentPhotoIndex = 0
     @State private var isScrollLocked = false
@@ -239,79 +240,128 @@ struct FeedRevealView: View {
     }
 
     private var preRevealScreen: some View {
-        VStack(spacing: 32) {
-            Spacer()
+        ZStack {
+            // Gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.06, green: 0.04, blue: 0.14),
+                    Color(red: 0.03, green: 0.03, blue: 0.07)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
 
-            // Stats - counts fetched separately
-            VStack(spacing: 16) {
-                Text("Photos")
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-            }
+            // Radial glow behind the reveal button area
+            RadialGradient(
+                colors: [
+                    Color.purple.opacity(0.2),
+                    Color.blue.opacity(0.08),
+                    Color.clear
+                ],
+                center: .init(x: 0.5, y: 0.65),
+                startRadius: 30,
+                endRadius: 250
+            )
 
-            // Ritual line
-            Text("Revealed together at \(formatRevealTime(event.releaseAt))")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.top, 8)
+            VStack(spacing: 32) {
+                Spacer()
 
-            Spacer()
+                VStack(spacing: 16) {
+                    Text(event.name)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
 
-            // Reveal button
-            Button {
-                HapticsManager.shared.soft()
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    flowPhase = .viewing
+                    Text("Photos")
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
                 }
-            } label: {
-                Text("Reveal")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.black)
-                    .frame(width: 160, height: 56)
-                    .background(Color.white)
-                    .cornerRadius(28)
+
+                Text("Revealed together at \(formatRevealTime(event.releaseAt))")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.top, 8)
+
+                Spacer()
+
+                Button {
+                    HapticsManager.shared.soft()
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        flowPhase = .viewing
+                    }
+                } label: {
+                    Text("Reveal")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.black)
+                        .frame(width: 160, height: 56)
+                        .background(Color.white)
+                        .cornerRadius(28)
+                }
+                .padding(.bottom, 60)
             }
-            .padding(.bottom, 60)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var completeScreen: some View {
-        VStack(spacing: 40) {
-            Spacer()
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.06, green: 0.04, blue: 0.12),
+                    Color(red: 0.04, green: 0.04, blue: 0.08)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            // Closing message
-            Text("That was the night.")
-                .font(.system(size: 28, weight: .medium, design: .serif))
-                .foregroundColor(.white)
+            RadialGradient(
+                colors: [
+                    Color.purple.opacity(0.15),
+                    Color.clear
+                ],
+                center: .center,
+                startRadius: 20,
+                endRadius: 300
+            )
 
-            Spacer()
+            VStack(spacing: 40) {
+                Spacer()
 
-            // Actions
-            VStack(spacing: 16) {
-                Button {
-                    Task {
-                        await viewModel.saveLikedPhotos()
-                        AnalyticsManager.shared.track(.revealCompleted, properties: [
-                            "event_id": event.id,
-                            "photos_revealed": viewModel.photos.count,
-                            "photos_liked": viewModel.likedCount
-                        ])
-                        onComplete()
+                Image(systemName: "sparkles")
+                    .font(.system(size: 32, weight: .light))
+                    .foregroundColor(Color.purple.opacity(0.6))
+
+                Text("That was the night.")
+                    .font(.system(size: 28, weight: .medium, design: .serif))
+                    .foregroundColor(.white)
+
+                Spacer()
+
+                VStack(spacing: 16) {
+                    Button {
+                        Task {
+                            await viewModel.saveLikedPhotos()
+                            AnalyticsManager.shared.track(.revealCompleted, properties: [
+                                "event_id": event.id,
+                                "photos_revealed": viewModel.photos.count,
+                                "photos_liked": viewModel.likedCount
+                            ])
+                            onComplete()
+                        }
+                    } label: {
+                        Text("View Liked Photos")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.white)
+                            .cornerRadius(28)
                     }
-                } label: {
-                    Text("View Liked Photos")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.white)
-                        .cornerRadius(28)
+                    .padding(.horizontal, 40)
                 }
-                .padding(.horizontal, 40)
+                .padding(.bottom, 40)
             }
-            .padding(.bottom, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -376,6 +426,13 @@ struct FeedRevealView: View {
                     // Completion card at end
                     completionCard
                         .frame(height: geometry.size.height)
+
+                    // Premium prompt card for hosts of free events
+                    if !event.isPremium,
+                       event.creatorId == SupabaseManager.shared.currentUser?.id.uuidString {
+                        premiumPromptCard
+                            .frame(height: geometry.size.height)
+                    }
                 }
             }
             .scrollDisabled(isScrollLocked)
@@ -384,39 +441,74 @@ struct FeedRevealView: View {
     }
 
     private var completionCard: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ZStack {
+            // Gradient background matching app aesthetic
+            LinearGradient(
+                colors: [
+                    Color(red: 0.06, green: 0.04, blue: 0.12),
+                    Color(red: 0.04, green: 0.04, blue: 0.08)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
 
-            Text("That was the night.")
-                .font(.system(size: 28, weight: .medium, design: .serif))
-                .foregroundColor(.white)
+            // Subtle radial glow
+            RadialGradient(
+                colors: [
+                    Color.purple.opacity(0.15),
+                    Color.clear
+                ],
+                center: .center,
+                startRadius: 20,
+                endRadius: 300
+            )
 
-            Text("\(viewModel.likedCount) photos liked")
+            VStack(spacing: 24) {
+                Spacer()
+
+                // Decorative icon
+                Image(systemName: "sparkles")
+                    .font(.system(size: 32, weight: .light))
+                    .foregroundColor(Color.purple.opacity(0.6))
+
+                Text("That was the night.")
+                    .font(.system(size: 28, weight: .medium, design: .serif))
+                    .foregroundColor(.white)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.red.opacity(0.8))
+                    Text("\(viewModel.likedCount) photos liked")
+                        .font(.system(size: 15, weight: .medium))
+                }
                 .foregroundColor(.white.opacity(0.6))
 
-            Button {
-                HapticsManager.shared.celebration()
-                Task {
-                    await viewModel.saveLikedPhotos()
-                    AnalyticsManager.shared.track(.revealCompleted, properties: [
-                        "event_id": event.id,
-                        "photos_revealed": viewModel.photos.count,
-                        "photos_liked": viewModel.likedCount
-                    ])
-                    onComplete()
-                }
-            } label: {
-                Text("View Liked Photos")
-                    .font(.headline)
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color.white)
-                    .cornerRadius(28)
-            }
-            .padding(.horizontal, 40)
+                Spacer()
 
-            Spacer()
+                Button {
+                    HapticsManager.shared.celebration()
+                    Task {
+                        await viewModel.saveLikedPhotos()
+                        AnalyticsManager.shared.track(.revealCompleted, properties: [
+                            "event_id": event.id,
+                            "photos_revealed": viewModel.photos.count,
+                            "photos_liked": viewModel.likedCount
+                        ])
+                        onComplete()
+                    }
+                } label: {
+                    Text("View Liked Photos")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color.white)
+                        .cornerRadius(28)
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, 40)
+            }
         }
     }
 
@@ -445,6 +537,112 @@ struct FeedRevealView: View {
             }
         }
         .padding(.vertical, 32)
+    }
+
+    private var premiumPromptCard: some View {
+        ZStack {
+            // Consistent gradient
+            LinearGradient(
+                colors: [
+                    Color(red: 0.06, green: 0.04, blue: 0.12),
+                    Color(red: 0.04, green: 0.04, blue: 0.08)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            // Soft ambient glow — same as completion card
+            RadialGradient(
+                colors: [
+                    Color.purple.opacity(0.12),
+                    Color.clear
+                ],
+                center: .center,
+                startRadius: 20,
+                endRadius: 300
+            )
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                Image(systemName: "infinity")
+                    .font(.system(size: 36, weight: .thin))
+                    .foregroundColor(.white.opacity(0.25))
+                    .padding(.bottom, 28)
+
+                Text("Keep these photos forever")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.bottom, 10)
+
+                Text("No watermarks, no expiry")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white.opacity(0.35))
+
+                if let days = daysUntilExpiry {
+                    Text("Free photos expire in \(days) day\(days == 1 ? "" : "s")")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.25))
+                        .padding(.top, 6)
+                }
+
+                Spacer()
+
+                VStack(spacing: 20) {
+                    Button {
+                        HapticsManager.shared.medium()
+                        isPurchasing = true
+                        Task {
+                            do {
+                                let success = try await PurchaseManager.shared.purchasePremium(for: event.id)
+                                isPurchasing = false
+                                if success {
+                                    onComplete()
+                                }
+                            } catch {
+                                isPurchasing = false
+                            }
+                        }
+                    } label: {
+                        Group {
+                            if isPurchasing {
+                                ProgressView()
+                                    .tint(.black)
+                            } else {
+                                Text("Keep forever — £7.99")
+                            }
+                        }
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(Color.white)
+                        .cornerRadius(27)
+                    }
+                    .disabled(isPurchasing)
+                    .padding(.horizontal, 40)
+
+                    Button {
+                        Task {
+                            await viewModel.saveLikedPhotos()
+                            onComplete()
+                        }
+                    } label: {
+                        Text("View liked photos")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.white.opacity(0.3))
+                    }
+                    .disabled(isPurchasing)
+                }
+                .padding(.bottom, 44)
+            }
+        }
+    }
+
+    private var daysUntilExpiry: Int? {
+        guard let expiresAt = event.expiresAt else { return nil }
+        let days = Calendar.current.dateComponents([.day], from: Date(), to: expiresAt).day
+        return days.flatMap { $0 > 0 ? $0 : nil }
     }
 
     // MARK: - Actions

@@ -108,6 +108,12 @@ struct PremiumEventCard: View {
         }
     }
     
+    private var daysUntilExpiry: Int? {
+        guard let expiresAt = event.expiresAt else { return nil }
+        let days = Calendar.current.dateComponents([.day], from: now, to: expiresAt).day
+        return days.flatMap { $0 > 0 ? $0 : nil }
+    }
+
     private var royalPurple: Color {
         Color(red: 0.5, green: 0.0, blue: 0.8)
     }
@@ -208,6 +214,13 @@ struct PremiumEventCard: View {
                             value: "\(photoCount)",
                             color: .white.opacity(0.6)
                         )
+                        if !event.isPremium, let days = daysUntilExpiry, eventState == .revealed || eventState == .readyToReveal {
+                            MetadataBadge(
+                                icon: "clock.fill",
+                                value: "\(days)d left",
+                                color: days <= 7 ? .red.opacity(0.8) : .orange.opacity(0.7)
+                            )
+                        }
                     }
                 }
                 

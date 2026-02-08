@@ -54,6 +54,8 @@ class SupabaseManager: ObservableObject {
                 self.currentUser = session.user
                 self.isAuthenticated = true
             }
+            // Link existing session to RevenueCat
+            await PurchaseManager.shared.identify(userId: session.user.id.uuidString)
         } catch {
             await MainActor.run {
                 self.currentUser = nil
@@ -81,10 +83,13 @@ class SupabaseManager: ObservableObject {
         
         // Create profile if doesn't exist
         try await createProfileIfNeeded(user: session.user)
-        
+
+        // Identify user in RevenueCat
+        await PurchaseManager.shared.identify(userId: session.user.id.uuidString)
+
         return session.user
     }
-    
+
     /// Sign in with Google
     func signInWithGoogle(idToken: String, accessToken: String) async throws -> User {
         let session = try await client.auth.signInWithIdToken(
@@ -102,10 +107,13 @@ class SupabaseManager: ObservableObject {
         
         // Create profile if doesn't exist
         try await createProfileIfNeeded(user: session.user)
-        
+
+        // Identify user in RevenueCat
+        await PurchaseManager.shared.identify(userId: session.user.id.uuidString)
+
         return session.user
     }
-    
+
     /// Handle OAuth callback URL (called from MomentoApp)
     func handleOAuthCallback(url: URL) async {
         do {
@@ -510,6 +518,24 @@ class SupabaseManager: ObservableObject {
         debugLog("✅ Left event")
     }
     
+    // MARK: - Premium Upgrade
+
+    /// Mark an event as premium after a successful RevenueCat purchase
+    func markEventPremium(eventId: UUID, transactionId: String) async throws {
+        try await client
+            .from("events")
+            .update([
+                "is_premium": AnyJSON.bool(true),
+                "premium_purchased_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date())),
+                "premium_transaction_id": AnyJSON.string(transactionId),
+                "expires_at": AnyJSON.null
+            ])
+            .eq("id", value: eventId.uuidString)
+            .execute()
+
+        debugLog("✅ Event marked as premium: \(eventId.uuidString.prefix(8))...")
+    }
+
     // MARK: - Event Counts (computed from related tables)
 
     /// Get the number of members in an event (computed from event_members table)

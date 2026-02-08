@@ -44,49 +44,117 @@ struct CreateStep2ConfigureView: View {
                 Spacer()
 
                 // Main content
-                VStack(spacing: 28) {
-                    // Title only - no subtitle
-                    Text("When does it start?")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
+                VStack(spacing: 32) {
+                    // Title + subtitle
+                    VStack(spacing: 8) {
+                        Text("When's the party?")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.white)
 
-                    // Date/Time picker - the hero
-                    ZStack {
-                        // Subtle glow behind picker
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    colors: [glowBlue.opacity(0.15), glowPurple.opacity(0.15)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(height: 200)
-                            .blur(radius: 40)
+                        Text("Pick when your event starts")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+
+                    // Compact date picker row
+                    HStack {
+                        Text("Starts")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+
+                        Spacer()
 
                         DatePicker("", selection: $startsAt, displayedComponents: [.date, .hourAndMinute])
-                            .datePickerStyle(.wheel)
+                            .datePickerStyle(.compact)
                             .labelsHidden()
                             .colorScheme(.dark)
+                            .tint(glowBlue)
                     }
                     .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal, 24)
 
-                    // How it works - one calm block, no icons
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("How it works")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.4))
+                    // Timeline info card
+                    VStack(spacing: 0) {
+                        // Photo Window row
+                        HStack(spacing: 14) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.08))
+                                    .frame(width: 44, height: 44)
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
 
-                        Text("Capture for 12 hours")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Photo Window")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.4))
+                                Text("12 hours")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                Text("Until \(formatDateTime(endsAt))")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.35))
+                            }
 
-                        Text("Reveal together at \(formatTime(releaseAt))")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+
+                        // Divider
+                        Rectangle()
+                            .fill(Color.white.opacity(0.06))
+                            .frame(height: 1)
+                            .padding(.horizontal, 20)
+
+                        // Photos Reveal row
+                        HStack(spacing: 14) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.08))
+                                    .frame(width: 44, height: 44)
+                                Image(systemName: "clock.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Photos Reveal")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.4))
+                                Text("24 hours after start")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                Text(formatDateTime(releaseAt))
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.35))
+                            }
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal, 24)
                 }
 
                 Spacer()
@@ -116,9 +184,9 @@ struct CreateStep2ConfigureView: View {
         }
     }
 
-    private func formatTime(_ date: Date) -> String {
+    private func formatDateTime(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE 'at' h:mm a"
+        formatter.dateFormat = "EEE, MMM d 'at' h:mm a"
         return formatter.string(from: date)
     }
 
