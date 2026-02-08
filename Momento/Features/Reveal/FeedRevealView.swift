@@ -7,7 +7,6 @@
 //
 
 import SwiftUI
-import Photos
 
 // MARK: - View Model
 
@@ -163,8 +162,6 @@ struct FeedRevealView: View {
     let onComplete: () -> Void
 
     @StateObject private var viewModel = FeedRevealViewModel()
-    @State private var showingSaveAlert = false
-    @State private var saveAlertMessage = ""
     @State private var isPurchasing = false
     @State private var flowPhase: FeedRevealPhase = .preReveal
     @State private var currentPhotoIndex = 0
@@ -208,11 +205,6 @@ struct FeedRevealView: View {
             Task {
                 await viewModel.saveLikedPhotos()
             }
-        }
-        .alert("Photo", isPresented: $showingSaveAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(saveAlertMessage)
         }
     }
 
@@ -402,6 +394,7 @@ struct FeedRevealView: View {
                         let photo = viewModel.photos[index]
                         RevealCardView(
                             photo: photo,
+                            eventId: event.id,
                             isRevealed: Binding(
                                 get: { viewModel.isRevealed(photo.id) },
                                 set: { viewModel.setRevealed(photo.id, $0) }
@@ -410,7 +403,6 @@ struct FeedRevealView: View {
                                 get: { viewModel.isLiked(photo.id) },
                                 set: { viewModel.setLiked(photo.id, $0) }
                             ),
-                            onDownload: { downloadPhoto(photo) },
                             onRevealStarted: { isScrollLocked = true },
                             onButtonsVisible: { isScrollLocked = false }
                         )
@@ -573,18 +565,17 @@ struct FeedRevealView: View {
                 Text("Keep these photos forever")
                     .font(.system(size: 22, weight: .medium))
                     .foregroundColor(.white.opacity(0.9))
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 20)
 
-                Text("No watermarks, no expiry")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.white.opacity(0.35))
+                VStack(alignment: .leading, spacing: 12) {
+                    featureRow(icon: "infinity", text: "No watermarks, no expiry")
+                    featureRow(icon: "link", text: "Shareable web album for everyone")
 
-                if let days = daysUntilExpiry {
-                    Text("Free photos expire in \(days) day\(days == 1 ? "" : "s")")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.25))
-                        .padding(.top, 6)
+                    if let days = daysUntilExpiry {
+                        featureRow(icon: "clock", text: "Free photos expire in \(days) day\(days == 1 ? "" : "s")", dimmed: true)
+                    }
                 }
+                .padding(.horizontal, 48)
 
                 Spacer()
 
@@ -639,63 +630,25 @@ struct FeedRevealView: View {
         }
     }
 
+    private func featureRow(icon: String, text: String, dimmed: Bool = false) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(dimmed ? 0.2 : 0.3))
+                .frame(width: 20)
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(dimmed ? 0.25 : 0.4))
+            Spacer()
+        }
+    }
+
     private var daysUntilExpiry: Int? {
         guard let expiresAt = event.expiresAt else { return nil }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: expiresAt).day
         return days.flatMap { $0 > 0 ? $0 : nil }
     }
 
-    // MARK: - Actions
-
-    private func downloadPhoto(_ photo: PhotoData) {
-        guard let url = photo.url else { return }
-
-        Task {
-            do {
-                // Download fresh from URL (same pattern as LikedGalleryView)
-                let (data, _) = try await URLSession.shared.data(from: url)
-                guard let image = UIImage(data: data) else {
-                    debugLog("❌ Failed to create image from data")
-                    return
-                }
-
-                // Apply watermark on free events
-                let saveImage = event.isPremium ? image : WatermarkRenderer.apply(to: image)
-
-                // Request permission
-                let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-                guard status == .authorized || status == .limited else {
-                    await MainActor.run {
-                        saveAlertMessage = "Please allow photo access in Settings"
-                        showingSaveAlert = true
-                    }
-                    return
-                }
-
-                // Save to camera roll
-                try await PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.creationRequestForAsset(from: saveImage)
-                }
-
-                await MainActor.run {
-                    HapticsManager.shared.success()
-                    saveAlertMessage = "Saved to camera roll"
-                    showingSaveAlert = true
-
-                    // Track photo download
-                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
-                        "event_id": event.id,
-                        "has_watermark": !event.isPremium
-                    ])
-                }
-            } catch {
-                await MainActor.run {
-                    saveAlertMessage = "Failed to save photo"
-                    showingSaveAlert = true
-                }
-            }
-        }
-    }
 }
 
 #Preview {

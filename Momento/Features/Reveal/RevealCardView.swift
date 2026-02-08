@@ -10,9 +10,9 @@ import SwiftUI
 
 struct RevealCardView: View {
     let photo: PhotoData
+    let eventId: String
     @Binding var isRevealed: Bool
     @Binding var isLiked: Bool
-    let onDownload: () -> Void
     var onRevealStarted: (() -> Void)? = nil
     var onButtonsVisible: (() -> Void)? = nil
 
@@ -20,6 +20,8 @@ struct RevealCardView: View {
     @State private var isLoadingImage = false
     @State private var showButtons = false
     @State private var buttonTimer: Timer?
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,20 +46,21 @@ struct RevealCardView: View {
 
             // Metadata + action bar - always reserve space, fade in content
             VStack(spacing: 12) {
-                // Username and time
+                // Film date + photographer
                 HStack {
-                    if let name = photo.photographerName {
-                        Text("@\(name)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(formatFilmDate(photo.capturedAt))
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .foregroundColor(Color(red: 1.0, green: 0.42, blue: 0.21))
+
+                        if let name = photo.photographerName {
+                            Text("by \(name)")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
                     }
-                    Text("·")
-                        .opacity(0.5)
-                    Text(formatTime(photo.capturedAt))
-                        .font(.subheadline)
                     Spacer()
                 }
-                .foregroundColor(.white.opacity(0.7))
 
                 // Action buttons
                 actionBar
@@ -84,6 +87,11 @@ struct RevealCardView: View {
         .onDisappear {
             buttonTimer?.invalidate()
             buttonTimer = nil
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let image = shareImage {
+                PhotoShareSheet(image: image, eventId: eventId)
+            }
         }
     }
 
@@ -142,14 +150,14 @@ struct RevealCardView: View {
                 }
             }
 
-            // Download button
+            // Share button
             Button {
-                onDownload()
+                loadImageForSharing()
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.down.circle")
-                        .font(.system(size: 24))
-                    Text("Save")
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 22))
+                    Text("Share")
                         .font(.subheadline)
                 }
                 .foregroundColor(.white)
@@ -192,10 +200,16 @@ struct RevealCardView: View {
         }
     }
 
-    private func formatTime(_ date: Date) -> String {
+    private func formatFilmDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "h:mma"
-        return formatter.string(from: date).lowercased()
+        formatter.dateFormat = "dd MMM yyyy  HH:mm"
+        return formatter.string(from: date).uppercased()
+    }
+
+    private func loadImageForSharing() {
+        guard let image = loadedImage else { return }
+        shareImage = image
+        showShareSheet = true
     }
 
     private func toggleLike() {
@@ -235,9 +249,9 @@ struct RevealCardView: View {
                 capturedAt: Date(),
                 photographerName: "Test User"
             ),
+            eventId: "preview",
             isRevealed: .constant(false),
-            isLiked: .constant(false),
-            onDownload: {}
+            isLiked: .constant(false)
         )
     }
 }

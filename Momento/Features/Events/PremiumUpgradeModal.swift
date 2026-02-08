@@ -83,6 +83,16 @@ struct PremiumUpgradeModal: View {
                         .foregroundColor(.white.opacity(0.45))
                     Spacer()
                 }
+
+                HStack(spacing: 12) {
+                    Image(systemName: "link")
+                        .font(.system(size: 14))
+                        .foregroundColor(glowCyan.opacity(0.6))
+                    Text("Shareable web album for everyone")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.45))
+                    Spacer()
+                }
             }
             .padding(20)
             .background(

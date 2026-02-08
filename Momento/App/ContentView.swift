@@ -322,6 +322,7 @@ struct ContentView: View {
                     FeedRevealView(event: event) {
                         // On complete - mark as completed and show liked gallery
                         revealCompletionStatus[event.id] = true
+                        RevealStateManager.shared.markRevealCompleted(for: event.id)
                         showStackReveal = false
                         showLikedGallery = true
                     }
@@ -445,9 +446,27 @@ struct ContentView: View {
                 }
             }
 
+            // Restore reveal completion from persistent storage
+            var restoredRevealStatus: [String: Bool] = [:]
+            for event in loadedEvents {
+                if RevealStateManager.shared.hasCompletedReveal(for: event.id) {
+                    restoredRevealStatus[event.id] = true
+                }
+            }
+
+            // Also mark as revealed if user has liked photos (they must have revealed)
+            for (eventId, count) in likeCounts where count > 0 {
+                restoredRevealStatus[eventId] = true
+                RevealStateManager.shared.markRevealCompleted(for: eventId)
+            }
+
             await MainActor.run {
                 events = loadedEvents
                 likedCounts = likeCounts
+                // Merge restored status with any in-session status
+                for (id, completed) in restoredRevealStatus {
+                    revealCompletionStatus[id] = completed
+                }
                 isLoadingEvents = false
                 isRefreshing = false
             }

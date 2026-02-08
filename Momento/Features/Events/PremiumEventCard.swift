@@ -591,13 +591,31 @@ struct PremiumEventCard: View {
             .foregroundColor(Color.cyan)
 
         case .revealed:
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 11, weight: .medium))
-                Text(likedCount > 0 ? "\(likedCount) liked • \(likedCount) saved" : "Tap to relive")
-                    .font(.system(size: 13, weight: .medium))
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 11, weight: .medium))
+                    Text(likedCount > 0 ? "\(likedCount) liked • \(likedCount) saved" : "Tap to relive")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .foregroundColor(premiumSilver)
+
+                if event.isPremium, let code = event.joinCode {
+                    Button {
+                        let albumURL = "https://yourmomento.app/album/\(code)"
+                        UIPasteboard.general.string = albumURL
+                        HapticsManager.shared.success()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "link")
+                                .font(.system(size: 10, weight: .medium))
+                            Text("Share album link")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundColor(Color(red: 0.0, green: 0.8, blue: 0.9).opacity(0.8))
+                    }
+                }
             }
-            .foregroundColor(premiumSilver)
         }
     }
 }

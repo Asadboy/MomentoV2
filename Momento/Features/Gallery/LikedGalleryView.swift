@@ -49,6 +49,19 @@ struct LikedGalleryView: View {
                         dismiss()
                     }
                 }
+
+                if event.isPremium, let code = event.joinCode {
+                    ToolbarItem(placement: .primaryAction) {
+                        ShareLink(
+                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
+                            subject: Text(event.name),
+                            message: Text("Check out the photos from \(event.name)")
+                        ) {
+                            Image(systemName: "link")
+                                .font(.system(size: 15, weight: .medium))
+                        }
+                    }
+                }
             }
             .sheet(item: $selectedPhoto) { photo in
                 GalleryDetailView(
@@ -96,9 +109,6 @@ struct LikedGalleryView: View {
                     }
                 }
                 .padding(.horizontal, 2)
-
-                downloadAllButton
-                    .padding(.vertical, 24)
             }
         }
     }
@@ -119,23 +129,6 @@ struct LikedGalleryView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, 100)
-    }
-
-    private var downloadAllButton: some View {
-        Button {
-            downloadAllPhotos()
-        } label: {
-            HStack {
-                Image(systemName: "arrow.down.circle.fill")
-                Text("Download All (\(likedPhotos.count))")
-            }
-            .fontWeight(.semibold)
-            .foregroundColor(.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
-            .background(Color(red: 0.5, green: 0.0, blue: 0.8))
-            .cornerRadius(12)
-        }
     }
 
     // MARK: - Actions
@@ -209,55 +202,6 @@ struct LikedGalleryView: View {
         }
     }
 
-    private func downloadAllPhotos() {
-        Task {
-            var savedCount = 0
-
-            // Request photo library access
-            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            guard status == .authorized || status == .limited else {
-                await MainActor.run {
-                    saveAlertMessage = "Please allow photo access in Settings"
-                    showingSaveAlert = true
-                }
-                return
-            }
-
-            for photo in likedPhotos {
-                guard let url = photo.url else { continue }
-
-                do {
-                    let (data, _) = try await URLSession.shared.data(from: url)
-                    guard let image = UIImage(data: data) else { continue }
-
-                    // Apply watermark on free events
-                    let saveImage = event.isPremium ? image : WatermarkRenderer.apply(to: image)
-
-                    try await PHPhotoLibrary.shared().performChanges {
-                        PHAssetChangeRequest.creationRequestForAsset(from: saveImage)
-                    }
-                    savedCount += 1
-                } catch {
-                    debugLog("❌ Failed to save photo: \(error)")
-                }
-            }
-
-            await MainActor.run {
-                HapticsManager.shared.success()
-                saveAlertMessage = "Saved \(savedCount) of \(likedPhotos.count) photos"
-                showingSaveAlert = true
-
-                // Track each downloaded photo
-                for _ in 0..<savedCount {
-                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
-                        "event_id": event.id,
-                        "has_watermark": !event.isPremium,
-                        "source": "batch_download"
-                    ])
-                }
-            }
-        }
-    }
 }
 
 // MARK: - Gallery Thumbnail
