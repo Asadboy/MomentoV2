@@ -28,7 +28,7 @@ struct MomentoApp: App {
     
     /// Handle OAuth callback URLs (e.g., momento://auth/callback)
     private func handleOAuthCallback(_ url: URL) {
-        print("📱 Received OAuth callback: \(url)")
+        debugLog("📱 Received OAuth callback: \(url)")
         
         Task {
             await SupabaseManager.shared.handleOAuthCallback(url: url)

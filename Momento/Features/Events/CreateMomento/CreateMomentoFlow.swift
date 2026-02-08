@@ -53,7 +53,6 @@ struct CreateMomentoFlow: View {
                         startsAt: $startsAt,
                         endsAt: $endsAt,
                         releaseAt: $releaseAt,
-                        selectedFilter: $selectedFilter,
                         onNext: { createMomento() },
                         onBack: { goToStep(1) }
                     )
@@ -118,7 +117,7 @@ struct CreateMomentoFlow: View {
                 hostName = profile.displayName ?? profile.username
             }
         } catch {
-            print("[CreateMomento] Failed to fetch host name: \(error)")
+            debugLog("[CreateMomento] Failed to fetch host name: \(error)")
             await MainActor.run {
                 hostName = "Host"
             }
@@ -141,8 +140,8 @@ struct CreateMomentoFlow: View {
         // Generate join code
         joinCode = generateJoinCode()
         
-        print("[CreateMomento] Creating: \(momentoName)")
-        print("[CreateMomento] Code: \(joinCode)")
+        debugLog("[CreateMomento] Creating: \(momentoName)")
+        debugLog("[CreateMomento] Code: \(joinCode)")
         
         Task {
             do {
@@ -167,10 +166,10 @@ struct CreateMomentoFlow: View {
                     goToStep(3)
                 }
                 
-                print("[CreateMomento] Success!")
+                debugLog("[CreateMomento] Success!")
                 
             } catch {
-                print("[CreateMomento] Error: \(error)")
+                debugLog("[CreateMomento] Error: \(error)")
                 await MainActor.run {
                     isCreating = false
                     errorMessage = "Failed to create momento: \(error.localizedDescription)"

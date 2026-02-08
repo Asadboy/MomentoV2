@@ -5,7 +5,6 @@ struct CreateStep2ConfigureView: View {
     @Binding var startsAt: Date
     @Binding var endsAt: Date
     @Binding var releaseAt: Date
-    @Binding var selectedFilter: PhotoFilter
     let onNext: () -> Void
     let onBack: () -> Void
 
@@ -88,16 +87,6 @@ struct CreateStep2ConfigureView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 40)
-
-                    // Filter - feels optional
-                    VStack(spacing: 10) {
-                        Text("Filter")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.3))
-
-                        FilterPickerView(selectedFilter: $selectedFilter)
-                            .padding(.horizontal, 50)
-                    }
                 }
 
                 Spacer()
@@ -173,7 +162,6 @@ struct CreateStep2ConfigureView: View {
         startsAt: .constant(Date()),
         endsAt: .constant(Date().addingTimeInterval(12 * 3600)),
         releaseAt: .constant(Date().addingTimeInterval(24 * 3600)),
-        selectedFilter: .constant(.br),
         onNext: {},
         onBack: {}
     )

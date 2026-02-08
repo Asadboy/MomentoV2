@@ -40,8 +40,8 @@ class SupabaseManager: ObservableObject {
             await checkSession()
         }
         
-        print("✅ Supabase configured successfully")
-        print("📍 URL: \(SupabaseConfig.supabaseURL)")
+        debugLog("✅ Supabase configured successfully")
+        debugLog("📍 URL: \(SupabaseConfig.supabaseURL)")
     }
     
     // MARK: - Session Management
@@ -111,9 +111,9 @@ class SupabaseManager: ObservableObject {
         do {
             try await client.auth.session(from: url)
             await checkSession()
-            print("✅ OAuth callback handled successfully")
+            debugLog("✅ OAuth callback handled successfully")
         } catch {
-            print("❌ OAuth callback error: \(error)")
+            debugLog("❌ OAuth callback error: \(error)")
         }
     }
     
@@ -165,7 +165,7 @@ class SupabaseManager: ObservableObject {
             RevealStateManager.shared.clearAllCompletedReveals()
         }
 
-        print("✅ User signed out")
+        debugLog("✅ User signed out")
     }
     
     // MARK: - Profile Management
@@ -206,7 +206,7 @@ class SupabaseManager: ObservableObject {
             .insert(profile)
             .execute()
         
-        print("✅ Profile created for user: \(username)")
+        debugLog("✅ Profile created for user: \(username)")
     }
     
     /// Get user profile
@@ -233,7 +233,7 @@ class SupabaseManager: ObservableObject {
             .eq("id", value: userId.uuidString)
             .execute()
 
-        print("✅ Profile updated")
+        debugLog("✅ Profile updated")
     }
 
     /// Check if user needs to set their username (has auto-generated username)
@@ -282,7 +282,7 @@ class SupabaseManager: ObservableObject {
             .eq("id", value: userId.uuidString)
             .execute()
 
-        print("✅ Username updated to: \(normalized)")
+        debugLog("✅ Username updated to: \(normalized)")
     }
 
     // MARK: - Event Management
@@ -295,7 +295,7 @@ class SupabaseManager: ObservableObject {
     /// - Returns: The created EventModel
     func createEvent(name: String, startsAt: Date, joinCode: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
-            print("[createEvent] Error: User not authenticated")
+            debugLog("[createEvent] Error: User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
 
@@ -304,8 +304,8 @@ class SupabaseManager: ObservableObject {
         let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
         let expiresAt = releaseAt.addingTimeInterval(30 * 24 * 3600) // +30 days (launch grace period)
 
-        print("[createEvent] Creating: \(name)")
-        print("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")
+        debugLog("[createEvent] Creating: \(name)")
+        debugLog("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")
 
         let event = EventModel(
             id: UUID(),
@@ -330,7 +330,7 @@ class SupabaseManager: ObservableObject {
             .insert(event)
             .execute()
         
-        print("[createEvent] Event saved, adding creator as member...")
+        debugLog("[createEvent] Event saved, adding creator as member...")
         
         // Auto-join the creator
         let member = EventMember(
@@ -344,7 +344,7 @@ class SupabaseManager: ObservableObject {
             .insert(member)
             .execute()
         
-        print("[createEvent] Success: \(name) with code \(joinCode)")
+        debugLog("[createEvent] Success: \(name) with code \(joinCode)")
         return event
     }
     
@@ -367,7 +367,7 @@ class SupabaseManager: ObservableObject {
             .value
 
         if !existingMembers.isEmpty {
-            print("ℹ️ Already a member of this event")
+            debugLog("ℹ️ Already a member of this event")
             return event
         }
 
@@ -389,7 +389,7 @@ class SupabaseManager: ObservableObject {
             "join_method": "code"
         ])
 
-        print("✅ Joined event: \(event.name)")
+        debugLog("✅ Joined event: \(event.name)")
         return event
     }
 
@@ -440,7 +440,7 @@ class SupabaseManager: ObservableObject {
             .execute()
             .value
         
-        print("✅ Fetched \(events.count) events")
+        debugLog("✅ Fetched \(events.count) events")
         return events
     }
     
@@ -473,7 +473,7 @@ class SupabaseManager: ObservableObject {
             .eq("creator_id", value: userId.uuidString)
             .execute()
 
-        print("Soft-deleted event: \(id.uuidString.prefix(8))...")
+        debugLog("Soft-deleted event: \(id.uuidString.prefix(8))...")
     }
 
     /// Restore a soft-deleted event
@@ -489,9 +489,9 @@ class SupabaseManager: ObservableObject {
             .eq("creator_id", value: userId.uuidString)
             .execute()
 
-        print("Restored event: \(id.uuidString.prefix(8))...")
+        debugLog("Restored event: \(id.uuidString.prefix(8))...")
         
-        print("✅ Event deleted")
+        debugLog("✅ Event deleted")
     }
     
     /// Leave an event
@@ -507,7 +507,7 @@ class SupabaseManager: ObservableObject {
             .eq("user_id", value: userId.uuidString)
             .execute()
         
-        print("✅ Left event")
+        debugLog("✅ Left event")
     }
     
     // MARK: - Event Counts (computed from related tables)
@@ -537,7 +537,7 @@ class SupabaseManager: ObservableObject {
     /// Upload a photo to an event
     func uploadPhoto(image: Data, eventId: UUID, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
-            print("❌ [uploadPhoto] User not authenticated")
+            debugLog("❌ [uploadPhoto] User not authenticated")
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
         
@@ -549,7 +549,7 @@ class SupabaseManager: ObservableObject {
             username = profile.username
         } catch {
             username = "Unknown"
-            print("⚠️ Could not fetch username, using 'Unknown'")
+            debugLog("⚠️ Could not fetch username, using 'Unknown'")
         }
         
         // Photo limit check - disabled for beta testing
@@ -559,7 +559,7 @@ class SupabaseManager: ObservableObject {
         let photoId = UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
         
-        print("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(username)...")
+        debugLog("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(username)...")
         
         // Upload to storage
         _ = try await client.storage
@@ -658,7 +658,7 @@ class SupabaseManager: ObservableObject {
             ))
         }
 
-        print("📸 Loaded \(photoDataArray.count) photos with signed URLs")
+        debugLog("📸 Loaded \(photoDataArray.count) photos with signed URLs")
         return photoDataArray
     }
 
@@ -736,7 +736,7 @@ class SupabaseManager: ObservableObject {
             return results.sorted { $0.0 < $1.0 }.map { $0.1 }
         }
 
-        print("📸 Loaded \(photoDataArray.count) photos (offset: \(offset), hasMore: \(hasMore))")
+        debugLog("📸 Loaded \(photoDataArray.count) photos (offset: \(offset), hasMore: \(hasMore))")
         return (photos: photoDataArray, hasMore: hasMore)
     }
 
@@ -748,7 +748,7 @@ class SupabaseManager: ObservableObject {
             .eq("id", value: id.uuidString)
             .execute()
         
-        print("✅ Photo deleted")
+        debugLog("✅ Photo deleted")
     }
     
     /// Flag a photo for moderation (updates upload_status)
@@ -759,7 +759,7 @@ class SupabaseManager: ObservableObject {
             .eq("id", value: id.uuidString)
             .execute()
         
-        print("✅ Photo flagged")
+        debugLog("✅ Photo flagged")
     }
     
     // MARK: - Real-time Subscriptions

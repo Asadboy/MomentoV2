@@ -28,7 +28,7 @@ class RevealStateManager {
         if !completed.contains(eventId) {
             completed.append(eventId)
             saveCompletedEventIds(completed)
-            print("✅ Marked reveal completed for event: \(eventId.prefix(8))...")
+            debugLog("✅ Marked reveal completed for event: \(eventId.prefix(8))...")
         }
     }
     
@@ -37,13 +37,13 @@ class RevealStateManager {
         var completed = getCompletedEventIds()
         completed.removeAll { $0 == eventId }
         saveCompletedEventIds(completed)
-        print("🗑️ Cleared reveal status for event: \(eventId.prefix(8))...")
+        debugLog("🗑️ Cleared reveal status for event: \(eventId.prefix(8))...")
     }
     
     /// Clear all completed reveals (for testing)
     func clearAllCompletedReveals() {
         UserDefaults.standard.removeObject(forKey: completedRevealsKey)
-        print("🗑️ Cleared all reveal statuses")
+        debugLog("🗑️ Cleared all reveal statuses")
     }
     
     // MARK: - Private

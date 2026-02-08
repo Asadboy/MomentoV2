@@ -154,7 +154,7 @@ struct LikedGalleryView: View {
                 isLoading = false
             }
         } catch {
-            print("❌ Failed to load photos: \(error)")
+            debugLog("❌ Failed to load photos: \(error)")
             await MainActor.run {
                 isLoading = false
             }
@@ -238,7 +238,7 @@ struct LikedGalleryView: View {
                     }
                     savedCount += 1
                 } catch {
-                    print("❌ Failed to save photo: \(error)")
+                    debugLog("❌ Failed to save photo: \(error)")
                 }
             }
 
@@ -412,7 +412,7 @@ struct GalleryDetailView: View {
                     showShareSheet = true
                 }
             } catch {
-                print("Failed to load image for sharing: \(error)")
+                debugLog("Failed to load image for sharing: \(error)")
             }
         }
     }

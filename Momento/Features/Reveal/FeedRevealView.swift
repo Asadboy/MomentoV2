@@ -86,7 +86,7 @@ class FeedRevealViewModel: ObservableObject {
                 "photos_to_reveal": photos.count
             ])
         } catch {
-            print("❌ Failed to load photos: \(error)")
+            debugLog("❌ Failed to load photos: \(error)")
             isLoading = false
         }
     }
@@ -130,9 +130,9 @@ class FeedRevealViewModel: ObservableObject {
             hasMorePhotos = result.hasMore
             currentOffset = photos.count
 
-            print("📸 Loaded more photos. Total: \(photos.count), hasMore: \(hasMorePhotos)")
+            debugLog("📸 Loaded more photos. Total: \(photos.count), hasMore: \(hasMorePhotos)")
         } catch {
-            print("❌ Failed to load more photos: \(error)")
+            debugLog("❌ Failed to load more photos: \(error)")
         }
     }
 
@@ -457,7 +457,7 @@ struct FeedRevealView: View {
                 // Download fresh from URL (same pattern as LikedGalleryView)
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard let image = UIImage(data: data) else {
-                    print("❌ Failed to create image from data")
+                    debugLog("❌ Failed to create image from data")
                     return
                 }
 

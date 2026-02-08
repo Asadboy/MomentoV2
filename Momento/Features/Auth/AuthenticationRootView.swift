@@ -19,16 +19,8 @@ struct AuthenticationRootView: View {
         case authenticated
     }
 
-    // 🚨 DEBUG: Set to true to bypass sign-in screen for testing
-    // ⚠️ REMEMBER TO SET BACK TO FALSE BEFORE PRODUCTION!
-    private let DEBUG_SKIP_AUTH = false
-
     var body: some View {
         Group {
-            if DEBUG_SKIP_AUTH {
-                // 🧪 DEBUG MODE: Skip authentication entirely
-                ContentView()
-            } else {
                 switch appState {
                 case .checkingAuth:
                     // Show splash screen while checking auth
@@ -55,7 +47,6 @@ struct AuthenticationRootView: View {
                 case .authenticated:
                     ContentView()
                 }
-            }
         }
         .task {
             await checkAuthState()
@@ -118,7 +109,7 @@ struct AuthenticationRootView: View {
                     isCheckingUsername = false
                 }
             } catch {
-                print("❌ Failed to check username status: \(error)")
+                debugLog("❌ Failed to check username status: \(error)")
                 // Default to authenticated to avoid blocking user
                 await MainActor.run {
                     appState = .authenticated
@@ -138,7 +129,7 @@ struct AuthenticationRootView: View {
                     username: profile.username
                 )
             } catch {
-                print("❌ Failed to identify user for analytics: \(error)")
+                debugLog("❌ Failed to identify user for analytics: \(error)")
             }
         }
     }

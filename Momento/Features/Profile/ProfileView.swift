@@ -227,7 +227,7 @@ struct ProfileView: View {
                 self.isLoading = false
             }
         } catch {
-            print("❌ Failed to load profile: \(error)")
+            debugLog("❌ Failed to load profile: \(error)")
             await MainActor.run {
                 self.isLoading = false
             }

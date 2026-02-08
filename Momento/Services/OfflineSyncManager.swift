@@ -103,11 +103,10 @@ class OfflineSyncManager: ObservableObject {
         let pendingPhotos = queue.filter { $0.status == .pending || $0.status == .failed }
         
         if pendingPhotos.isEmpty {
-            print("📭 No pending photos to upload")
             return
         }
         
-        print("📤 Processing \(pendingPhotos.count) pending photo(s) with \(maxConcurrentUploads) concurrent uploads...")
+        debugLog("📤 Processing \(pendingPhotos.count) pending photo(s) with \(maxConcurrentUploads) concurrent uploads...")
         
         await MainActor.run {
             isUploading = true
@@ -196,7 +195,7 @@ class OfflineSyncManager: ObservableObject {
             // Delete local file
             try? FileManager.default.removeItem(at: photo.localFileURL)
             
-            print("✅ Photo \(photo.id.uuidString.prefix(8)) uploaded!")
+            debugLog("✅ Photo \(photo.id.uuidString.prefix(8)) uploaded!")
             
         } catch {
             // Mark as failed, increment retry count
@@ -210,7 +209,7 @@ class OfflineSyncManager: ObservableObject {
                 }
             }
             
-            print("❌ Upload failed: \(error.localizedDescription)")
+            debugLog("❌ Upload failed: \(error.localizedDescription)")
         }
     }
     
@@ -259,7 +258,7 @@ class OfflineSyncManager: ObservableObject {
         let fileURL = queueDirectory.appendingPathComponent("\(photoId.uuidString).jpg")
         try imageData.write(to: fileURL)
         
-        print("🎞️ Photo processed: \(imageData.count / 1024)KB with Kodak Gold filter")
+        debugLog("🎞️ Photo processed: \(imageData.count / 1024)KB with Kodak Gold filter")
         
         return fileURL
     }
@@ -294,7 +293,7 @@ class OfflineSyncManager: ObservableObject {
             let data = try encoder.encode(queue)
             try data.write(to: queueFileURL)
         } catch {
-            print("Failed to save queue: \(error)")
+            debugLog("Failed to save queue: \(error)")
         }
     }
     
@@ -322,19 +321,19 @@ class OfflineSyncManager: ObservableObject {
             let validQueue = loadedQueue.filter { photo in
                 let exists = FileManager.default.fileExists(atPath: photo.localFileURL.path)
                 if !exists {
-                    print("🗑️ Removing stale queue entry (file missing): \(photo.id)")
+                    debugLog("🗑️ Removing stale queue entry (file missing): \(photo.id)")
                 }
                 return exists
             }
             
             if validQueue.count != loadedQueue.count {
-                print("🧹 Cleaned up \(loadedQueue.count - validQueue.count) stale queue entries")
+                debugLog("🧹 Cleaned up \(loadedQueue.count - validQueue.count) stale queue entries")
             }
             
             queue = validQueue
             saveQueue() // Save the cleaned queue
         } catch {
-            print("Failed to load queue: \(error)")
+            debugLog("Failed to load queue: \(error)")
         }
     }
     
@@ -358,8 +357,8 @@ class OfflineSyncManager: ObservableObject {
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .sink { [weak self] _ in
                 guard let self = self else { return }
-                print("📱 App became active - processing upload queue...")
-                print("   Pending: \(self.pendingCount), Failed: \(self.failedCount)")
+                debugLog("📱 App became active - processing upload queue...")
+                debugLog("   Pending: \(self.pendingCount), Failed: \(self.failedCount)")
                 Task {
                     await self.processQueue()
                 }
@@ -393,7 +392,7 @@ class OfflineSyncManager: ObservableObject {
     
     /// Clear the entire upload queue (for debugging/testing)
     func clearQueue() {
-        print("🗑️ Clearing entire upload queue (\(queue.count) items)")
+        debugLog("🗑️ Clearing entire upload queue (\(queue.count) items)")
         queue.removeAll()
         saveQueue()
         
@@ -402,7 +401,7 @@ class OfflineSyncManager: ObservableObject {
         let queueDirectory = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
         try? FileManager.default.removeItem(at: queueDirectory)
         
-        print("✅ Upload queue cleared")
+        debugLog("✅ Upload queue cleared")
     }
 }
 

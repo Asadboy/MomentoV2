@@ -177,12 +177,12 @@ extension BethanReynoldsFilter {
     /// Quick test of the filter
     static func testFilter() {
         let filter = BethanReynoldsFilter()
-        print("Bethan Reynolds Filter initialized")
-        print("   Warmth: \(filter.warmth)")
-        print("   Saturation: \(filter.saturationBoost)")
-        print("   Black Lift: \(filter.blackLift)")
-        print("   Grain: \(filter.grainIntensity)")
-        print("   Vignette: \(filter.vignetteIntensity)")
+        debugLog("Bethan Reynolds Filter initialized")
+        debugLog("   Warmth: \(filter.warmth)")
+        debugLog("   Saturation: \(filter.saturationBoost)")
+        debugLog("   Black Lift: \(filter.blackLift)")
+        debugLog("   Grain: \(filter.grainIntensity)")
+        debugLog("   Vignette: \(filter.vignetteIntensity)")
     }
 }
 #endif

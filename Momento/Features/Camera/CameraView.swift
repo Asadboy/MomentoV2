@@ -369,7 +369,7 @@ class CameraController: NSObject, ObservableObject {
             
             session.commitConfiguration()
         } catch {
-            print("Error switching camera: \(error)")
+            debugLog("Error switching camera: \(error)")
         }
     }
     
@@ -483,10 +483,10 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
     CameraView(
         cameraController: CameraController(),
         onPhotoCaptured: { image in
-            print("Photo captured: \(image.size)")
+            debugLog("Photo captured: \(image.size)")
         },
         onDismiss: {
-            print("Dismiss camera")
+            debugLog("Dismiss camera")
         }
     )
 }

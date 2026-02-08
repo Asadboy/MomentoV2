@@ -235,7 +235,7 @@ struct PhotoRevealCard: View {
             capturedAt: Date().addingTimeInterval(-3600),
             isRevealed: false,
             onReveal: {
-                print("Card revealed!")
+                debugLog("Card revealed!")
             }
         )
         .padding()
@@ -247,7 +247,7 @@ struct PhotoRevealCard: View {
             capturedAt: Date().addingTimeInterval(-7200),
             isRevealed: true,
             onReveal: {
-                print("Card already revealed!")
+                debugLog("Card already revealed!")
             }
         )
         .padding()

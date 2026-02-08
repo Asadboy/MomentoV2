@@ -398,7 +398,7 @@ struct ContentView: View {
     private func loadEvents() async {
         // Prevent duplicate refresh calls from cancelling each other
         guard !isRefreshing else {
-            print("⏳ Already refreshing, skipping duplicate call")
+            debugLog("⏳ Already refreshing, skipping duplicate call")
             return
         }
 
@@ -428,9 +428,9 @@ struct ContentView: View {
                 isLoadingEvents = false
                 isRefreshing = false
             }
-            print("✅ Loaded \(eventModels.count) events")
+            debugLog("✅ Loaded \(eventModels.count) events")
         } catch {
-            print("Failed to load events: \(error)")
+            debugLog("Failed to load events: \(error)")
             await MainActor.run {
                 isLoadingEvents = false
                 isRefreshing = false
@@ -454,7 +454,7 @@ struct ContentView: View {
                         events.removeAll { $0.id == event.id }
                     }
                 } catch {
-                    print("Failed to delete event: \(error)")
+                    debugLog("Failed to delete event: \(error)")
                     // TODO: Show error to user
                 }
             }
@@ -485,7 +485,7 @@ struct ContentView: View {
     ///   - event: The event the photo was taken for
     private func handlePhotoCaptured(_ image: UIImage, for event: Event) {
         guard let eventUUID = UUID(uuidString: event.id) else {
-            print("Invalid event ID")
+            debugLog("Invalid event ID")
             return
         }
         
@@ -505,10 +505,10 @@ struct ContentView: View {
             
             // Photo count is now computed server-side, no local increment needed
             
-            print("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
-            print("   Pending uploads: \(syncManager.pendingCount)")
+            debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
+            debugLog("   Pending uploads: \(syncManager.pendingCount)")
         } catch {
-            print("❌ Failed to save photo: \(error)")
+            debugLog("❌ Failed to save photo: \(error)")
         }
     }
 

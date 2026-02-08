@@ -134,7 +134,7 @@ struct PhotoCaptureSheet: View {
             joinCode: "TEST"
         ),
         onPhotoCaptured: { image, event in
-            print("Photo captured for \(event.name)")
+            debugLog("Photo captured for \(event.name)")
         }
     )
 }

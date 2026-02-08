@@ -105,7 +105,7 @@ class ImageCacheManager {
             let (data, _) = try await URLSession.shared.data(from: url)
             return UIImage(data: data)
         } catch {
-            print("❌ Failed to download image: \(error)")
+            debugLog("❌ Failed to download image: \(error)")
             return nil
         }
     }

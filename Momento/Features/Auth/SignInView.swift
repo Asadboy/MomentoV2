@@ -171,17 +171,17 @@ struct SignInView: View {
         isSigningIn = true
         errorMessage = nil
         
-        print("🔵 Starting Google Sign In...")
+        debugLog("🔵 Starting Google Sign In...")
         
         Task {
             do {
                 // Get the OAuth URL from Supabase
-                print("🔵 Getting OAuth URL from Supabase...")
-                let url = try await supabaseManager.client.auth.getOAuthSignInURL(
+                debugLog("🔵 Getting OAuth URL from Supabase...")
+                let url = try supabaseManager.client.auth.getOAuthSignInURL(
                     provider: .google,
                     redirectTo: URL(string: "momento://auth/callback")
                 )
-                print("🔵 OAuth URL: \(url)")
+                debugLog("🔵 OAuth URL: \(url)")
                 
                 await MainActor.run {
                     // Create and present ASWebAuthenticationSession
@@ -189,14 +189,14 @@ struct SignInView: View {
                         url: url,
                         callbackURLScheme: "momento"
                     ) { callbackURL, error in
-                        print("🔵 ASWebAuthenticationSession callback fired!")
+                        debugLog("🔵 ASWebAuthenticationSession callback fired!")
                         
                         Task { @MainActor in
                             if let error = error {
                                 // User cancelled or error
-                                print("🔴 Auth error: \(error)")
+                                debugLog("🔴 Auth error: \(error)")
                                 if (error as NSError).code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
-                                    print("ℹ️ User cancelled Google sign in")
+                                    debugLog("ℹ️ User cancelled Google sign in")
                                 } else {
                                     errorMessage = "Sign in failed: \(error.localizedDescription)"
                                 }
@@ -205,23 +205,23 @@ struct SignInView: View {
                             }
                             
                             guard let callbackURL = callbackURL else {
-                                print("🔴 No callback URL received!")
+                                debugLog("🔴 No callback URL received!")
                                 errorMessage = "No callback received"
                                 isSigningIn = false
                                 return
                             }
                             
-                            print("🔵 Callback URL received: \(callbackURL)")
+                            debugLog("🔵 Callback URL received: \(callbackURL)")
                             
                             // Handle the OAuth callback
                             do {
-                                print("🔵 Parsing session from callback URL...")
+                                debugLog("🔵 Parsing session from callback URL...")
                                 try await supabaseManager.client.auth.session(from: callbackURL)
-                                print("🔵 Session parsed, checking session...")
+                                debugLog("🔵 Session parsed, checking session...")
                                 await supabaseManager.checkSession()
-                                print("✅ Google sign in successful! isAuthenticated: \(supabaseManager.isAuthenticated)")
+                                debugLog("✅ Google sign in successful! isAuthenticated: \(supabaseManager.isAuthenticated)")
                             } catch {
-                                print("🔴 Session parsing error: \(error)")
+                                debugLog("🔴 Session parsing error: \(error)")
                                 errorMessage = "Failed to complete sign in: \(error.localizedDescription)"
                             }
                             
@@ -232,19 +232,19 @@ struct SignInView: View {
                     session.presentationContextProvider = WebAuthPresentationContext.shared
                     session.prefersEphemeralWebBrowserSession = false
                     
-                    print("🔵 Starting ASWebAuthenticationSession...")
+                    debugLog("🔵 Starting ASWebAuthenticationSession...")
                     if !session.start() {
-                        print("🔴 Failed to start ASWebAuthenticationSession!")
+                        debugLog("🔴 Failed to start ASWebAuthenticationSession!")
                         errorMessage = "Failed to start authentication"
                         isSigningIn = false
                     } else {
-                        print("🔵 ASWebAuthenticationSession started successfully")
+                        debugLog("🔵 ASWebAuthenticationSession started successfully")
                     }
                     
                     webAuthSession = session
                 }
             } catch {
-                print("🔴 Failed to get OAuth URL: \(error)")
+                debugLog("🔴 Failed to get OAuth URL: \(error)")
                 await MainActor.run {
                     errorMessage = "Failed to start Google sign in: \(error.localizedDescription)"
                     isSigningIn = false

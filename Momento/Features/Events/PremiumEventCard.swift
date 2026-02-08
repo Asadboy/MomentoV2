@@ -286,7 +286,7 @@ struct PremiumEventCard: View {
 
             // Progress ring with breathing animation
             Circle()
-                .trim(from: 0, to: progress)
+                .trim(from: 0, to: max(0, min(1, progress)))
                 .stroke(
                     royalPurple.opacity(0.9),
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
