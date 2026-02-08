@@ -395,6 +395,7 @@ struct FeedRevealView: View {
                         RevealCardView(
                             photo: photo,
                             eventId: event.id,
+                            isPremium: event.isPremium,
                             isRevealed: Binding(
                                 get: { viewModel.isRevealed(photo.id) },
                                 set: { viewModel.setRevealed(photo.id, $0) }

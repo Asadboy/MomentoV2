@@ -2,11 +2,16 @@
 //  LikedGalleryView.swift
 //  Momento
 //
-//  Gallery view showing liked photos with download functionality.
+//  Gallery view showing liked and all photos with download functionality.
 //
 
 import SwiftUI
 import Photos
+
+enum GalleryFilter: String, CaseIterable {
+    case liked = "Liked"
+    case all = "All"
+}
 
 struct LikedGalleryView: View {
     let event: Event
@@ -14,16 +19,22 @@ struct LikedGalleryView: View {
 
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var likedPhotos: [PhotoData] = []
+    @State private var allPhotos: [PhotoData] = []
     @State private var isLoading = true
     @State private var selectedPhoto: PhotoData?
     @State private var showingSaveAlert = false
     @State private var saveAlertMessage = ""
+    @State private var activeFilter: GalleryFilter = .liked
 
     private let columns = [
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2)
     ]
+
+    private var displayedPhotos: [PhotoData] {
+        activeFilter == .liked ? likedPhotos : allPhotos
+    }
 
     var body: some View {
         NavigationStack {
@@ -33,6 +44,17 @@ struct LikedGalleryView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
+                    // Filter toggle
+                    Picker("Filter", selection: $activeFilter) {
+                        ForEach(GalleryFilter.allCases, id: \.self) { filter in
+                            Text(filter == .liked ? "Liked (\(likedPhotos.count))" : "All (\(allPhotos.count))")
+                                .tag(filter)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+
                     if isLoading {
                         loadingView
                     } else {
@@ -67,6 +89,7 @@ struct LikedGalleryView: View {
                 GalleryDetailView(
                     photo: photo,
                     eventId: event.id,
+                    isPremium: event.isPremium,
                     onSave: {
                         saveToPhotos(photo)
                     }
@@ -97,11 +120,11 @@ struct LikedGalleryView: View {
 
     private var photoGridView: some View {
         ScrollView {
-            if likedPhotos.isEmpty {
+            if displayedPhotos.isEmpty {
                 emptyStateView
             } else {
                 LazyVGrid(columns: columns, spacing: 2) {
-                    ForEach(likedPhotos) { photo in
+                    ForEach(displayedPhotos) { photo in
                         GalleryThumbnail(photo: photo)
                             .onTapGesture {
                                 selectedPhoto = photo
@@ -115,17 +138,19 @@ struct LikedGalleryView: View {
 
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "heart.slash")
+            Image(systemName: activeFilter == .liked ? "heart.slash" : "photo.on.rectangle.angled")
                 .font(.system(size: 48))
                 .foregroundColor(.white.opacity(0.4))
 
-            Text("No liked photos yet")
+            Text(activeFilter == .liked ? "No liked photos yet" : "No photos yet")
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.6))
 
-            Text("Swipe right on photos to like them")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.4))
+            if activeFilter == .liked {
+                Text("Like photos during reveal to save them here")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.4))
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, 100)
@@ -140,10 +165,14 @@ struct LikedGalleryView: View {
         }
 
         do {
-            let result = try await supabaseManager.getLikedPhotos(eventId: eventUUID)
+            async let likedResult = supabaseManager.getLikedPhotos(eventId: eventUUID)
+            async let allResult = supabaseManager.getPhotos(for: event.id)
+
+            let (liked, all) = try await (likedResult, allResult)
 
             await MainActor.run {
-                likedPhotos = result
+                likedPhotos = liked
+                allPhotos = all
                 isLoading = false
             }
         } catch {
@@ -244,6 +273,7 @@ struct GalleryThumbnail: View {
 struct GalleryDetailView: View {
     let photo: PhotoData
     let eventId: String
+    let isPremium: Bool
     let onSave: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -338,7 +368,7 @@ struct GalleryDetailView: View {
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
-                PhotoShareSheet(image: image, eventId: eventId)
+                PhotoShareSheet(image: image, eventId: eventId, isPremium: isPremium)
             }
         }
     }
@@ -351,8 +381,10 @@ struct GalleryDetailView: View {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard let image = UIImage(data: data) else { return }
 
+                let finalImage = isPremium ? image : WatermarkRenderer.apply(to: image)
+
                 await MainActor.run {
-                    shareImage = image
+                    shareImage = finalImage
                     showShareSheet = true
                 }
             } catch {
@@ -373,6 +405,7 @@ struct GalleryDetailView: View {
 struct PhotoShareSheet: UIViewControllerRepresentable {
     let image: UIImage
     let eventId: String
+    var isPremium: Bool = false
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
@@ -382,7 +415,7 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
                 AnalyticsManager.shared.track(.photoShared, properties: [
                     "event_id": eventId,
                     "destination": destination,
-                    "has_watermark": true
+                    "has_watermark": !isPremium
                 ])
             }
         }

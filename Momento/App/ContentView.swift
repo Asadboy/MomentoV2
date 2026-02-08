@@ -460,13 +460,12 @@ struct ContentView: View {
                 RevealStateManager.shared.markRevealCompleted(for: eventId)
             }
 
+            let finalRevealStatus = restoredRevealStatus
             await MainActor.run {
                 events = loadedEvents
                 likedCounts = likeCounts
                 // Merge restored status with any in-session status
-                for (id, completed) in restoredRevealStatus {
-                    revealCompletionStatus[id] = completed
-                }
+                revealCompletionStatus.merge(finalRevealStatus) { _, new in new }
                 isLoadingEvents = false
                 isRefreshing = false
             }
