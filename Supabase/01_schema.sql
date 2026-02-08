@@ -45,7 +45,7 @@ CREATE TABLE public.events (
   description TEXT,
   
   -- Stats (updated by triggers)
-  member_count INTEGER DEFAULT 1,
+  member_count INTEGER DEFAULT 0,
   photo_count INTEGER DEFAULT 0,
   
   -- Reveal
@@ -147,19 +147,16 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Update event member count
+-- Update event member count (uses COUNT for accuracy)
 CREATE OR REPLACE FUNCTION update_event_member_count()
 RETURNS TRIGGER AS $$
+DECLARE
+  target_event_id UUID;
 BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE events 
-    SET member_count = member_count + 1 
-    WHERE id = NEW.event_id;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE events 
-    SET member_count = member_count - 1 
-    WHERE id = OLD.event_id;
-  END IF;
+  target_event_id := COALESCE(NEW.event_id, OLD.event_id);
+  UPDATE events
+  SET member_count = (SELECT COUNT(*) FROM event_members WHERE event_id = target_event_id)
+  WHERE id = target_event_id;
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -168,19 +165,16 @@ CREATE TRIGGER event_member_count_trigger
   AFTER INSERT OR DELETE ON event_members
   FOR EACH ROW EXECUTE FUNCTION update_event_member_count();
 
--- Update event photo count
+-- Update event photo count (uses COUNT for accuracy)
 CREATE OR REPLACE FUNCTION update_event_photo_count()
 RETURNS TRIGGER AS $$
+DECLARE
+  target_event_id UUID;
 BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE events 
-    SET photo_count = photo_count + 1 
-    WHERE id = NEW.event_id;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE events 
-    SET photo_count = photo_count - 1 
-    WHERE id = OLD.event_id;
-  END IF;
+  target_event_id := COALESCE(NEW.event_id, OLD.event_id);
+  UPDATE events
+  SET photo_count = (SELECT COUNT(*) FROM photos WHERE event_id = target_event_id)
+  WHERE id = target_event_id;
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;

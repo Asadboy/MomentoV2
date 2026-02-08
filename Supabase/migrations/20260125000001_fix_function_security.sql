@@ -26,16 +26,13 @@ SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.update_event_member_count()
 RETURNS TRIGGER AS $$
+DECLARE
+  target_event_id UUID;
 BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE public.events
-    SET member_count = member_count + 1
-    WHERE id = NEW.event_id;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE public.events
-    SET member_count = member_count - 1
-    WHERE id = OLD.event_id;
-  END IF;
+  target_event_id := COALESCE(NEW.event_id, OLD.event_id);
+  UPDATE public.events
+  SET member_count = (SELECT COUNT(*) FROM public.event_members WHERE event_id = target_event_id)
+  WHERE id = target_event_id;
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql
@@ -43,16 +40,13 @@ SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.update_event_photo_count()
 RETURNS TRIGGER AS $$
+DECLARE
+  target_event_id UUID;
 BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE public.events
-    SET photo_count = photo_count + 1
-    WHERE id = NEW.event_id;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE public.events
-    SET photo_count = photo_count - 1
-    WHERE id = OLD.event_id;
-  END IF;
+  target_event_id := COALESCE(NEW.event_id, OLD.event_id);
+  UPDATE public.events
+  SET photo_count = (SELECT COUNT(*) FROM public.photos WHERE event_id = target_event_id)
+  WHERE id = target_event_id;
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql

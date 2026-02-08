@@ -131,21 +131,17 @@ struct SignInView: View {
                         .foregroundColor(.white.opacity(0.5))
                     
                     HStack(spacing: 4) {
-                        Button("Terms of Service") {
-                            // TODO: Show terms
-                        }
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(royalPurple.opacity(0.8))
-                        
+                        Link("Terms of Service", destination: URL(string: "https://yourmomento.app/terms")!)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(royalPurple.opacity(0.8))
+
                         Text("and")
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.5))
-                        
-                        Button("Privacy Policy") {
-                            // TODO: Show privacy policy
-                        }
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(royalPurple.opacity(0.8))
+
+                        Link("Privacy Policy", destination: URL(string: "https://yourmomento.app/privacy")!)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(royalPurple.opacity(0.8))
                     }
                 }
                 .padding(.bottom, 32)

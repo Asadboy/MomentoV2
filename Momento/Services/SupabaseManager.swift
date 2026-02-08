@@ -152,15 +152,19 @@ class SupabaseManager: ObservableObject {
         return user
     }
     
-    /// Sign out
+    /// Sign out and clear all app state
     func signOut() async throws {
         try await client.auth.signOut()
-        
+
         await MainActor.run {
             self.currentUser = nil
             self.isAuthenticated = false
+
+            // Clear all singleton state to prevent data leaking between accounts
+            OfflineSyncManager.shared.clearQueue()
+            RevealStateManager.shared.clearAllCompletedReveals()
         }
-        
+
         print("✅ User signed out")
     }
     

@@ -61,14 +61,15 @@ struct AuthenticationRootView: View {
             await checkAuthState()
         }
         .onReceive(supabaseManager.$isAuthenticated) { isAuthenticated in
-            // Only re-check if we're not already in a stable state
-            guard appState == .checkingAuth || appState == .needsSignIn else { return }
-
-            if isAuthenticated {
-                Task { await checkAuthState() }
-            } else {
+            if !isAuthenticated {
+                // Always transition to sign-in when logged out (clears ContentView)
                 appState = .needsSignIn
+                return
             }
+
+            // Only re-check auth if we're not already authenticated
+            guard appState == .checkingAuth || appState == .needsSignIn else { return }
+            Task { await checkAuthState() }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UsernameUpdated"))) { _ in
             // Re-check auth state to transition from needsUsername to authenticated
