@@ -11,7 +11,6 @@ import SwiftUI
 struct RevealCardView: View {
     let photo: PhotoData
     let eventId: String
-    let isPremium: Bool
     @Binding var isRevealed: Bool
     @Binding var isLiked: Bool
     var onRevealStarted: (() -> Void)? = nil
@@ -91,7 +90,7 @@ struct RevealCardView: View {
         }
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
-                PhotoShareSheet(image: image, eventId: eventId, isPremium: isPremium)
+                PhotoShareSheet(image: image, eventId: eventId)
             }
         }
     }
@@ -209,7 +208,7 @@ struct RevealCardView: View {
 
     private func loadImageForSharing() {
         guard let image = loadedImage else { return }
-        shareImage = isPremium ? image : WatermarkRenderer.apply(to: image)
+        shareImage = image
         showShareSheet = true
     }
 
@@ -251,7 +250,6 @@ struct RevealCardView: View {
                 photographerName: "Test User"
             ),
             eventId: "preview",
-            isPremium: false,
             isRevealed: .constant(false),
             isLiked: .constant(false)
         )

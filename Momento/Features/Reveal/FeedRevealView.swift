@@ -162,7 +162,6 @@ struct FeedRevealView: View {
     let onComplete: () -> Void
 
     @StateObject private var viewModel = FeedRevealViewModel()
-    @State private var isPurchasing = false
     @State private var flowPhase: FeedRevealPhase = .preReveal
     @State private var currentPhotoIndex = 0
     @State private var isScrollLocked = false
@@ -395,7 +394,6 @@ struct FeedRevealView: View {
                         RevealCardView(
                             photo: photo,
                             eventId: event.id,
-                            isPremium: event.isPremium,
                             isRevealed: Binding(
                                 get: { viewModel.isRevealed(photo.id) },
                                 set: { viewModel.setRevealed(photo.id, $0) }
@@ -420,12 +418,6 @@ struct FeedRevealView: View {
                     completionCard
                         .frame(height: geometry.size.height)
 
-                    // Premium prompt card for hosts of free events
-                    if !event.isPremium,
-                       event.creatorId == SupabaseManager.shared.currentUser?.id.uuidString {
-                        premiumPromptCard
-                            .frame(height: geometry.size.height)
-                    }
                 }
             }
             .scrollDisabled(isScrollLocked)
@@ -530,124 +522,6 @@ struct FeedRevealView: View {
             }
         }
         .padding(.vertical, 32)
-    }
-
-    private var premiumPromptCard: some View {
-        ZStack {
-            // Consistent gradient
-            LinearGradient(
-                colors: [
-                    Color(red: 0.06, green: 0.04, blue: 0.12),
-                    Color(red: 0.04, green: 0.04, blue: 0.08)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            // Soft ambient glow — same as completion card
-            RadialGradient(
-                colors: [
-                    Color.purple.opacity(0.12),
-                    Color.clear
-                ],
-                center: .center,
-                startRadius: 20,
-                endRadius: 300
-            )
-
-            VStack(spacing: 0) {
-                Spacer()
-
-                Image(systemName: "infinity")
-                    .font(.system(size: 36, weight: .thin))
-                    .foregroundColor(.white.opacity(0.25))
-                    .padding(.bottom, 28)
-
-                Text("Keep these photos forever")
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.bottom, 20)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    featureRow(icon: "infinity", text: "No watermarks, no expiry")
-                    featureRow(icon: "link", text: "Shareable web album for everyone")
-
-                    if let days = daysUntilExpiry {
-                        featureRow(icon: "clock", text: "Free photos expire in \(days) day\(days == 1 ? "" : "s")", dimmed: true)
-                    }
-                }
-                .padding(.horizontal, 48)
-
-                Spacer()
-
-                VStack(spacing: 20) {
-                    Button {
-                        HapticsManager.shared.medium()
-                        isPurchasing = true
-                        Task {
-                            do {
-                                let success = try await PurchaseManager.shared.purchasePremium(for: event.id)
-                                isPurchasing = false
-                                if success {
-                                    onComplete()
-                                }
-                            } catch {
-                                isPurchasing = false
-                            }
-                        }
-                    } label: {
-                        Group {
-                            if isPurchasing {
-                                ProgressView()
-                                    .tint(.black)
-                            } else {
-                                Text("Keep forever — £7.99")
-                            }
-                        }
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(Color.white)
-                        .cornerRadius(27)
-                    }
-                    .disabled(isPurchasing)
-                    .padding(.horizontal, 40)
-
-                    Button {
-                        Task {
-                            await viewModel.saveLikedPhotos()
-                            onComplete()
-                        }
-                    } label: {
-                        Text("View liked photos")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .disabled(isPurchasing)
-                }
-                .padding(.bottom, 44)
-            }
-        }
-    }
-
-    private func featureRow(icon: String, text: String, dimmed: Bool = false) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(dimmed ? 0.2 : 0.3))
-                .frame(width: 20)
-            Text(text)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(dimmed ? 0.25 : 0.4))
-            Spacer()
-        }
-    }
-
-    private var daysUntilExpiry: Int? {
-        guard let expiresAt = event.expiresAt else { return nil }
-        let days = Calendar.current.dateComponents([.day], from: Date(), to: expiresAt).day
-        return days.flatMap { $0 > 0 ? $0 : nil }
     }
 
 }

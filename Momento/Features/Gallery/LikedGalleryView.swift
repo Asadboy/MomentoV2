@@ -72,7 +72,7 @@ struct LikedGalleryView: View {
                     }
                 }
 
-                if event.isPremium, let code = event.joinCode {
+                if let code = event.joinCode {
                     ToolbarItem(placement: .primaryAction) {
                         ShareLink(
                             item: URL(string: "https://yourmomento.app/album/\(code)")!,
@@ -89,7 +89,6 @@ struct LikedGalleryView: View {
                 GalleryDetailView(
                     photo: photo,
                     eventId: event.id,
-                    isPremium: event.isPremium,
                     onSave: {
                         saveToPhotos(photo)
                     }
@@ -193,8 +192,7 @@ struct LikedGalleryView: View {
                     throw NSError(domain: "LikedGalleryView", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create image"])
                 }
 
-                // Apply watermark on free events
-                let saveImage = event.isPremium ? image : WatermarkRenderer.apply(to: image)
+                let saveImage = image
 
                 // Request photo library access
                 let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
@@ -219,7 +217,7 @@ struct LikedGalleryView: View {
                     // Track photo download
                     AnalyticsManager.shared.track(.photoDownloaded, properties: [
                         "event_id": event.id,
-                        "has_watermark": !event.isPremium
+                        "has_watermark": false
                     ])
                 }
             } catch {
@@ -273,7 +271,6 @@ struct GalleryThumbnail: View {
 struct GalleryDetailView: View {
     let photo: PhotoData
     let eventId: String
-    let isPremium: Bool
     let onSave: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -368,7 +365,7 @@ struct GalleryDetailView: View {
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
-                PhotoShareSheet(image: image, eventId: eventId, isPremium: isPremium)
+                PhotoShareSheet(image: image, eventId: eventId)
             }
         }
     }
@@ -381,7 +378,7 @@ struct GalleryDetailView: View {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard let image = UIImage(data: data) else { return }
 
-                let finalImage = isPremium ? image : WatermarkRenderer.apply(to: image)
+                let finalImage = image
 
                 await MainActor.run {
                     shareImage = finalImage
@@ -405,7 +402,6 @@ struct GalleryDetailView: View {
 struct PhotoShareSheet: UIViewControllerRepresentable {
     let image: UIImage
     let eventId: String
-    var isPremium: Bool = false
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
@@ -414,8 +410,7 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
                 let destination = AnalyticsManager.mapActivityToDestination(activityType)
                 AnalyticsManager.shared.track(.photoShared, properties: [
                     "event_id": eventId,
-                    "destination": destination,
-                    "has_watermark": !isPremium
+                    "destination": destination
                 ])
             }
         }

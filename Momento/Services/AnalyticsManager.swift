@@ -3,15 +3,6 @@ import PostHog
 import UIKit
 
 enum AnalyticsEvent: String {
-    // Premium conversion (5 events)
-    case premiumRowViewed = "premium_row_viewed"
-    case premiumEnabled = "premium_enabled"
-    case premiumPurchased = "premium_purchased"
-    case premiumUpgradePromptSeen = "premium_upgrade_prompt_seen"
-    case premiumUpgradedLate = "premium_upgraded_late"
-    case premiumPurchaseFailed = "premium_purchase_failed"
-    case premiumPromptDismissed = "premium_prompt_dismissed"
-
     // Virality & organic spread (6 events)
     case momentoCreated = "momento_created"
     case inviteShared = "invite_shared"

@@ -54,8 +54,6 @@ class SupabaseManager: ObservableObject {
                 self.currentUser = session.user
                 self.isAuthenticated = true
             }
-            // Link existing session to RevenueCat
-            await PurchaseManager.shared.identify(userId: session.user.id.uuidString)
         } catch {
             await MainActor.run {
                 self.currentUser = nil
@@ -84,9 +82,6 @@ class SupabaseManager: ObservableObject {
         // Create profile if doesn't exist
         try await createProfileIfNeeded(user: session.user)
 
-        // Identify user in RevenueCat
-        await PurchaseManager.shared.identify(userId: session.user.id.uuidString)
-
         return session.user
     }
 
@@ -107,9 +102,6 @@ class SupabaseManager: ObservableObject {
         
         // Create profile if doesn't exist
         try await createProfileIfNeeded(user: session.user)
-
-        // Identify user in RevenueCat
-        await PurchaseManager.shared.identify(userId: session.user.id.uuidString)
 
         return session.user
     }
@@ -310,8 +302,6 @@ class SupabaseManager: ObservableObject {
         // Auto-calculate event times from start
         let endsAt = startsAt.addingTimeInterval(12 * 3600)  // +12 hours
         let releaseAt = startsAt.addingTimeInterval(24 * 3600) // +24 hours
-        let expiresAt = releaseAt.addingTimeInterval(30 * 24 * 3600) // +30 days (launch grace period)
-
         debugLog("[createEvent] Creating: \(name)")
         debugLog("[createEvent] Starts: \(startsAt), Ends: \(endsAt), Reveals: \(releaseAt)")
 
@@ -327,7 +317,7 @@ class SupabaseManager: ObservableObject {
             isDeleted: false,
             memberCount: 0,
             photoCount: 0,
-            expiresAt: expiresAt,
+            expiresAt: nil,
             premiumPurchasedAt: nil,
             premiumTransactionId: nil,
             createdAt: Date()
@@ -518,24 +508,6 @@ class SupabaseManager: ObservableObject {
         debugLog("✅ Left event")
     }
     
-    // MARK: - Premium Upgrade
-
-    /// Mark an event as premium after a successful RevenueCat purchase
-    func markEventPremium(eventId: UUID, transactionId: String) async throws {
-        try await client
-            .from("events")
-            .update([
-                "is_premium": AnyJSON.bool(true),
-                "premium_purchased_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date())),
-                "premium_transaction_id": AnyJSON.string(transactionId),
-                "expires_at": AnyJSON.null
-            ])
-            .eq("id", value: eventId.uuidString)
-            .execute()
-
-        debugLog("✅ Event marked as premium: \(eventId.uuidString.prefix(8))...")
-    }
-
     // MARK: - Event Counts (computed from related tables)
 
     /// Get the number of members in an event (computed from event_members table)

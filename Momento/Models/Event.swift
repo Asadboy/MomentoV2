@@ -155,7 +155,6 @@ func makeFakeEvents(now: Date = .now) -> [Event] {
             startsAt: calendar.date(byAdding: .minute, value: -30, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: 6, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: 30, to: now)!,
-            isPremium: true,
             joinCode: "NYE2025"
         ),
 

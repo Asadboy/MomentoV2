@@ -84,11 +84,6 @@ struct ContentView: View {
     /// Controls whether the settings sheet is presented
     @State private var showSettings = false
 
-    /// Controls whether the premium upgrade modal is presented (host-only, post-reveal)
-    @State private var showPremiumUpgrade = false
-
-    /// Tracks which events have already shown the premium prompt this session
-    @State private var premiumPromptShownFor: Set<String> = []
     
     
     
@@ -328,16 +323,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .fullScreenCover(isPresented: $showLikedGallery, onDismiss: {
-                // Show premium upgrade modal for host of free events (once per session per event)
-                if let event = selectedEventForReveal,
-                   !event.isPremium,
-                   event.creatorId == supabaseManager.currentUser?.id.uuidString,
-                   !premiumPromptShownFor.contains(event.id) {
-                    premiumPromptShownFor.insert(event.id)
-                    showPremiumUpgrade = true
-                }
-            }) {
+            .fullScreenCover(isPresented: $showLikedGallery) {
                 if let event = selectedEventForReveal {
                     LikedGalleryView(event: event)
                 }
@@ -349,14 +335,6 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showSettings) {
                 ProfileView()
-            }
-            .sheet(isPresented: $showPremiumUpgrade, onDismiss: {
-                // Reload events to pick up premium status change
-                Task { await loadEvents() }
-            }) {
-                if let event = selectedEventForReveal {
-                    PremiumUpgradeModal(event: event)
-                }
             }
         }
     }
