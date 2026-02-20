@@ -26,7 +26,7 @@ struct CameraView: View {
     
     /// Royal purple accent color
     private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
+        AppTheme.Colors.royalPurple
     }
     
     var body: some View {

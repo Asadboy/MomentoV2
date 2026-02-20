@@ -15,13 +15,8 @@ struct EventPreviewModal: View {
     @State private var isJoining = false
     @State private var appeared = false
 
-    private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
-    }
-
-    private var cardBackground: Color {
-        Color(red: 0.12, green: 0.1, blue: 0.16)
-    }
+    private var royalPurple: Color { AppTheme.Colors.royalPurple }
+    private var cardBackground: Color { AppTheme.Colors.cardFill }
 
     /// Humanized timing text
     private var timingText: String {

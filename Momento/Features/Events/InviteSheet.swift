@@ -2,8 +2,6 @@
 //  InviteSheet.swift
 //  Momento
 //
-//  Created by Cursor on 09/11/2025.
-//
 //  Sheet for inviting friends to an event via share link or QR code
 //
 
@@ -13,57 +11,39 @@ import CoreImage.CIFilterBuiltins
 struct InviteSheet: View {
     let event: Event
     let onDismiss: () -> Void
-    
+
     @State private var showCopiedConfirmation = false
     @State private var qrCodeImage: UIImage?
-    
-    private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
-    }
-    
+
     private var inviteLink: String {
         "https://momento.app/join/\(event.joinCode ?? "INVITE")"
     }
-    
+
     private var shareText: String {
         """
         Join my Momento "\(event.name)"! 📸
-        
+
         Use code: \(event.joinCode ?? "INVITE")
-        
+
         Or open: \(inviteLink)
         """
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.1),
-                        Color(red: 0.08, green: 0.06, blue: 0.12)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-                
-                VStack(spacing: 32) {
+                Color.clear
+                    .momentoBackground()
+
+                VStack(spacing: AppTheme.Spacing.sectionGap) {
                     // Event info header
-                    VStack(spacing: 12) {
+                    VStack(spacing: AppTheme.Spacing.elementGap) {
                         Text(event.name)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        
+
                         HStack(spacing: 16) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "person.2.fill")
-                                    .font(.system(size: 12))
-                            }
-                            .foregroundColor(.white.opacity(0.7))
-                            
                             if let joinCode = event.joinCode {
                                 HStack(spacing: 6) {
                                     Image(systemName: "key.fill")
@@ -71,19 +51,19 @@ struct InviteSheet: View {
                                     Text(joinCode)
                                         .font(.system(size: 14, weight: .bold, design: .monospaced))
                                 }
-                                .foregroundColor(royalPurple)
+                                .foregroundColor(AppTheme.Colors.royalPurple)
                             }
                         }
                     }
-                    .padding(.top, 32)
-                    
-                    // QR Code (real, scannable)
+                    .padding(.top, AppTheme.Spacing.sectionGap)
+
+                    // QR Code
                     VStack(spacing: 16) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 24)
+                            RoundedRectangle(cornerRadius: AppTheme.Radii.card)
                                 .fill(Color.white)
                                 .frame(width: 220, height: 220)
-                            
+
                             if let qrImage = qrCodeImage {
                                 Image(uiImage: qrImage)
                                     .interpolation(.none)
@@ -96,26 +76,25 @@ struct InviteSheet: View {
                             }
                         }
                         .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
-                        
+
                         VStack(spacing: 4) {
                             Text("Scan to join")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.6))
-                            
+                                .font(AppTheme.Fonts.bodySmall)
+                                .foregroundColor(AppTheme.Colors.textTertiary)
+
                             Text("Code: \(event.joinCode ?? "INVITE")")
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                .foregroundColor(royalPurple)
+                                .font(AppTheme.Fonts.mono(size: 13))
+                                .foregroundColor(AppTheme.Colors.royalPurple)
                         }
                     }
                     .onAppear {
                         generateQRCode()
                     }
-                    
+
                     Spacer()
-                    
+
                     // Action buttons
                     VStack(spacing: 16) {
-                        // Copy link button
                         Button {
                             copyInviteLink()
                         } label: {
@@ -127,15 +106,14 @@ struct InviteSheet: View {
                             }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 56)
+                            .frame(height: AppTheme.Dimensions.primaryButtonHeight)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(showCopiedConfirmation ? Color.green : royalPurple)
+                                RoundedRectangle(cornerRadius: AppTheme.Radii.tertiaryButton)
+                                    .fill(showCopiedConfirmation ? Color.green : AppTheme.Colors.royalPurple)
                             )
                         }
                         .animation(.spring(response: 0.3), value: showCopiedConfirmation)
-                        
-                        // Share button
+
                         Button {
                             shareInvite()
                         } label: {
@@ -145,16 +123,10 @@ struct InviteSheet: View {
                                 Text("Share Invite")
                                     .font(.system(size: 17, weight: .semibold))
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.15))
-                            )
                         }
+                        .buttonStyle(MomentoTertiaryButtonStyle())
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, AppTheme.Spacing.screenH)
                     .padding(.bottom, 32)
                 }
             }
@@ -164,87 +136,74 @@ struct InviteSheet: View {
                     Button("Done") {
                         onDismiss()
                     }
-                    .foregroundColor(royalPurple)
+                    .foregroundColor(.white)
                 }
             }
         }
     }
-    
+
     // MARK: - Actions
-    
+
     private func copyInviteLink() {
         UIPasteboard.general.string = inviteLink
-        
-        // Haptic feedback
+
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-        
-        // Show confirmation
+
         showCopiedConfirmation = true
-        
-        // Reset after 2 seconds
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             showCopiedConfirmation = false
         }
     }
-    
+
     private func shareInvite() {
-        // Haptic feedback
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
-        
-        // Create share items
+
         var shareItems: [Any] = [shareText]
-        
-        // Add QR code image if available
+
         if let qrImage = qrCodeImage {
             shareItems.append(qrImage)
         }
-        
-        // Present native share sheet
+
         let activityVC = UIActivityViewController(
             activityItems: shareItems,
             applicationActivities: nil
         )
-        
-        // Get the current window scene
+
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
-            // Find the topmost presented view controller
             var topVC = rootVC
             while let presented = topVC.presentedViewController {
                 topVC = presented
             }
-            
-            // For iPad: set popover source
+
             if let popover = activityVC.popoverPresentationController {
                 popover.sourceView = topVC.view
                 popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
                 popover.permittedArrowDirections = []
             }
-            
+
             topVC.present(activityVC, animated: true)
         }
     }
-    
+
     // MARK: - QR Code Generation
-    
+
     private func generateQRCode() {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
-        
-        // Encode the invite link into the QR code
+
         let data = Data(inviteLink.utf8)
         filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("H", forKey: "inputCorrectionLevel") // High error correction
-        
+        filter.setValue("H", forKey: "inputCorrectionLevel")
+
         guard let outputImage = filter.outputImage else { return }
-        
-        // Scale up the QR code (it's generated very small)
+
         let scale: CGFloat = 10
         let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-        
-        // Convert to UIImage
+
         if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
             qrCodeImage = UIImage(cgImage: cgImage)
         }
@@ -265,4 +224,3 @@ struct InviteSheet: View {
         onDismiss: {}
     )
 }
-

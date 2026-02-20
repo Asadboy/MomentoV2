@@ -9,42 +9,37 @@ struct InviteCardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Event name
             Text(eventName)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
+                .padding(.horizontal, AppTheme.Spacing.screenH)
+                .padding(.top, AppTheme.Spacing.screenH)
 
-            // QR Code
             if let qrImage = generateQRCode(from: joinCode) {
                 Image(uiImage: qrImage)
                     .interpolation(.none)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
+                    .frame(width: 140, height: 140)
                     .padding(10)
                     .background(Color.white)
-                    .cornerRadius(12)
+                    .cornerRadius(AppTheme.Radii.tertiaryButton)
                     .padding(.top, 20)
             }
 
-            // Join code
             Text(joinCode)
-                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                .font(AppTheme.Fonts.mono(size: 20))
                 .foregroundColor(.white)
                 .tracking(4)
                 .padding(.top, 12)
 
-            // Date/time
             Text(formatStartDate(startDate))
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(AppTheme.Colors.textSecondary)
                 .padding(.top, 10)
 
-            // Host info
             HStack(spacing: 8) {
                 Circle()
                     .fill(Color.white.opacity(0.2))
@@ -56,24 +51,14 @@ struct InviteCardView: View {
                     )
 
                 Text("Hosted by \(hostName)")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(AppTheme.Fonts.caption)
+                    .foregroundColor(AppTheme.Colors.textSecondary)
             }
             .padding(.top, 14)
-            .padding(.bottom, 24)
+            .padding(.bottom, AppTheme.Spacing.screenH)
         }
         .frame(maxWidth: .infinity)
-        .background(cardGradient)
-        .cornerRadius(20)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
-    }
-
-    // Same background as event cards - neutral, not special
-    private var cardGradient: Color {
-        Color(red: 0.12, green: 0.1, blue: 0.16)
+        .momentoCard()
     }
 
     private func formatStartDate(_ date: Date) -> String {

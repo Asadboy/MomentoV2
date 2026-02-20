@@ -15,10 +15,6 @@ struct CreateStep1NameView: View {
     @FocusState private var isNameFocused: Bool
     @State private var showSuggestions = false
 
-    // Glow colors (reveal palette: blue + purple)
-    private let glowBlue = Color(red: 0.0, green: 0.6, blue: 1.0)
-    private let glowPurple = Color(red: 0.5, green: 0.0, blue: 0.8)
-    
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -67,7 +63,7 @@ struct CreateStep1NameView: View {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(
                                 LinearGradient(
-                                    colors: [glowBlue.opacity(0.3), glowPurple.opacity(0.3)],
+                                    colors: [AppTheme.Colors.glowBlue.opacity(0.3), AppTheme.Colors.royalPurple.opacity(0.3)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -99,7 +95,7 @@ struct CreateStep1NameView: View {
                             .fill(
                                 isNameFocused
                                     ? LinearGradient(
-                                        colors: [glowBlue, glowPurple],
+                                        colors: [AppTheme.Colors.glowBlue, AppTheme.Colors.royalPurple],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                       )
@@ -186,8 +182,8 @@ struct CreateStep1NameView: View {
             // Base gradient
             LinearGradient(
                 colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.12),
-                    Color(red: 0.08, green: 0.06, blue: 0.15)
+                    AppTheme.Colors.bgStart,
+                    AppTheme.Colors.bgEnd
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -198,8 +194,8 @@ struct CreateStep1NameView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            glowPurple.opacity(0.25),
-                            glowBlue.opacity(0.1),
+                            AppTheme.Colors.royalPurple.opacity(0.25),
+                            AppTheme.Colors.glowBlue.opacity(0.1),
                             Color.clear
                         ],
                         center: .center,

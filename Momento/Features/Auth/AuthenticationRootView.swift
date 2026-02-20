@@ -23,15 +23,22 @@ struct AuthenticationRootView: View {
         Group {
                 switch appState {
                 case .checkingAuth:
-                    // Show splash screen while checking auth
                     ZStack {
-                        Color(red: 0.1, green: 0.1, blue: 0.2)
-                            .ignoresSafeArea()
+                        Color.clear
+                            .momentoGlowOrb()
 
                         VStack(spacing: 20) {
-                            Image(systemName: "camera.metering.center.weighted")
-                                .font(.system(size: 80, weight: .light))
-                                .foregroundColor(.white)
+                            ZStack {
+                                Image(systemName: "camera.metering.center.weighted")
+                                    .font(.system(size: 80, weight: .light))
+                                    .foregroundColor(AppTheme.Colors.royalPurple)
+                                    .blur(radius: 20)
+                                    .opacity(0.5)
+
+                                Image(systemName: "camera.metering.center.weighted")
+                                    .font(.system(size: 80, weight: .light))
+                                    .foregroundColor(.white)
+                            }
 
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))

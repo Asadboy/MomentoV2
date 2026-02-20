@@ -13,6 +13,7 @@
 		C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859002F2E3FC600E11B8C /* PostHogConfig.swift */; };
 		C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */; };
 		C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859042F2E4D7400E11B8C /* AccordionRow.swift */; };
+		C3THEME012F3C000000000001 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3THEME002F3C000000000001 /* AppTheme.swift */; };
 		C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859062F2E4D7400E11B8C /* FilterPickerView.swift */; };
 		C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859072F2E4D7400E11B8C /* InviteCardView.swift */; };
 
@@ -25,11 +26,8 @@
 		C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889112EB7C5F4003094CB /* MomentoApp.swift */; };
 		C34889122EB7C6F5003094CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889132EB7C6F5003094CB /* ContentView.swift */; };
 		C34889142EB7C7F6003094CB /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889152EB7C7F6003094CB /* Event.swift */; };
-		C34889162EB7C8F7003094CB /* EventRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889172EB7C8F7003094CB /* EventRow.swift */; };
-		C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889192EB7C9F8003094CB /* AddEventSheet.swift */; };
 		C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891B2EB7CAF9003094CB /* TimeFormatter.swift */; };
 		C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891D2EB7CBF0003094CB /* EventManager.swift */; };
-		C34A395E2EDC55360059FA89 /* PhotoRevealCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */; };
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
 		C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34D444F2F0AA5B70019CA2C /* Assets.xcassets */; };
 		C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */; };
@@ -88,6 +86,7 @@
 		C30859002F2E3FC600E11B8C /* PostHogConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogConfig.swift; sourceTree = "<group>"; };
 		C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardRenderer.swift; sourceTree = "<group>"; };
 		C30859042F2E4D7400E11B8C /* AccordionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccordionRow.swift; sourceTree = "<group>"; };
+		C3THEME002F3C000000000001 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		C30859062F2E4D7400E11B8C /* FilterPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPickerView.swift; sourceTree = "<group>"; };
 		C30859072F2E4D7400E11B8C /* InviteCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardView.swift; sourceTree = "<group>"; };
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,11 +101,8 @@
 		C34889112EB7C5F4003094CB /* MomentoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoApp.swift; sourceTree = "<group>"; };
 		C34889132EB7C6F5003094CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C34889152EB7C7F6003094CB /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
-		C34889172EB7C8F7003094CB /* EventRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRow.swift; sourceTree = "<group>"; };
-		C34889192EB7C9F8003094CB /* AddEventSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventSheet.swift; sourceTree = "<group>"; };
 		C348891B2EB7CAF9003094CB /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		C348891D2EB7CBF0003094CB /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
-		C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoRevealCard.swift; sourceTree = "<group>"; };
 		C34A39632EDC55DB0059FA89 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		C34A39682EDC96D90059FA89 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C34D444C2F0A80760019CA2C /* Momento.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Momento.entitlements; sourceTree = "<group>"; };
@@ -275,6 +271,7 @@
 			isa = PBXGroup;
 			children = (
 				C30859042F2E4D7400E11B8C /* AccordionRow.swift */,
+				C3THEME002F3C000000000001 /* AppTheme.swift */,
 				C3C5709F2F26579F00A8024C /* EventPreviewModal.swift */,
 				C30859062F2E4D7400E11B8C /* FilterPickerView.swift */,
 				C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */,
@@ -297,8 +294,6 @@
 		C3EVTGROUP001 /* Events */ = {
 			isa = PBXGroup;
 			children = (
-				C34889172EB7C8F7003094CB /* EventRow.swift */,
-				C34889192EB7C9F8003094CB /* AddEventSheet.swift */,
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
 				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
@@ -361,7 +356,6 @@
 			children = (
 				C3C6D43B2F2029A400847D38 /* FeedRevealView.swift */,
 				C3C6D4392F20299100847D38 /* RevealCardView.swift */,
-				C34A395B2EDC55360059FA89 /* PhotoRevealCard.swift */,
 			);
 			path = Reveal;
 			sourceTree = "<group>";
@@ -532,12 +526,10 @@
 				C34889122EB7C6F5003094CB /* ContentView.swift in Sources */,
 				C3ACE77B2EC0F190004B23B1 /* SupabaseManager.swift in Sources */,
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
-				C34889162EB7C8F7003094CB /* EventRow.swift in Sources */,
 				C3C4112C2EF857E9002D8DB5 /* BethanReynoldsFilter.swift in Sources */,
 				C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */,
 				C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */,
 				C3C570A02F26579F00A8024C /* VerificationCodeInput.swift in Sources */,
-				C34889182EB7C9F8003094CB /* AddEventSheet.swift in Sources */,
 				C3ACE7752EC0F096004B23B1 /* AuthenticationRootView.swift in Sources */,
 				C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */,
 				C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */,
@@ -557,11 +549,11 @@
 				C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */,
 				C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */,
 				C308590A2F2E4D7400E11B8C /* AccordionRow.swift in Sources */,
+				C3THEME012F3C000000000001 /* AppTheme.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
 				C308590C2F2E4D7400E11B8C /* FilterPickerView.swift in Sources */,
 				C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */,
 				C3DBGL012F3A6B1200A1C2D3 /* DebugLog.swift in Sources */,
-				C34A395E2EDC55360059FA89 /* PhotoRevealCard.swift in Sources */,
 				C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */,
 				C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */,
 				C3C6D43C2F2029A400847D38 /* FeedRevealView.swift in Sources */,

@@ -33,23 +33,23 @@ struct AccordionRow<Content: View>: View {
                 HStack {
                     Image(systemName: icon)
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(AppTheme.Colors.textSecondary)
                         .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                         Text(subtitle)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(AppTheme.Colors.textTertiary)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(AppTheme.Colors.textTertiary)
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
                 }
                 .padding(.horizontal, 16)
@@ -64,7 +64,7 @@ struct AccordionRow<Content: View>: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(Color.white.opacity(0.05))
+        .background(AppTheme.Colors.fieldFill)
     }
 }
 

@@ -38,11 +38,11 @@ struct JoinEventSheet: View {
     // MARK: - Colors
 
     private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
+        AppTheme.Colors.royalPurple
     }
 
     private var cardBackground: Color {
-        Color(red: 0.12, green: 0.1, blue: 0.16)
+        AppTheme.Colors.cardFill
     }
 
     // MARK: - Computed
@@ -57,7 +57,7 @@ struct JoinEventSheet: View {
         NavigationStack {
             ZStack {
                 // Background
-                Color(red: 0.05, green: 0.05, blue: 0.1)
+                AppTheme.Colors.bgStart
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {

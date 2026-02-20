@@ -139,15 +139,7 @@ struct ContentView: View {
     // MARK: - Background
 
     private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.05, green: 0.05, blue: 0.1),
-                Color(red: 0.08, green: 0.06, blue: 0.12)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        Color.clear.momentoBackground()
     }
 
     // MARK: - Body

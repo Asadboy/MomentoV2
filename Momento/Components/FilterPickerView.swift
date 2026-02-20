@@ -59,8 +59,8 @@ struct FilterOptionView: View {
 
                 // Label - subtle
                 Text(filter.displayName)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(isSelected ? 0.8 : 0.4))
+                    .font(AppTheme.Fonts.micro)
+                    .foregroundColor(isSelected ? AppTheme.Colors.textSecondary : AppTheme.Colors.textQuaternary)
             }
         }
         .frame(maxWidth: .infinity)

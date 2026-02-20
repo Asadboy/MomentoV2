@@ -20,23 +20,11 @@ struct ProfileView: View {
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
 
-    private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
-    }
-
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.1),
-                        Color(red: 0.08, green: 0.06, blue: 0.12)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                Color.clear
+                    .momentoBackground()
 
                 if isLoading {
                     ProgressView()
@@ -44,28 +32,26 @@ struct ProfileView: View {
                         .scaleEffect(1.2)
                 } else {
                     ScrollView {
-                        VStack(spacing: 24) {
-                            // Header section
+                        VStack(spacing: AppTheme.Spacing.screenH) {
                             headerSection
 
-                            // Stats section
                             if let stats = stats {
                                 statsSection(stats: stats)
                             }
 
-                            Spacer(minLength: 40)
+                            Spacer(minLength: AppTheme.Spacing.ctaBottom)
 
-                            // Sign out button
                             signOutButton
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, AppTheme.Spacing.screenH)
                         .padding(.top, 20)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, AppTheme.Spacing.ctaBottom)
                     }
                 }
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
@@ -102,37 +88,26 @@ struct ProfileView: View {
 
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Profile icon with enhanced glow
+            // Profile icon with single blurred glow
             ZStack {
-                // Outer glow
                 Image(systemName: "person.circle.fill")
                     .font(.system(size: 100, weight: .light))
-                    .foregroundColor(royalPurple)
-                    .blur(radius: 25)
+                    .foregroundColor(AppTheme.Colors.royalPurple)
+                    .blur(radius: 20)
                     .opacity(0.4)
 
-                // Inner glow
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 100, weight: .light))
-                    .foregroundColor(royalPurple)
-                    .blur(radius: 10)
-                    .opacity(0.3)
-
-                // Main icon
                 Image(systemName: "person.circle.fill")
                     .font(.system(size: 100, weight: .light))
                     .foregroundColor(.white.opacity(0.95))
             }
 
             VStack(spacing: 6) {
-                // Username - prominent
                 if let username = username {
                     Text("@\(username)")
-                        .font(.system(size: 26, weight: .semibold))
+                        .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                 }
 
-                // Member status - quiet nod, not a badge
                 if let userNumber = userNumber {
                     HStack(spacing: 4) {
                         if userNumber <= 100 {
@@ -142,21 +117,13 @@ struct ProfileView: View {
                         Text(userNumber <= 100 ? "Founding Member" : "Member #\(userNumber)")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(.white.opacity(0.28))
+                    .foregroundColor(AppTheme.Colors.textQuaternary)
                 }
             }
         }
         .padding(.vertical, 28)
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(red: 0.12, green: 0.1, blue: 0.16))
-                .shadow(color: Color.black.opacity(0.3), radius: 16, x: 0, y: 8)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
+        .momentoCard()
     }
 
     // MARK: - Stats Section
@@ -164,8 +131,8 @@ struct ProfileView: View {
     private func statsSection(stats: ProfileStats) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("STATS")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white.opacity(0.3))
+                .font(AppTheme.Fonts.micro)
+                .foregroundColor(AppTheme.Colors.textMuted)
                 .tracking(1.2)
 
             StatsGridView(stats: stats)
@@ -181,25 +148,16 @@ struct ProfileView: View {
             HStack(spacing: 8) {
                 if isLoggingOut {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.7)))
+                        .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.Colors.textSecondary))
                 } else {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .font(.system(size: 14, weight: .medium))
                 }
 
                 Text(isLoggingOut ? "Signing Out..." : "Sign Out")
-                    .font(.system(size: 15, weight: .medium))
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 48)
-            .background(Color(red: 0.15, green: 0.12, blue: 0.18))
-            .foregroundColor(.white.opacity(0.5))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-            )
         }
+        .buttonStyle(MomentoDestructiveButtonStyle())
         .disabled(isLoggingOut)
     }
 
@@ -214,10 +172,7 @@ struct ProfileView: View {
         }
 
         do {
-            // Load profile
             let profile = try await supabaseManager.getUserProfile(userId: userId)
-
-            // Load stats
             let profileStats = try await supabaseManager.getProfileStats()
 
             await MainActor.run {

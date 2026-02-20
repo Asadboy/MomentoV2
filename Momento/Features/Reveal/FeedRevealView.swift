@@ -517,7 +517,7 @@ struct FeedRevealView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 32)
                     .padding(.vertical, 14)
-                    .background(Color(red: 0.5, green: 0.0, blue: 0.8))
+                    .background(AppTheme.Colors.royalPurple)
                     .cornerRadius(12)
             }
         }

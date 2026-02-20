@@ -22,7 +22,7 @@ struct PhotoCaptureSheet: View {
     
     /// Royal purple accent color
     private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
+        AppTheme.Colors.royalPurple
     }
     
     var body: some View {
@@ -72,8 +72,8 @@ struct PhotoCaptureSheet: View {
                 .background(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.05, green: 0.05, blue: 0.1),
-                            Color(red: 0.08, green: 0.06, blue: 0.12)
+                            AppTheme.Colors.bgStart,
+                            AppTheme.Colors.bgEnd
                         ],
                         startPoint: .top,
                         endPoint: .bottom

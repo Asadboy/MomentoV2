@@ -195,8 +195,8 @@ struct CreateStep3ShareView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
-                Color(red: 0.05, green: 0.05, blue: 0.12),
-                Color(red: 0.08, green: 0.06, blue: 0.15)
+                AppTheme.Colors.bgStart,
+                AppTheme.Colors.bgEnd
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing

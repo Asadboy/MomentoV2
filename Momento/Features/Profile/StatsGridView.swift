@@ -11,12 +11,12 @@ struct StatsGridView: View {
     let stats: ProfileStats
 
     private let columns = [
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
+        GridItem(.flexible(), spacing: AppTheme.Spacing.elementGap),
+        GridItem(.flexible(), spacing: AppTheme.Spacing.elementGap)
     ]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 10) {
+        LazyVGrid(columns: columns, spacing: AppTheme.Spacing.elementGap) {
             StatCardView(
                 value: "\(stats.eventsJoined)",
                 label: "Events joined",
@@ -33,12 +33,6 @@ struct StatsGridView: View {
                 value: "\(stats.photosLiked)",
                 label: "Photos liked",
                 icon: "heart.fill"
-            )
-
-            StatCardView(
-                value: "—",
-                label: "Coming soon",
-                icon: "sparkles"
             )
         }
     }

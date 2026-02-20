@@ -108,22 +108,10 @@ struct PremiumEventCard: View {
         }
     }
     
-    private var royalPurple: Color {
-        Color(red: 0.5, green: 0.0, blue: 0.8)
-    }
-
-    private var warmGold: Color {
-        Color(red: 0.85, green: 0.65, blue: 0.3)
-    }
-
-    // Premium silver for completed momentos
-    private var premiumSilver: Color {
-        Color(red: 0.75, green: 0.78, blue: 0.85)
-    }
-
-    private var cardBackground: Color {
-        Color(red: 0.12, green: 0.1, blue: 0.16)
-    }
+    private var royalPurple: Color { AppTheme.Colors.royalPurple }
+    private var warmGold: Color { Color(red: 0.85, green: 0.65, blue: 0.3) }
+    private var premiumSilver: Color { Color(red: 0.75, green: 0.78, blue: 0.85) }
+    private var cardBackground: Color { AppTheme.Colors.cardFill }
     
     private var cardBorderGradient: LinearGradient {
         switch eventState {
@@ -657,7 +645,7 @@ private struct MetadataBadge: View {
                 coverEmoji: "\u{1F389}",
                 startsAt: now.addingTimeInterval(-3600),
                 endsAt: now.addingTimeInterval(3600 * 5),
-                releaseAt: now.addingTimeInterval(3600 * 29),
+                releaseAt: now.addingTimeInterval(3600 * 29)
             ),
             now: now,
             onTap: {},
