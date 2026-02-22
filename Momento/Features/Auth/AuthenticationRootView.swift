@@ -59,8 +59,10 @@ struct AuthenticationRootView: View {
             await checkAuthState()
         }
         .onReceive(supabaseManager.$isAuthenticated) { isAuthenticated in
+            // Don't react until the initial session check is done — prevents login flash
+            guard supabaseManager.hasCompletedInitialCheck else { return }
+
             if !isAuthenticated {
-                // Always transition to sign-in when logged out (clears ContentView)
                 appState = .needsSignIn
                 return
             }
@@ -82,9 +84,6 @@ struct AuthenticationRootView: View {
 
     private func checkAuthState() async {
         await supabaseManager.checkSession()
-
-        // Small delay to prevent flash
-        try? await Task.sleep(nanoseconds: 500_000_000)
 
         await MainActor.run {
             if !supabaseManager.isAuthenticated {

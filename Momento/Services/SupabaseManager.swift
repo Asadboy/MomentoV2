@@ -17,6 +17,8 @@ class SupabaseManager: ObservableObject {
     
     @Published var currentUser: User?
     @Published var isAuthenticated = false
+    /// True once the initial session check has completed (prevents login screen flash)
+    @Published var hasCompletedInitialCheck = false
     
     private init() {
         // Validate configuration
@@ -53,11 +55,13 @@ class SupabaseManager: ObservableObject {
             await MainActor.run {
                 self.currentUser = session.user
                 self.isAuthenticated = true
+                self.hasCompletedInitialCheck = true
             }
         } catch {
             await MainActor.run {
                 self.currentUser = nil
                 self.isAuthenticated = false
+                self.hasCompletedInitialCheck = true
             }
         }
     }

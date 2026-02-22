@@ -96,6 +96,13 @@ struct ContentView: View {
         in: .common
     ).autoconnect()
 
+    /// Timer that refreshes event data (counts) every 15 seconds
+    private let refreshTimer = Timer.publish(
+        every: 15.0,
+        on: .main,
+        in: .common
+    ).autoconnect()
+
     // MARK: - Sorted Events
 
     /// Events sorted by priority: Live > Ready to Reveal > Upcoming > Revealed
@@ -278,6 +285,10 @@ struct ContentView: View {
                     await loadEvents()
                 }
             }
+            .onReceive(refreshTimer) { _ in
+                // Silently refresh event data (counts) every 15s — no loading spinner
+                Task { await refreshEventCounts() }
+            }
             .fullScreenCover(isPresented: $showAddSheet) {
                 CreateMomentoFlow { createdEvent in
                     events.append(createdEvent)
@@ -450,6 +461,28 @@ struct ContentView: View {
     }
     
 
+    /// Silently refresh event counts from the DB without a full reload
+    private func refreshEventCounts() async {
+        guard !events.isEmpty else { return }
+
+        do {
+            let eventModels = try await supabaseManager.getMyEvents()
+            let updated = eventModels.map { Event(fromSupabase: $0) }
+
+            await MainActor.run {
+                // Update counts on existing events without replacing the whole array
+                for updatedEvent in updated {
+                    if let idx = events.firstIndex(where: { $0.id == updatedEvent.id }) {
+                        events[idx].memberCount = updatedEvent.memberCount
+                        events[idx].photoCount = updatedEvent.photoCount
+                    }
+                }
+            }
+        } catch {
+            debugLog("⚠️ Silent count refresh failed: \(error)")
+        }
+    }
+
     /// Deletes momentos at specified indices
     private func deleteEvents(at offsets: IndexSet) {
         let eventsToDelete = offsets.map { events[$0] }
@@ -518,6 +551,12 @@ struct ContentView: View {
             
             debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             debugLog("   Pending uploads: \(syncManager.pendingCount)")
+
+            // Refresh counts after upload settles
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2s for upload to complete
+                await refreshEventCounts()
+            }
         } catch {
             debugLog("❌ Failed to save photo: \(error)")
         }
