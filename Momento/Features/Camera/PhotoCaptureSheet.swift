@@ -131,7 +131,8 @@ struct PhotoCaptureSheet: View {
     // MARK: - Photo Limit
 
     private func fetchRemainingCount() async {
-        guard let userId = SupabaseManager.shared.currentUser?.id else {
+        guard let userId = SupabaseManager.shared.currentUser?.id,
+              let eventUUID = UUID(uuidString: event.id) else {
             photosRemaining = PhotoLimitConfig.defaultPhotoLimit
             isLoadingCount = false
             return
@@ -139,7 +140,7 @@ struct PhotoCaptureSheet: View {
 
         do {
             let count = try await SupabaseManager.shared.getPhotoCount(
-                eventId: event.id,
+                eventId: eventUUID,
                 userId: userId
             )
             let remaining = max(0, PhotoLimitConfig.defaultPhotoLimit - count)
@@ -150,7 +151,7 @@ struct PhotoCaptureSheet: View {
 
             if remaining <= 0 {
                 AnalyticsManager.shared.track(.photoLimitReached, properties: [
-                    "event_id": event.id.uuidString
+                    "event_id": event.id
                 ])
             }
         } catch {
@@ -173,7 +174,7 @@ struct PhotoCaptureSheet: View {
 
         if remaining - 1 <= 0 {
             AnalyticsManager.shared.track(.photoLimitReached, properties: [
-                "event_id": event.id.uuidString
+                "event_id": event.id
             ])
         }
     }
