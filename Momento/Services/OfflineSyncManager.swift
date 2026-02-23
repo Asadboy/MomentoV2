@@ -163,7 +163,30 @@ class OfflineSyncManager: ObservableObject {
             }
             return
         }
-        
+
+        // Check server-side photo limit before uploading
+        if let userId = supabaseManager.currentUser?.id {
+            do {
+                let count = try await supabaseManager.getPhotoCount(
+                    eventId: photo.eventId,
+                    userId: userId
+                )
+                if count >= PhotoLimitConfig.defaultPhotoLimit {
+                    debugLog("📷 Photo limit reached for event \(photo.eventId.uuidString.prefix(8)), dropping queued photo")
+                    await MainActor.run {
+                        if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
+                            queue[idx].status = .completed
+                            saveQueue()
+                        }
+                    }
+                    try? FileManager.default.removeItem(at: photo.localFileURL)
+                    return
+                }
+            } catch {
+                debugLog("⚠️ Could not check photo limit, proceeding with upload: \(error)")
+            }
+        }
+
         // Update status to uploading
         await MainActor.run {
             if let idx = queue.firstIndex(where: { $0.id == photo.id }) {

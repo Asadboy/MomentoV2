@@ -17,10 +17,14 @@ struct CameraView: View {
     @ObservedObject var cameraController: CameraController
     let onPhotoCaptured: (UIImage) -> Void  // Callback when photo is captured
     let onDismiss: () -> Void  // Callback to dismiss camera
-    
+    let photoLimit: Int              // Total allowed (e.g. 12)
+    let initialRemaining: Int        // Remaining when camera opened
+
     @State private var showShutterFlash = false
-    @State private var photoCount = 0
+    @State private var photosRemaining: Int = 0
     @State private var showSavedIndicator = false
+    @State private var shutterShakeOffset: CGFloat = 0
+    @State private var isLocked: Bool = false
     
     // MARK: - Constants
     
@@ -60,19 +64,18 @@ struct CameraView: View {
                     
                     Spacer()
                     
-                    // Photo count indicator
-                    if photoCount > 0 {
-                        HStack(spacing: 6) {
-                            Image(systemName: "photo.fill")
-                                .font(.system(size: 14))
-                            Text("\(photoCount)")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(Color.black.opacity(0.4)))
+                    // Photo countdown indicator
+                    HStack(spacing: 6) {
+                        Image(systemName: "film")
+                            .font(.system(size: 14))
+                        Text("\(photosRemaining)")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .contentTransition(.numericText())
                     }
+                    .foregroundColor(photosRemaining <= 3 ? Color.orange : .white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(Color.black.opacity(0.4)))
                     
                     Spacer()
                     
@@ -118,18 +121,48 @@ struct CameraView: View {
                     
                     // Capture button
                     Button {
-                        captureWithFeedback()
+                        if isLocked {
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.error)
+                            withAnimation(.default) {
+                                shutterShakeOffset = 10
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                                withAnimation(.default) {
+                                    shutterShakeOffset = -8
+                                }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                                withAnimation(.default) {
+                                    shutterShakeOffset = 6
+                                }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+                                withAnimation(.default) {
+                                    shutterShakeOffset = 0
+                                }
+                            }
+                        } else {
+                            captureWithFeedback()
+                        }
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(Color.white)
+                                .fill(isLocked ? Color.gray : Color.white)
                                 .frame(width: 80, height: 80)
-                            
+
                             Circle()
                                 .stroke(Color.white.opacity(0.3), lineWidth: 4)
                                 .frame(width: 90, height: 90)
+
+                            if isLocked {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
                         }
                     }
+                    .offset(x: shutterShakeOffset)
                     .disabled(!cameraController.isSessionRunning)
                     
                     // Camera flip button
@@ -149,6 +182,8 @@ struct CameraView: View {
         .background(Color.black)
         .onAppear {
             cameraController.startSession()
+            photosRemaining = initialRemaining
+            isLocked = initialRemaining <= 0
         }
         .onDisappear {
             cameraController.stopSession()
@@ -157,8 +192,15 @@ struct CameraView: View {
             if let image = newValue {
                 onPhotoCaptured(image)
                 cameraController.clearCapturedImage()
-                photoCount += 1
-                
+
+                withAnimation {
+                    photosRemaining -= 1
+                }
+
+                if photosRemaining <= 0 {
+                    isLocked = true
+                }
+
                 // Show saved indicator briefly
                 withAnimation(.easeOut(duration: 0.2)) {
                     showSavedIndicator = true
@@ -487,6 +529,8 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         },
         onDismiss: {
             debugLog("Dismiss camera")
-        }
+        },
+        photoLimit: 12,
+        initialRemaining: 8
     )
 }

@@ -16,6 +16,9 @@ enum AnalyticsEvent: String {
     case photoCaptured = "photo_captured"
     case revealStarted = "reveal_started"
     case revealCompleted = "reveal_completed"
+
+    // Capture limit experiment
+    case photoLimitReached = "photo_limit_reached"
 }
 
 final class AnalyticsManager {

@@ -17,7 +17,10 @@ struct PhotoCaptureSheet: View {
     @Binding var isPresented: Bool
     let event: Event
     let onPhotoCaptured: (UIImage, Event) -> Void  // Callback with photo and event
-    
+
+    @State private var photosRemaining: Int? = nil
+    @State private var isLoadingCount = true
+
     // MARK: - Constants
     
     /// Royal purple accent color
@@ -29,15 +32,28 @@ struct PhotoCaptureSheet: View {
         ZStack {
             if cameraController.hasPermission {
                 // Camera view
-                CameraView(
-                    cameraController: cameraController,
-                    onPhotoCaptured: { image in
-                        handlePhotoCaptured(image)
-                    },
-                    onDismiss: {
-                        isPresented = false
+                if isLoadingCount {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .tint(.white)
+                        Text("Loading camera...")
+                            .foregroundColor(.gray)
                     }
-                )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.ignoresSafeArea())
+                } else {
+                    CameraView(
+                        cameraController: cameraController,
+                        onPhotoCaptured: { image in
+                            handlePhotoCaptured(image)
+                        },
+                        onDismiss: {
+                            isPresented = false
+                        },
+                        photoLimit: PhotoLimitConfig.defaultPhotoLimit,
+                        initialRemaining: photosRemaining ?? PhotoLimitConfig.defaultPhotoLimit
+                    )
+                }
             } else {
                 // Permission request view
                 VStack(spacing: 24) {
@@ -107,17 +123,59 @@ struct PhotoCaptureSheet: View {
                 }
             }
         }
+        .task {
+            await fetchRemainingCount()
+        }
     }
-    
+
+    // MARK: - Photo Limit
+
+    private func fetchRemainingCount() async {
+        guard let userId = SupabaseManager.shared.currentUser?.id else {
+            photosRemaining = PhotoLimitConfig.defaultPhotoLimit
+            isLoadingCount = false
+            return
+        }
+
+        do {
+            let count = try await SupabaseManager.shared.getPhotoCount(
+                eventId: event.id,
+                userId: userId
+            )
+            let remaining = max(0, PhotoLimitConfig.defaultPhotoLimit - count)
+            await MainActor.run {
+                photosRemaining = remaining
+                isLoadingCount = false
+            }
+
+            if remaining <= 0 {
+                AnalyticsManager.shared.track(.photoLimitReached, properties: [
+                    "event_id": event.id.uuidString
+                ])
+            }
+        } catch {
+            debugLog("Failed to fetch photo count: \(error)")
+            await MainActor.run {
+                photosRemaining = PhotoLimitConfig.defaultPhotoLimit
+                isLoadingCount = false
+            }
+        }
+    }
+
     // MARK: - Actions
     
     /// Handles captured photo - stays open for multi-capture
     private func handlePhotoCaptured(_ image: UIImage) {
-        // Call callback with photo and event
+        guard let remaining = photosRemaining, remaining > 0 else { return }
+
         onPhotoCaptured(image, event)
-        
-        // Don't dismiss - allow user to take multiple photos
-        // User must tap X to close camera
+        photosRemaining = remaining - 1
+
+        if remaining - 1 <= 0 {
+            AnalyticsManager.shared.track(.photoLimitReached, properties: [
+                "event_id": event.id.uuidString
+            ])
+        }
     }
 }
 

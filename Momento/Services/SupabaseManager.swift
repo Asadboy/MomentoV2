@@ -609,7 +609,20 @@ class SupabaseManager: ObservableObject {
         
         return photos
     }
-    
+
+    /// Get the number of photos a user has taken for a specific event
+    func getPhotoCount(eventId: UUID, userId: UUID) async throws -> Int {
+        let photos: [PhotoModel] = try await client
+            .from("photos")
+            .select()
+            .eq("event_id", value: eventId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+
+        return photos.count
+    }
+
     /// Get photos for an event (String ID overload for convenience)
     func getPhotos(for eventId: String) async throws -> [PhotoData] {
         guard let uuid = UUID(uuidString: eventId) else {
