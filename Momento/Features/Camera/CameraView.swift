@@ -25,32 +25,24 @@ struct CameraView: View {
     @State private var showSavedIndicator = false
     @State private var shutterShakeOffset: CGFloat = 0
     @State private var isLocked: Bool = false
-    
-    // MARK: - Constants
-    
-    /// Royal purple accent color
-    private var royalPurple: Color {
-        AppTheme.Colors.royalPurple
-    }
-    
+
     var body: some View {
         ZStack {
             // Camera preview
             CameraPreviewView(cameraController: cameraController)
                 .ignoresSafeArea()
-            
+
             // Shutter flash effect
             if showShutterFlash {
                 Color.white
                     .ignoresSafeArea()
                     .transition(.opacity)
             }
-            
+
             // UI overlay
-            VStack {
-                // Top bar
+            VStack(spacing: 0) {
+                // Top bar — just close button
                 HStack {
-                    // Close button
                     Button {
                         cameraController.stopSession()
                         onDismiss()
@@ -61,40 +53,14 @@ struct CameraView: View {
                             .frame(width: 44, height: 44)
                             .background(Circle().fill(Color.black.opacity(0.4)))
                     }
-                    
+
                     Spacer()
-                    
-                    // Photo countdown indicator
-                    HStack(spacing: 6) {
-                        Image(systemName: "film")
-                            .font(.system(size: 14))
-                        Text("\(photosRemaining)")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .contentTransition(.numericText())
-                    }
-                    .foregroundColor(photosRemaining <= 3 ? Color.orange : .white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(Color.black.opacity(0.4)))
-                    
-                    Spacer()
-                    
-                    // Flash toggle
-                    Button {
-                        cameraController.toggleFlash()
-                    } label: {
-                        Image(systemName: cameraController.isFlashOn ? "bolt.fill" : "bolt.slash.fill")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(cameraController.isFlashOn ? .yellow : .white)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Color.black.opacity(0.4)))
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
-                
+
                 Spacer()
-                
+
                 // "Saved" indicator that appears briefly
                 if showSavedIndicator {
                     HStack(spacing: 8) {
@@ -109,16 +75,78 @@ struct CameraView: View {
                     .background(Capsule().fill(Color.black.opacity(0.7)))
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                
+
                 Spacer()
-                
-                // Bottom controls
-                HStack(alignment: .center, spacing: 60) {
-                    // Placeholder for symmetry
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 44, height: 44)
-                    
+
+                // Middle controls row — flash, zoom, flip
+                HStack {
+                    // Flash toggle
+                    Button {
+                        cameraController.toggleFlash()
+                    } label: {
+                        Image(systemName: cameraController.isFlashOn ? "bolt.fill" : "bolt.slash.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(cameraController.isFlashOn ? .yellow : .white)
+                            .frame(width: 44, height: 44)
+                    }
+
+                    Spacer()
+
+                    // Zoom toggle — 0.5x / 1.0x
+                    HStack(spacing: 4) {
+                        if cameraController.hasUltraWide {
+                            Button {
+                                cameraController.setZoom(ultraWide: true)
+                            } label: {
+                                Text("0.5x")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(cameraController.isUltraWide ? .yellow : .white)
+                                    .frame(width: 48, height: 32)
+                                    .background(
+                                        Capsule().fill(cameraController.isUltraWide ? Color.white.opacity(0.2) : Color.clear)
+                                    )
+                            }
+                        }
+
+                        Button {
+                            cameraController.setZoom(ultraWide: false)
+                        } label: {
+                            Text("1.0x")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundColor(!cameraController.isUltraWide ? .yellow : .white)
+                                .frame(width: 48, height: 32)
+                                .background(
+                                    Capsule().fill(!cameraController.isUltraWide ? Color.white.opacity(0.2) : Color.clear)
+                                )
+                        }
+                    }
+
+                    Spacer()
+
+                    // Camera flip
+                    Button {
+                        cameraController.switchCamera()
+                    } label: {
+                        Image(systemName: "camera.rotate.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
+
+                // Bottom controls — counter, shutter, placeholder
+                HStack(alignment: .center) {
+                    // Rolling dial counter (bottom-left)
+                    FilmCounterView(
+                        remaining: photosRemaining,
+                        isLocked: isLocked
+                    )
+                    .frame(width: 100)
+
+                    Spacer()
+
                     // Capture button
                     Button {
                         if isLocked {
@@ -164,18 +192,14 @@ struct CameraView: View {
                     }
                     .offset(x: shutterShakeOffset)
                     .disabled(!cameraController.isSessionRunning)
-                    
-                    // Camera flip button
-                    Button {
-                        cameraController.switchCamera()
-                    } label: {
-                        Image(systemName: "camera.rotate.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Color.black.opacity(0.4)))
-                    }
+
+                    Spacer()
+
+                    // Placeholder for symmetry
+                    Color.clear
+                        .frame(width: 100, height: 44)
                 }
+                .padding(.horizontal, 20)
                 .padding(.bottom, 50)
             }
         }
@@ -213,13 +237,13 @@ struct CameraView: View {
             }
         }
     }
-    
+
     private func captureWithFeedback() {
         // Haptic feedback
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.prepare()
         generator.impactOccurred()
-        
+
         // Shutter flash animation
         withAnimation(.easeOut(duration: 0.05)) {
             showShutterFlash = true
@@ -229,9 +253,62 @@ struct CameraView: View {
                 showShutterFlash = false
             }
         }
-        
+
         // Capture photo
         cameraController.capturePhoto()
+    }
+}
+
+// MARK: - Film Counter View (Disposable Camera Dial)
+
+/// Rolling number counter like a disposable camera's shot dial
+struct FilmCounterView: View {
+    let remaining: Int
+    let isLocked: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            // Film icon
+            Image(systemName: "film")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(counterColor)
+
+            // Rolling number dial
+            VStack(spacing: 2) {
+                // Number above
+                Text("\(remaining + 1)")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.25))
+
+                // Current number
+                Text("\(remaining)")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(counterColor)
+                    .contentTransition(.numericText())
+
+                // Number below
+                Text("\(max(0, remaining - 1))")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.25))
+            }
+            .frame(width: 36)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.black.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        )
+    }
+
+    private var counterColor: Color {
+        if isLocked { return .gray }
+        if remaining <= 3 { return .orange }
+        return .white
     }
 }
 
@@ -240,46 +317,46 @@ struct CameraView: View {
 /// UIViewRepresentable wrapper for camera preview
 struct CameraPreviewView: UIViewRepresentable {
     @ObservedObject var cameraController: CameraController
-    
+
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
         view.backgroundColor = .black
-        
+
         // Create preview layer
         let previewLayer = AVCaptureVideoPreviewLayer()
         previewLayer.videoGravity = .resizeAspectFill
-        
+
         // Store reference
         context.coordinator.previewLayer = previewLayer
         view.layer.addSublayer(previewLayer)
-        
+
         // Set initial frame
         previewLayer.frame = view.bounds
-        
+
         // Setup session when available
         if let session = cameraController.captureSession {
             previewLayer.session = session
         }
-        
+
         return view
     }
-    
+
     func updateUIView(_ uiView: UIView, context: Context) {
         // Update preview layer frame
         if let previewLayer = context.coordinator.previewLayer {
             previewLayer.frame = uiView.bounds
-            
+
             // Setup session if not already set
             if previewLayer.session == nil, let session = cameraController.captureSession {
                 previewLayer.session = session
             }
         }
     }
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
-    
+
     class Coordinator {
         var previewLayer: AVCaptureVideoPreviewLayer?
     }
@@ -295,18 +372,24 @@ class CameraController: NSObject, ObservableObject {
     @Published var errorMessage: String?
     @Published var isFlashOn: Bool = false
     @Published var isUsingFrontCamera: Bool = false
-    
+    @Published var isUltraWide: Bool = false
+
     var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
     private var videoDeviceInput: AVCaptureDeviceInput?
-    
+
+    /// Whether the device has an ultra-wide camera
+    var hasUltraWide: Bool {
+        AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) != nil
+    }
+
     override init() {
         super.init()
         checkPermission()
     }
-    
+
     // MARK: - Permission Management
-    
+
     /// Checks camera permission status
     func checkPermission() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -318,7 +401,7 @@ class CameraController: NSObject, ObservableObject {
             hasPermission = false
         }
     }
-    
+
     /// Requests camera permission
     func requestPermission() {
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
@@ -330,28 +413,30 @@ class CameraController: NSObject, ObservableObject {
             }
         }
     }
-    
+
     // MARK: - Session Management
-    
+
     /// Sets up the camera capture session
     private func setupSession() {
         let session = AVCaptureSession()
         session.sessionPreset = .photo
-        
+
         // Get video device based on current camera preference
         let position: AVCaptureDevice.Position = isUsingFrontCamera ? .front : .back
-        guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) ??
+        let deviceType: AVCaptureDevice.DeviceType = isUltraWide ? .builtInUltraWideCamera : .builtInWideAngleCamera
+        guard let videoDevice = AVCaptureDevice.default(deviceType, for: .video, position: position) ??
+                AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) ??
                 AVCaptureDevice.default(for: .video) else {
             DispatchQueue.main.async {
                 self.errorMessage = "Camera not available"
             }
             return
         }
-        
+
         // Create video input
         do {
             let videoInput = try AVCaptureDeviceInput(device: videoDevice)
-            
+
             if session.canAddInput(videoInput) {
                 session.addInput(videoInput)
                 videoDeviceInput = videoInput
@@ -367,10 +452,10 @@ class CameraController: NSObject, ObservableObject {
             }
             return
         }
-        
+
         // Create photo output
         let photoOutput = AVCapturePhotoOutput()
-        
+
         if session.canAddOutput(photoOutput) {
             session.addOutput(photoOutput)
             self.photoOutput = photoOutput
@@ -380,62 +465,99 @@ class CameraController: NSObject, ObservableObject {
             }
             return
         }
-        
+
         captureSession = session
     }
-    
+
     /// Switch between front and back camera
     func switchCamera() {
         guard let session = captureSession, let currentInput = videoDeviceInput else { return }
-        
+
         // Toggle camera
         isUsingFrontCamera.toggle()
+        // Reset to 1.0x when switching to front camera (no ultrawide on front)
+        if isUsingFrontCamera {
+            isUltraWide = false
+        }
         let newPosition: AVCaptureDevice.Position = isUsingFrontCamera ? .front : .back
-        
+
         guard let newDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newPosition) else {
             return
         }
-        
+
         do {
             let newInput = try AVCaptureDeviceInput(device: newDevice)
-            
+
             session.beginConfiguration()
             session.removeInput(currentInput)
-            
+
             if session.canAddInput(newInput) {
                 session.addInput(newInput)
                 videoDeviceInput = newInput
             } else {
                 session.addInput(currentInput) // Restore original if failed
             }
-            
+
             session.commitConfiguration()
         } catch {
             debugLog("Error switching camera: \(error)")
         }
     }
-    
+
+    /// Set zoom level — true for 0.5x ultrawide, false for 1.0x wide
+    func setZoom(ultraWide: Bool) {
+        guard !isUsingFrontCamera else { return } // No ultrawide on front
+        guard ultraWide != isUltraWide else { return } // Already at this zoom
+        guard let session = captureSession, let currentInput = videoDeviceInput else { return }
+
+        let deviceType: AVCaptureDevice.DeviceType = ultraWide ? .builtInUltraWideCamera : .builtInWideAngleCamera
+        guard let newDevice = AVCaptureDevice.default(deviceType, for: .video, position: .back) else { return }
+
+        do {
+            let newInput = try AVCaptureDeviceInput(device: newDevice)
+
+            session.beginConfiguration()
+            session.removeInput(currentInput)
+
+            if session.canAddInput(newInput) {
+                session.addInput(newInput)
+                videoDeviceInput = newInput
+                isUltraWide = ultraWide
+            } else {
+                session.addInput(currentInput)
+            }
+
+            session.commitConfiguration()
+
+            // Haptic feedback on zoom change
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+        } catch {
+            debugLog("Error switching zoom: \(error)")
+        }
+    }
+
     /// Toggle flash mode
     func toggleFlash() {
         isFlashOn.toggle()
     }
-    
+
     /// Starts the camera session
     func startSession() {
         guard hasPermission else {
             requestPermission()
             return
         }
-        
+
         // Setup session if not already configured
         if captureSession == nil {
             setupSession()
         }
-        
+
         guard let session = captureSession else {
             return
         }
-        
+
         // Start session on background queue
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             if !session.isRunning {
@@ -446,13 +568,13 @@ class CameraController: NSObject, ObservableObject {
             }
         }
     }
-    
+
     /// Stops the camera session
     func stopSession() {
         guard let session = captureSession else {
             return
         }
-        
+
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             if session.isRunning {
                 session.stopRunning()
@@ -462,9 +584,9 @@ class CameraController: NSObject, ObservableObject {
             }
         }
     }
-    
+
     // MARK: - Photo Capture
-    
+
     /// Captures a photo
     func capturePhoto() {
         guard let photoOutput = photoOutput,
@@ -472,21 +594,21 @@ class CameraController: NSObject, ObservableObject {
               session.isRunning else {
             return
         }
-        
+
         // Configure photo settings
         let settings = AVCapturePhotoSettings()
-        
+
         // Set flash mode based on user preference
         if photoOutput.supportedFlashModes.contains(.on) && isFlashOn {
             settings.flashMode = .on
         } else if photoOutput.supportedFlashModes.contains(.off) {
             settings.flashMode = .off
         }
-        
+
         // Capture photo
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
-    
+
     /// Clears the captured image
     func clearCapturedImage() {
         capturedImage = nil
@@ -504,7 +626,7 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
             }
             return
         }
-        
+
         // Extract image from photo
         guard let imageData = photo.fileDataRepresentation(),
               let image = UIImage(data: imageData) else {
@@ -513,7 +635,7 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
             }
             return
         }
-        
+
         // Update captured image on main thread
         DispatchQueue.main.async {
             self.capturedImage = image
