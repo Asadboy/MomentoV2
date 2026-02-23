@@ -31,6 +31,8 @@
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
 		C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34D444F2F0AA5B70019CA2C /* Assets.xcassets */; };
 		C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */; };
+		C30B8D012F51000000000001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30B8D002F51000000000001 /* OnboardingView.swift */; };
+		C30B8D032F51000000000002 /* OnboardingActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30B8D022F51000000000002 /* OnboardingActionView.swift */; };
 		C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B72EF8200000000001 /* CreateMomentoFlow.swift */; };
 		C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B92EF8200000000002 /* CreateStep1NameView.swift */; };
 		C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */; };
@@ -108,6 +110,8 @@
 		C34D444C2F0A80760019CA2C /* Momento.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Momento.entitlements; sourceTree = "<group>"; };
 		C34D444F2F0AA5B70019CA2C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameSelectionView.swift; sourceTree = "<group>"; };
+		C30B8D002F51000000000001 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		C30B8D022F51000000000002 /* OnboardingActionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingActionView.swift; sourceTree = "<group>"; };
 		C36446B72EF8200000000001 /* CreateMomentoFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMomentoFlow.swift; sourceTree = "<group>"; };
 		C36446B92EF8200000000002 /* CreateStep1NameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep1NameView.swift; sourceTree = "<group>"; };
 		C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep3ShareView.swift; sourceTree = "<group>"; };
@@ -253,6 +257,8 @@
 				C3ACE7722EC0F096004B23B1 /* SignInView.swift */,
 				C3ACE7732EC0F096004B23B1 /* AuthenticationRootView.swift */,
 				C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */,
+				C30B8D002F51000000000001 /* OnboardingView.swift */,
+				C30B8D022F51000000000002 /* OnboardingActionView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -536,6 +542,8 @@
 				C3C411322EFEF88E002D8DB5 /* RevealStateManager.swift in Sources */,
 				C348890C2EB7B3F2003094CB /* CameraView.swift in Sources */,
 				C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */,
+				C30B8D012F51000000000001 /* OnboardingView.swift in Sources */,
+				C30B8D032F51000000000002 /* OnboardingActionView.swift in Sources */,
 				C3C6D43A2F20299100847D38 /* RevealCardView.swift in Sources */,
 				C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */,
 				C3ACE7742EC0F096004B23B1 /* SignInView.swift in Sources */,

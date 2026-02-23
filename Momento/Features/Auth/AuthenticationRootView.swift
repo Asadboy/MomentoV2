@@ -9,13 +9,17 @@ import SwiftUI
 
 struct AuthenticationRootView: View {
     @StateObject private var supabaseManager = SupabaseManager.shared
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var appState: AppState = .checkingAuth
     @State private var isCheckingUsername = false
+    @State private var initialAction: OnboardingAction?
 
     enum AppState {
         case checkingAuth
         case needsSignIn
         case needsUsername
+        case needsOnboarding
+        case needsAction
         case authenticated
     }
 
@@ -51,8 +55,24 @@ struct AuthenticationRootView: View {
                 case .needsUsername:
                     UsernameSelectionView()
 
+                case .needsOnboarding:
+                    OnboardingView {
+                        hasSeenOnboarding = true
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            appState = .needsAction
+                        }
+                    }
+
+                case .needsAction:
+                    OnboardingActionView { action in
+                        initialAction = action
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            appState = .authenticated
+                        }
+                    }
+
                 case .authenticated:
-                    ContentView()
+                    ContentView(initialAction: initialAction)
                 }
         }
         .task {
@@ -109,8 +129,8 @@ struct AuthenticationRootView: View {
                     if needsUsername {
                         appState = .needsUsername
                     } else {
-                        appState = .authenticated
-                        identifyUserForAnalytics(userId: userId)
+                        // TODO: restore hasSeenOnboarding check once onboarding is finalised
+                        appState = .needsOnboarding
                     }
                     isCheckingUsername = false
                 }
@@ -118,8 +138,8 @@ struct AuthenticationRootView: View {
                 debugLog("❌ Failed to check username status: \(error)")
                 // Default to authenticated to avoid blocking user
                 await MainActor.run {
-                    appState = .authenticated
-                    identifyUserForAnalytics(userId: userId)
+                    // TODO: restore hasSeenOnboarding check once onboarding is finalised
+                    appState = .needsOnboarding
                     isCheckingUsername = false
                 }
             }

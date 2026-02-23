@@ -12,8 +12,13 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
+    // MARK: - Initial Action (from onboarding)
+
+    /// Optional action passed from the onboarding action screen
+    var initialAction: OnboardingAction? = nil
+
     // MARK: - State Management
-    
+
     /// Supabase manager instance
     @StateObject private var supabaseManager = SupabaseManager.shared
     
@@ -275,6 +280,17 @@ struct ContentView: View {
                 ])
                 await loadEvents()
             }
+            .onAppear {
+                if let action = initialAction {
+                    // Small delay so ContentView finishes layout before presenting
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        switch action {
+                        case .create: showAddSheet = true
+                        case .join: showJoinSheet = true
+                        }
+                    }
+                }
+            }
             .refreshable {
                 await loadEvents()
             }
@@ -291,7 +307,9 @@ struct ContentView: View {
             }
             .fullScreenCover(isPresented: $showAddSheet) {
                 CreateMomentoFlow { createdEvent in
-                    events.append(createdEvent)
+                    Task { @MainActor in
+                        events.append(createdEvent)
+                    }
                 }
             }
             .sheet(isPresented: $showJoinSheet) {
@@ -400,17 +418,15 @@ struct ContentView: View {
     }
     
     /// Load events from Supabase (debounced to prevent duplicate requests)
-    private func loadEvents() async {
+    @MainActor private func loadEvents() async {
         // Prevent duplicate refresh calls from cancelling each other
         guard !isRefreshing else {
             debugLog("⏳ Already refreshing, skipping duplicate call")
             return
         }
 
-        await MainActor.run {
-            isRefreshing = true
-            isLoadingEvents = events.isEmpty // Only show loading if no events yet
-        }
+        isRefreshing = true
+        isLoadingEvents = events.isEmpty // Only show loading if no events yet
 
         do {
             let eventModels = try await supabaseManager.getMyEvents()
@@ -441,41 +457,32 @@ struct ContentView: View {
                 RevealStateManager.shared.markRevealCompleted(for: eventId)
             }
 
-            let finalRevealStatus = restoredRevealStatus
-            await MainActor.run {
-                events = loadedEvents
-                likedCounts = likeCounts
-                // Merge restored status with any in-session status
-                revealCompletionStatus.merge(finalRevealStatus) { _, new in new }
-                isLoadingEvents = false
-                isRefreshing = false
-            }
+            events = loadedEvents
+            likedCounts = likeCounts
+            revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
+            isLoadingEvents = false
+            isRefreshing = false
             debugLog("✅ Loaded \(eventModels.count) events")
         } catch {
             debugLog("Failed to load events: \(error)")
-            await MainActor.run {
-                isLoadingEvents = false
-                isRefreshing = false
-            }
+            isLoadingEvents = false
+            isRefreshing = false
         }
     }
     
 
     /// Silently refresh event counts from the DB without a full reload
-    private func refreshEventCounts() async {
+    @MainActor private func refreshEventCounts() async {
         guard !events.isEmpty else { return }
 
         do {
             let eventModels = try await supabaseManager.getMyEvents()
             let updated = eventModels.map { Event(fromSupabase: $0) }
 
-            await MainActor.run {
-                // Update counts on existing events without replacing the whole array
-                for updatedEvent in updated {
-                    if let idx = events.firstIndex(where: { $0.id == updatedEvent.id }) {
-                        events[idx].memberCount = updatedEvent.memberCount
-                        events[idx].photoCount = updatedEvent.photoCount
-                    }
+            for updatedEvent in updated {
+                if let idx = events.firstIndex(where: { $0.id == updatedEvent.id }) {
+                    events[idx].memberCount = updatedEvent.memberCount
+                    events[idx].photoCount = updatedEvent.photoCount
                 }
             }
         } catch {
@@ -486,20 +493,16 @@ struct ContentView: View {
     /// Deletes momentos at specified indices
     private func deleteEvents(at offsets: IndexSet) {
         let eventsToDelete = offsets.map { events[$0] }
-        
-        Task {
+
+        Task { @MainActor in
             for event in eventsToDelete {
                 guard let uuid = UUID(uuidString: event.id) else { continue }
-                
+
                 do {
                     try await supabaseManager.deleteEvent(id: uuid)
-                    
-                    await MainActor.run {
-                        events.removeAll { $0.id == event.id }
-                    }
+                    events.removeAll { $0.id == event.id }
                 } catch {
                     debugLog("Failed to delete event: \(error)")
-                    // TODO: Show error to user
                 }
             }
         }
