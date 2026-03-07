@@ -28,21 +28,12 @@ struct AuthenticationRootView: View {
                 switch appState {
                 case .checkingAuth:
                     ZStack {
-                        Color.clear
-                            .momentoGlowOrb()
+                        Color.black.ignoresSafeArea()
 
-                        VStack(spacing: 20) {
-                            ZStack {
-                                Image(systemName: "camera.metering.center.weighted")
-                                    .font(.system(size: 80, weight: .light))
-                                    .foregroundColor(AppTheme.Colors.royalPurple)
-                                    .blur(radius: 20)
-                                    .opacity(0.5)
-
-                                Image(systemName: "camera.metering.center.weighted")
-                                    .font(.system(size: 80, weight: .light))
-                                    .foregroundColor(.white)
-                            }
+                        VStack(spacing: 24) {
+                            Text("Momento")
+                                .font(.custom("RalewayDots-Regular", size: 48))
+                                .foregroundColor(.white)
 
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))

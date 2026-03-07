@@ -19,39 +19,26 @@ struct SignInView: View {
 
     var body: some View {
         ZStack {
-            Color.clear
-                .momentoGlowOrb()
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 40) {
                 Spacer()
 
-                // App Logo & Title
-                VStack(spacing: 20) {
-                    ZStack {
-                        Image(systemName: "camera.metering.center.weighted")
-                            .font(.system(size: 80, weight: .light))
-                            .foregroundColor(AppTheme.Colors.royalPurple)
-                            .blur(radius: 20)
-                            .opacity(0.6)
-
-                        Image(systemName: "camera.metering.center.weighted")
-                            .font(.system(size: 80, weight: .light))
-                            .foregroundColor(.white)
-                    }
-
+                // App Title — Raleway Dots
+                VStack(spacing: 16) {
                     Text("Momento")
-                        .font(.system(size: 58, weight: .bold))
+                        .font(.custom("RalewayDots-Regular", size: 64))
                         .foregroundColor(.white)
 
-                    Text("Capture & Reveal Memories Together")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(AppTheme.Colors.textTertiary)
+                    Text("Your Shared Disposable Camera")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                 }
 
                 Spacer()
 
-                // Sign In Buttons — directly on gradient, no card
+                // Sign In Buttons
                 VStack(spacing: 14) {
                     // Google Sign In
                     Button {
@@ -60,7 +47,7 @@ struct SignInView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "g.circle.fill")
                                 .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(AppTheme.Colors.textSecondary)
+                                .foregroundColor(.black)
 
                             Text("Sign in with Google")
                                 .font(.system(size: 17, weight: .semibold))
@@ -100,20 +87,20 @@ struct SignInView: View {
                 VStack(spacing: 8) {
                     Text("By continuing, you agree to our")
                         .font(.system(size: 12))
-                        .foregroundColor(AppTheme.Colors.textTertiary)
+                        .foregroundColor(.gray)
 
                     HStack(spacing: 4) {
                         Link("Terms of Service", destination: URL(string: "https://yourmomento.app/terms")!)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(AppTheme.Colors.royalPurple.opacity(0.8))
+                            .foregroundColor(Color.white.opacity(0.6))
 
                         Text("and")
                             .font(.system(size: 12))
-                            .foregroundColor(AppTheme.Colors.textTertiary)
+                            .foregroundColor(.gray)
 
                         Link("Privacy Policy", destination: URL(string: "https://yourmomento.app/privacy")!)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(AppTheme.Colors.royalPurple.opacity(0.8))
+                            .foregroundColor(Color.white.opacity(0.6))
                     }
                 }
                 .padding(.bottom, 32)
@@ -126,12 +113,12 @@ struct SignInView: View {
 
                 VStack(spacing: 16) {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.Colors.royalPurple))
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
 
                     Text("Signing in...")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(AppTheme.Colors.textSecondary)
+                        .foregroundColor(.gray)
                 }
             }
         }

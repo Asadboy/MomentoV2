@@ -2,7 +2,7 @@
 //  OnboardingView.swift
 //  Momento
 //
-//  3-screen onboarding: emotional hook → mechanic sequence → reveal payoff.
+//  3-screen onboarding: dots → camera hook, 10 shots mechanic, reveal payoff.
 //
 
 import SwiftUI
@@ -14,19 +14,18 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            Color.clear
-                .momentoBackground()
+            Color.black.ignoresSafeArea()
 
             TabView(selection: $currentPage) {
-                OnboardingHookPage()
+                OnboardingScreen1()
                     .overlay(alignment: .bottom) { pageButton(title: "Next", index: 0) }
                     .tag(0)
 
-                OnboardingMechanicPage()
+                OnboardingScreen2()
                     .overlay(alignment: .bottom) { pageButton(title: "Next", index: 1) }
                     .tag(1)
 
-                OnboardingPayoffPage()
+                OnboardingScreen3()
                     .overlay(alignment: .bottom) { pageButton(title: "Get Started", index: 2) }
                     .tag(2)
             }
@@ -38,7 +37,7 @@ struct OnboardingView: View {
             } label: {
                 Text("Skip")
                     .font(AppTheme.Fonts.bodySmall)
-                    .foregroundColor(AppTheme.Colors.textTertiary)
+                    .foregroundColor(.gray)
             }
             .padding(.trailing, AppTheme.Spacing.screenH)
             .padding(.top, 16)
@@ -64,321 +63,320 @@ struct OnboardingView: View {
     }
 }
 
-// MARK: - Parallax helper
+// MARK: - Screen 1: Dots → Camera
 
-private struct ParallaxGeometry: View {
-    let factor: CGFloat
-    @Binding var parallaxOffset: CGFloat
-
-    var body: some View {
-        GeometryReader { geo in
-            Color.clear
-                .preference(key: ParallaxKey.self, value: geo.frame(in: .global).minX)
-        }
-        .onPreferenceChange(ParallaxKey.self) { minX in
-            parallaxOffset = minX * (1.0 - factor)
-        }
-    }
-}
-
-private struct ParallaxKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-// MARK: - Screen 1: Emotional Hook
-
-private struct OnboardingHookPage: View {
+struct OnboardingScreen1: View {
     @State private var appeared = false
+    @State private var dotsVisible: [Bool] = Array(repeating: false, count: 10)
+    @State private var dotsConverged = false
+    @State private var cameraVisible = false
+    @State private var line1Visible = false
+    @State private var line2Visible = false
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
             Spacer()
 
-            Text("Every event\nlooks different\nthrough every lens.")
-                .font(AppTheme.Fonts.display)
-                .foregroundColor(AppTheme.Colors.textPrimary)
+            // Dots → Camera animation
+            ZStack {
+                // 10 dots that converge to center
+                ForEach(0..<10, id: \.self) { index in
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 10, height: 10)
+                        .offset(x: dotsConverged ? 0 : dotOffset(for: index).x,
+                                y: dotsConverged ? 0 : dotOffset(for: index).y)
+                        .opacity(dotsVisible[index] ? (dotsConverged ? 0 : 1) : 0)
+                        .scaleEffect(dotsVisible[index] ? (dotsConverged ? 0.3 : 1) : 0)
+                        .animation(.easeOut(duration: 0.3), value: dotsVisible[index])
+                        .animation(.easeInOut(duration: 0.5), value: dotsConverged)
+                }
+
+                // Camera icon appears after dots converge
+                Image(systemName: "camera.fill")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundColor(.white)
+                    .opacity(cameraVisible ? 1 : 0)
+                    .scaleEffect(cameraVisible ? 1 : 0.5)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: cameraVisible)
+            }
+            .frame(height: 80)
+
+            Spacer().frame(height: 48)
+
+            // Line 1
+            Text("Create your own Momento")
+                .font(AppTheme.Fonts.h1)
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .lineSpacing(6)
-                .opacity(appeared ? 1 : 0)
-                .offset(y: appeared ? 0 : 12)
-                .animation(.easeOut(duration: 0.6), value: appeared)
+                .opacity(line1Visible ? 1 : 0)
+                .offset(y: line1Visible ? 0 : 10)
+                .animation(.easeOut(duration: 0.5), value: line1Visible)
 
-            Spacer().frame(height: 28)
+            Spacer().frame(height: 14)
 
-            Text("Momento brings it all back together.")
+            // Line 2
+            Text("Your Shared Disposable Camera")
                 .font(AppTheme.Fonts.bodySmall)
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-                .opacity(appeared ? 1 : 0)
-                .animation(.easeOut(duration: 0.6).delay(0.2), value: appeared)
+                .opacity(line2Visible ? 1 : 0)
+                .offset(y: line2Visible ? 0 : 10)
+                .animation(.easeOut(duration: 0.5), value: line2Visible)
 
             Spacer()
             Spacer()
             Spacer().frame(height: 80)
         }
         .padding(.horizontal, AppTheme.Spacing.screenH)
-        .onAppear { appeared = true }
+        .onAppear { startAnimation() }
+    }
+
+    /// Spread dots in a loose ring around center
+    private func dotOffset(for index: Int) -> CGPoint {
+        let angle = (Double(index) / 10.0) * 2 * .pi - .pi / 2
+        let radius: CGFloat = 50
+        return CGPoint(x: CGFloat(cos(angle)) * radius, y: CGFloat(sin(angle)) * radius)
+    }
+
+    private func startAnimation() {
+        // Dots appear one by one
+        for i in 0..<10 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.08) {
+                dotsVisible[i] = true
+                HapticsManager.shared.light()
+            }
+        }
+
+        // Dots converge to center
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            dotsConverged = true
+        }
+
+        // Camera appears
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            cameraVisible = true
+            HapticsManager.shared.medium()
+        }
+
+        // Line 1 fades in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+            line1Visible = true
+            HapticsManager.shared.light()
+        }
+
+        // Line 2 fades in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.7) {
+            line2Visible = true
+            HapticsManager.shared.light()
+        }
     }
 }
 
-// MARK: - Screen 2: The Mechanic (Capture → Locked → Revealed)
+// MARK: - Screen 2: 10 Shots
 
-private struct OnboardingMechanicPage: View {
-    @State private var stepsAppeared = false
-    @State private var parallaxOffset: CGFloat = 0
+struct OnboardingScreen2: View {
+    @State private var appeared = false
+    @State private var dotsFilled = 0
+    @State private var dotsComplete = false
+    @State private var line1Visible = false
+    @State private var line2Visible = false
+    @State private var line3Visible = false
 
     var body: some View {
-        ZStack {
-            ParallaxGeometry(factor: 0.85, parallaxOffset: $parallaxOffset)
+        VStack(spacing: 0) {
+            Spacer()
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                Text("Shoot now.\nSee everything later.")
-                    .font(AppTheme.Fonts.h1)
-                    .foregroundColor(AppTheme.Colors.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-
-                Spacer().frame(height: 24)
-
-                Text("No previews. No retakes.\nEverything stays hidden until the event ends.")
-                    .font(AppTheme.Fonts.bodySmall)
-                    .foregroundColor(.white.opacity(0.5))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-
-                Spacer().frame(height: 48)
-
-                // 3-step visual sequence — parallax lagged
-                HStack(spacing: 0) {
-                    // Step 1: Capture
-                    stepView(index: 0, title: "Capture") {
-                        ZStack {
-                            Circle()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1.5)
-                                .frame(width: 56, height: 56)
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-
-                    // Connector
-                    connectorLine(index: 0)
-
-                    // Step 2: Locked
-                    stepView(index: 1, title: "Locked") {
-                        ZStack {
-                            // Mini blurred cards
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(AppTheme.Colors.cardFill)
-                                .frame(width: 38, height: 48)
-                                .rotationEffect(.degrees(-4))
-                                .offset(x: -6)
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(AppTheme.Colors.cardFill)
-                                .frame(width: 38, height: 48)
-                                .rotationEffect(.degrees(3))
-                                .offset(x: 4)
-                        }
-                        .blur(radius: 4)
-                        .overlay(
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white.opacity(0.6))
-                        )
-                        .frame(width: 56, height: 56)
-                    }
-
-                    // Connector
-                    connectorLine(index: 1)
-
-                    // Step 3: Revealed
-                    stepView(index: 2, title: "Revealed") {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(AppTheme.Colors.cardFill)
-                                .frame(width: 36, height: 46)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppTheme.Colors.cardBorder, lineWidth: 1)
-                                )
-                                .rotationEffect(.degrees(-3))
-                                .offset(x: -5)
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(AppTheme.Colors.cardFill)
-                                .frame(width: 36, height: 46)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppTheme.Colors.cardBorder, lineWidth: 1)
-                                )
-                                .rotationEffect(.degrees(2))
-                                .offset(x: 4)
-                                .overlay(
-                                    Image(systemName: "heart.fill")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(.white.opacity(0.5))
-                                        .offset(x: 12, y: 14)
-                                )
-                        }
-                        .frame(width: 56, height: 56)
-                    }
+            // 10 dots pulse in one by one
+            HStack(spacing: 8) {
+                ForEach(0..<10, id: \.self) { index in
+                    Circle()
+                        .fill(index < dotsFilled ? Color.white : Color.white.opacity(0.15))
+                        .frame(width: 12, height: 12)
+                        .scaleEffect(index == dotsFilled - 1 && !dotsComplete ? 1.4 : 1.0)
+                        .animation(.spring(response: 0.25, dampingFraction: 0.5), value: dotsFilled)
+                        .animation(.easeOut(duration: 0.3), value: dotsComplete)
                 }
-                .offset(x: parallaxOffset)
-
-                Spacer()
-                Spacer().frame(height: 80)
             }
-            .padding(.horizontal, AppTheme.Spacing.screenH)
+            .opacity(appeared ? 1 : 0)
+            .animation(.easeOut(duration: 0.3), value: appeared)
+
+            Spacer().frame(height: 56)
+
+            // Three lines fade in with haptic
+            VStack(spacing: 12) {
+                Text("10 Shots")
+                    .font(AppTheme.Fonts.h1)
+                    .foregroundColor(.white)
+                    .opacity(line1Visible ? 1 : 0)
+                    .offset(y: line1Visible ? 0 : 10)
+                    .animation(.easeOut(duration: 0.5), value: line1Visible)
+
+                Text("No Retakes")
+                    .font(AppTheme.Fonts.h1)
+                    .foregroundColor(.white)
+                    .opacity(line2Visible ? 1 : 0)
+                    .offset(y: line2Visible ? 0 : 10)
+                    .animation(.easeOut(duration: 0.5), value: line2Visible)
+
+                Text("No Previews")
+                    .font(AppTheme.Fonts.h1)
+                    .foregroundColor(.white)
+                    .opacity(line3Visible ? 1 : 0)
+                    .offset(y: line3Visible ? 0 : 10)
+                    .animation(.easeOut(duration: 0.5), value: line3Visible)
+            }
+            .multilineTextAlignment(.center)
+
+            Spacer()
+            Spacer().frame(height: 80)
         }
-        .onAppear { stepsAppeared = true }
+        .padding(.horizontal, AppTheme.Spacing.screenH)
+        .onAppear { startAnimation() }
     }
 
-    @ViewBuilder
-    private func stepView<Content: View>(index: Int, title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(spacing: 10) {
-            content()
-            Text(title)
-                .font(AppTheme.Fonts.micro)
-                .foregroundColor(.white.opacity(0.4))
-                .textCase(.uppercase)
-                .tracking(1)
-        }
-        .opacity(stepsAppeared ? 1 : 0)
-        .offset(y: stepsAppeared ? 0 : 14)
-        .animation(
-            .easeOut(duration: 0.4).delay(Double(index) * 0.2),
-            value: stepsAppeared
-        )
-    }
+    private func startAnimation() {
+        appeared = true
 
-    @ViewBuilder
-    private func connectorLine(index: Int) -> some View {
-        Rectangle()
-            .fill(Color.white.opacity(0.1))
-            .frame(height: 1)
-            .frame(maxWidth: 28)
-            .padding(.horizontal, 4)
-            .padding(.bottom, 24) // Align with icons, above labels
-            .opacity(stepsAppeared ? 1 : 0)
-            .animation(
-                .easeOut(duration: 0.3).delay(Double(index) * 0.2 + 0.15),
-                value: stepsAppeared
-            )
+        // Dots pulse in one by one
+        for i in 1...10 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(i) * 0.2) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    dotsFilled = i
+                }
+                HapticsManager.shared.light()
+            }
+        }
+
+        // Dots settle (no more pulsing)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+            dotsComplete = true
+        }
+
+        // Line 1: "10 Shots"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) {
+            line1Visible = true
+            HapticsManager.shared.medium()
+        }
+
+        // Line 2: "No Retakes"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.7) {
+            line2Visible = true
+            HapticsManager.shared.light()
+        }
+
+        // Line 3: "No Previews"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.2) {
+            line3Visible = true
+            HapticsManager.shared.light()
+        }
     }
 }
 
-// MARK: - Screen 3: The Payoff
+// MARK: - Screen 3: The Reveal
 
-private struct OnboardingPayoffPage: View {
-    @State private var cardsAppeared = false
-    @State private var parallaxOffset: CGFloat = 0
-
-    // Card configs: (width, height, rotation, xOffset)
-    private let cards: [(w: CGFloat, h: CGFloat, rot: Double, x: CGFloat)] = [
-        (70, 95, -5, -55),
-        (75, 100, -2, -22),
-        (85, 115, 0, 8),   // Center card, biggest
-        (72, 98, 3, 40),
-        (65, 88, 6, 68),
-    ]
+struct OnboardingScreen3: View {
+    @State private var appeared = false
+    @State private var headerVisible = false
+    @State private var line1Visible = false
+    @State private var line2Visible = false
+    @State private var line3Visible = false
 
     var body: some View {
-        ZStack {
-            ParallaxGeometry(factor: 0.85, parallaxOffset: $parallaxOffset)
+        VStack(spacing: 0) {
+            Spacer()
 
-            // Faint radial glow behind cards — the only color hint
-            RadialGradient(
-                colors: [
-                    AppTheme.Colors.royalPurple.opacity(0.08),
-                    .clear
-                ],
-                center: .center,
-                startRadius: 20,
-                endRadius: 180
-            )
-            .frame(width: 360, height: 360)
-            .offset(x: parallaxOffset, y: 40)
-            .opacity(cardsAppeared ? 1 : 0)
-            .animation(.easeOut(duration: 0.8).delay(0.4), value: cardsAppeared)
-
-            VStack(spacing: 0) {
-                Spacer()
-
-                Text("Then everything\ndrops at once.")
+            // Header
+            VStack(spacing: 6) {
+                Text("All Momentos")
                     .font(AppTheme.Fonts.h1)
-                    .foregroundColor(AppTheme.Colors.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-
-                Spacer().frame(height: 24)
-
-                Text("The good ones. The blurry ones.\nThe forgotten ones.")
-                    .font(AppTheme.Fonts.bodySmall)
-                    .foregroundColor(.white.opacity(0.5))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-
-                Spacer().frame(height: 44)
-
-                // Cascading revealed cards — parallax lagged
-                ZStack {
-                    ForEach(0..<cards.count, id: \.self) { i in
-                        let card = cards[i]
-                        let isCenter = i == 2
-
-                        RoundedRectangle(cornerRadius: AppTheme.Radii.card)
-                            .fill(AppTheme.Colors.cardFill)
-                            .frame(width: card.w, height: card.h)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppTheme.Radii.card)
-                                    .stroke(AppTheme.Colors.cardBorder, lineWidth: 1)
-                            )
-                            .overlay(alignment: .bottomTrailing) {
-                                if isCenter {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "heart.fill")
-                                            .font(.system(size: 9))
-                                        Text("7")
-                                            .font(AppTheme.Fonts.micro)
-                                    }
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .padding(6)
-                                }
-                            }
-                            .shadow(
-                                color: .black.opacity(isCenter ? 0.35 : 0.2),
-                                radius: isCenter ? 14 : 8,
-                                x: 0,
-                                y: isCenter ? 6 : 3
-                            )
-                            .rotationEffect(.degrees(card.rot))
-                            .offset(x: card.x)
-                            .opacity(cardsAppeared ? 1 : 0)
-                            .offset(y: cardsAppeared ? 0 : 24)
-                            .animation(
-                                .easeOut(duration: 0.45).delay(Double(i) * 0.12),
-                                value: cardsAppeared
-                            )
-                    }
-                }
-                .frame(height: 140)
-                .offset(x: parallaxOffset)
-
-                Spacer()
-                Spacer().frame(height: 80)
+                    .foregroundColor(.white)
+                Text("Get Revealed Tomorrow")
+                    .font(AppTheme.Fonts.h1)
+                    .foregroundColor(.white)
             }
-            .padding(.horizontal, AppTheme.Spacing.screenH)
+            .multilineTextAlignment(.center)
+            .opacity(headerVisible ? 1 : 0)
+            .offset(y: headerVisible ? 0 : 12)
+            .animation(.easeOut(duration: 0.5), value: headerVisible)
+
+            Spacer().frame(height: 40)
+
+            // Sub-lines
+            VStack(spacing: 10) {
+                Text("The Blurry Ones")
+                    .opacity(line1Visible ? 1 : 0)
+                    .offset(y: line1Visible ? 0 : 8)
+                    .animation(.easeOut(duration: 0.5), value: line1Visible)
+
+                Text("The Funny Ones")
+                    .opacity(line2Visible ? 1 : 0)
+                    .offset(y: line2Visible ? 0 : 8)
+                    .animation(.easeOut(duration: 0.5), value: line2Visible)
+
+                Text("The Ones You Forgot You Took")
+                    .opacity(line3Visible ? 1 : 0)
+                    .offset(y: line3Visible ? 0 : 8)
+                    .animation(.easeOut(duration: 0.5), value: line3Visible)
+            }
+            .font(AppTheme.Fonts.bodySmall)
+            .foregroundColor(.gray)
+            .multilineTextAlignment(.center)
+
+            Spacer()
+            Spacer().frame(height: 80)
         }
-        .onAppear { cardsAppeared = true }
+        .padding(.horizontal, AppTheme.Spacing.screenH)
+        .onAppear { startAnimation() }
+    }
+
+    private func startAnimation() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            headerVisible = true
+            HapticsManager.shared.medium()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            line1Visible = true
+            HapticsManager.shared.light()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+            line2Visible = true
+            HapticsManager.shared.light()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            line3Visible = true
+            HapticsManager.shared.light()
+        }
     }
 }
 
-#Preview {
+// MARK: - Previews
+
+#Preview("Full Flow") {
     OnboardingView(onComplete: {})
+}
+
+#Preview("Screen 1 — Dots to Camera") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        OnboardingScreen1()
+    }
+}
+
+#Preview("Screen 2 — 10 Shots") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        OnboardingScreen2()
+    }
+}
+
+#Preview("Screen 3 — Reveal") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        OnboardingScreen3()
+    }
 }

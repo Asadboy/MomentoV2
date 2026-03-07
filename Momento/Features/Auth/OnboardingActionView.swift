@@ -17,8 +17,7 @@ struct OnboardingActionView: View {
 
     var body: some View {
         ZStack {
-            Color.clear
-                .momentoBackground()
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -27,13 +26,13 @@ struct OnboardingActionView: View {
                 VStack(spacing: 12) {
                     Text("What do you\nwant to do?")
                         .font(AppTheme.Fonts.h1)
-                        .foregroundColor(AppTheme.Colors.textPrimary)
+                        .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
 
                     Text("You can always do both later")
                         .font(AppTheme.Fonts.bodySmall)
-                        .foregroundColor(AppTheme.Colors.textTertiary)
+                        .foregroundColor(.gray)
                 }
 
                 Spacer()

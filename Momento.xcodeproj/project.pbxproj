@@ -64,6 +64,7 @@
 		C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK042F0B000000000002 /* LikedGalleryView.swift */; };
 		C3DBGL012F3A6B1200A1C2D3 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */; };
 		C30B8D0A2F51000000000010 /* PhotoLimitConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30B8D0B2F51000000000010 /* PhotoLimitConfig.swift */; };
+		C3FONT012F5A000000000001 /* RalewayDots-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3FONT002F5A000000000001 /* RalewayDots-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -138,6 +139,7 @@
 		C3STACK042F0B000000000002 /* LikedGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikedGalleryView.swift; sourceTree = "<group>"; };
 		C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		C30B8D0B2F51000000000010 /* PhotoLimitConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLimitConfig.swift; sourceTree = "<group>"; };
+		C3FONT002F5A000000000001 /* RalewayDots-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RalewayDots-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -219,6 +221,7 @@
 				C3MODELGROUP001 /* Models */,
 				C3COMPGROUP001 /* Components */,
 				C3CONFGROUP001 /* Config */,
+				C3FONTGROUP001 /* Fonts */,
 				C34D444F2F0AA5B70019CA2C /* Assets.xcassets */,
 				C34A39682EDC96D90059FA89 /* Info.plist */,
 				C34D444C2F0A80760019CA2C /* Momento.entitlements */,
@@ -384,6 +387,14 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		C3FONTGROUP001 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				C3FONT002F5A000000000001 /* RalewayDots-Regular.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -502,6 +513,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */,
+				C3FONT012F5A000000000001 /* RalewayDots-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
