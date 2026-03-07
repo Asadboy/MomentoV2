@@ -139,16 +139,8 @@ struct CameraView: View {
                 }
 
                 // Solid black bottom bar
-                HStack(alignment: .center) {
-                    // Rolling film counter (left)
-                    RollingFilmCounter(
-                        remaining: photosRemaining,
-                        total: photoLimit,
-                        isLocked: isLocked
-                    )
-                    .frame(maxWidth: .infinity)
-
-                    // Capture button (center)
+                VStack(spacing: 16) {
+                    // Capture button
                     Button {
                         if isLocked {
                             let generator = UINotificationFeedbackGenerator()
@@ -187,12 +179,13 @@ struct CameraView: View {
                     }
                     .offset(x: shutterShakeOffset)
                     .disabled(!cameraController.isSessionRunning)
-                    .frame(maxWidth: .infinity)
 
-                    // Right placeholder (for symmetry — future: photo stack)
-                    Color.clear
-                        .frame(width: 80, height: 80)
-                        .frame(maxWidth: .infinity)
+                    // Shot dots
+                    ShotDots(
+                        shotsTaken: photoLimit - photosRemaining,
+                        total: photoLimit,
+                        isLocked: isLocked
+                    )
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 40)
@@ -207,19 +200,23 @@ struct CameraView: View {
                     .transition(.opacity)
 
                 VStack(spacing: 20) {
-                    Text("Thats A Wrap!")
+                    Text("Roll Complete")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Your \(photoLimit) shots are locked in")
+                    Text("Your \(photoLimit) shots are now developing.")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+
+                    Text("You'll see everyone's photos tomorrow.")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
 
                     Button {
                         onDismiss()
                     } label: {
-                        Text("Close Camera")
-                            .font(.system(size: 17, weight: .semibold))
+                        Text("Done")
+                            .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
@@ -231,6 +228,7 @@ struct CameraView: View {
                     .padding(.horizontal, 40)
                     .padding(.top, 12)
                 }
+                .padding(.horizontal, 40)
                 .transition(.scale.combined(with: .opacity))
             }
         }
@@ -318,56 +316,49 @@ struct CameraView: View {
     }
 }
 
-// MARK: - Rolling Film Counter
+// MARK: - Shot Dots
 
-/// Disposable camera-style rolling number counter with physical scroll animation
-struct RollingFilmCounter: View {
-    let remaining: Int
+/// Visual dot strip showing shots taken vs remaining
+struct ShotDots: View {
+    let shotsTaken: Int
     let total: Int
     let isLocked: Bool
 
-    private let numberHeight: CGFloat = 32
+    @State private var lastFilledIndex: Int = -1
 
     var body: some View {
-        HStack(spacing: 10) {
-            // Film icon
-            Image(systemName: "film")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(counterColor)
-
-            // Rolling number drum
-            ZStack {
-                // Number strip that moves
-                VStack(spacing: 0) {
-                    ForEach((0...total).reversed(), id: \.self) { number in
-                        Text("\(number)")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(number == remaining ? counterColor : .white.opacity(0.2))
-                            .frame(height: numberHeight)
-                    }
-                }
-                .offset(y: CGFloat(remaining - total / 2) * numberHeight)
-                .animation(.spring(response: 0.4, dampingFraction: 0.65), value: remaining)
+        HStack(spacing: 8) {
+            ForEach(0..<total, id: \.self) { index in
+                Circle()
+                    .fill(dotColor(for: index))
+                    .frame(width: 10, height: 10)
+                    .scaleEffect(index == lastFilledIndex ? 1.5 : 1.0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.5), value: lastFilledIndex)
             }
-            .frame(width: 36, height: numberHeight * 3)
-            .clipped()
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                )
-        )
+        .onChange(of: shotsTaken) { oldValue, newValue in
+            if newValue > oldValue {
+                lastFilledIndex = newValue - 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    lastFilledIndex = -1
+                }
+            }
+        }
     }
 
-    private var counterColor: Color {
-        if isLocked { return .gray }
-        if remaining <= 3 { return .orange }
-        return .white
+    private func dotColor(for index: Int) -> Color {
+        let isFilled = index < shotsTaken
+        let remaining = total - shotsTaken
+
+        if isFilled {
+            return .white
+        } else if isLocked {
+            return .gray.opacity(0.4)
+        } else if remaining <= 3 {
+            return .orange.opacity(0.35)
+        } else {
+            return .white.opacity(0.25)
+        }
     }
 }
 
@@ -607,48 +598,5 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         photoLimit: 10,
         initialRemaining: 8
     )
-}
-// Preview for "That's a wrap" overlay - edit the copy and see changes instantly!
-#Preview("That's A Wrap Overlay") {
-    ZStack {
-        // Black background (simulating camera behind)
-        Color.black.ignoresSafeArea()
-        
-        // Semi-transparent overlay
-        Color.black.opacity(0.85)
-            .ignoresSafeArea()
-        
-        // The overlay content - EDIT THE TEXT BELOW
-        VStack(spacing: 20) {
-            Text("Roll Complete ")
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.white)
-
-            Text("Your 10 shots are now developing.")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-            
-            Text("You'll see everyone's photos tomorrow.")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-
-            Button {
-                // Preview only - no action
-            } label: {
-                Text("Done")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(AppTheme.Colors.royalPurple)
-                    )
-            }
-            .padding(.horizontal, 40)
-            .padding(.top, 40)
-        }
-        .padding(.horizontal, 40)
-    }
 }
 
