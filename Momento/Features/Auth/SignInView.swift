@@ -40,7 +40,7 @@ struct SignInView: View {
                     }
 
                     Text("Momento")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 58, weight: .bold))
                         .foregroundColor(.white)
 
                     Text("Capture & Reveal Memories Together")

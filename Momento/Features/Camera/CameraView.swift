@@ -11,6 +11,7 @@
 import SwiftUI
 import AVFoundation
 import UIKit
+import AudioToolbox
 
 /// SwiftUI view for capturing photos using the device camera
 struct CameraView: View {
@@ -25,177 +26,214 @@ struct CameraView: View {
     @State private var showSavedIndicator = false
     @State private var shutterShakeOffset: CGFloat = 0
     @State private var isLocked: Bool = false
+    @State private var showThatsAWrap: Bool = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Camera viewfinder area
-            ZStack {
-                CameraPreviewView(cameraController: cameraController)
+        ZStack {
+            VStack(spacing: 0) {
+                // Camera viewfinder area
+                ZStack {
+                    CameraPreviewView(cameraController: cameraController)
 
-                // Shutter flash effect
-                if showShutterFlash {
-                    Color.white
-                        .transition(.opacity)
-                }
-
-                // Overlay UI on viewfinder
-                VStack {
-                    // Top bar — just close button
-                    HStack {
-                        Button {
-                            cameraController.stopSession()
-                            onDismiss()
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Circle().fill(Color.black.opacity(0.4)))
-                        }
-
-                        Spacer()
+                    // Shutter flash effect
+                    if showShutterFlash {
+                        Color.white
+                            .transition(.opacity)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
 
-                    Spacer()
+                    // Overlay UI on viewfinder
+                    VStack {
+                        // Top bar — just close button
+                        HStack {
+                            Button {
+                                cameraController.stopSession()
+                                onDismiss()
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                                    .background(Circle().fill(Color.black.opacity(0.4)))
+                            }
 
-                    // "Saved" indicator
-                    if showSavedIndicator {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Saved!")
-                                .fontWeight(.semibold)
+                            Spacer()
                         }
-                        .foregroundColor(.white)
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(Capsule().fill(Color.black.opacity(0.7)))
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
+                        .padding(.top, 16)
 
-                    Spacer()
+                        Spacer()
 
-                    // Controls row — flash, zoom, flip
-                    HStack {
-                        Button {
-                            cameraController.toggleFlash()
-                        } label: {
-                            Image(systemName: cameraController.isFlashOn ? "bolt.fill" : "bolt.slash.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(cameraController.isFlashOn ? .yellow : .white.opacity(0.7))
-                                .frame(width: 44, height: 44)
+                        // "Saved" indicator
+                        if showSavedIndicator {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Saved!")
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color.black.opacity(0.7)))
+                            .transition(.move(edge: .top).combined(with: .opacity))
                         }
 
                         Spacer()
 
-                        // Zoom toggle
-                        HStack(spacing: 2) {
-                            if cameraController.hasUltraWide {
+                        // Controls row — flash, zoom, flip
+                        HStack {
+                            Button {
+                                cameraController.toggleFlash()
+                            } label: {
+                                Image(systemName: cameraController.isFlashOn ? "bolt.fill" : "bolt.slash.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(cameraController.isFlashOn ? .yellow : .white.opacity(0.7))
+                                    .frame(width: 44, height: 44)
+                            }
+
+                            Spacer()
+
+                            // Zoom toggle
+                            HStack(spacing: 2) {
+                                if cameraController.hasUltraWide {
+                                    Button {
+                                        cameraController.setZoom(ultraWide: true)
+                                    } label: {
+                                        Text("0.5x")
+                                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                            .foregroundColor(cameraController.isUltraWide ? .yellow : .white.opacity(0.5))
+                                            .frame(width: 44, height: 28)
+                                            .background(
+                                                Capsule().fill(cameraController.isUltraWide ? Color.white.opacity(0.15) : Color.clear)
+                                            )
+                                    }
+                                }
+
                                 Button {
-                                    cameraController.setZoom(ultraWide: true)
+                                    cameraController.setZoom(ultraWide: false)
                                 } label: {
-                                    Text("0.5x")
+                                    Text("1.0x")
                                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                        .foregroundColor(cameraController.isUltraWide ? .yellow : .white.opacity(0.5))
+                                        .foregroundColor(!cameraController.isUltraWide ? .yellow : .white.opacity(0.5))
                                         .frame(width: 44, height: 28)
                                         .background(
-                                            Capsule().fill(cameraController.isUltraWide ? Color.white.opacity(0.15) : Color.clear)
+                                            Capsule().fill(!cameraController.isUltraWide ? Color.white.opacity(0.15) : Color.clear)
                                         )
                                 }
                             }
 
+                            Spacer()
+
                             Button {
-                                cameraController.setZoom(ultraWide: false)
+                                cameraController.switchCamera()
                             } label: {
-                                Text("1.0x")
-                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                    .foregroundColor(!cameraController.isUltraWide ? .yellow : .white.opacity(0.5))
-                                    .frame(width: 44, height: 28)
-                                    .background(
-                                        Capsule().fill(!cameraController.isUltraWide ? Color.white.opacity(0.15) : Color.clear)
-                                    )
+                                Image(systemName: "camera.rotate.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .frame(width: 44, height: 44)
                             }
                         }
-
-                        Spacer()
-
-                        Button {
-                            cameraController.switchCamera()
-                        } label: {
-                            Image(systemName: "camera.rotate.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.7))
-                                .frame(width: 44, height: 44)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 8)
-                }
-            }
-
-            // Solid black bottom bar
-            HStack(alignment: .center) {
-                // Rolling film counter (left)
-                RollingFilmCounter(
-                    remaining: photosRemaining,
-                    total: photoLimit,
-                    isLocked: isLocked
-                )
-                .frame(maxWidth: .infinity)
-
-                // Capture button (center)
-                Button {
-                    if isLocked {
-                        let generator = UINotificationFeedbackGenerator()
-                        generator.notificationOccurred(.error)
-                        withAnimation(.default) {
-                            shutterShakeOffset = 10
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                            withAnimation(.default) { shutterShakeOffset = -8 }
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                            withAnimation(.default) { shutterShakeOffset = 6 }
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
-                            withAnimation(.default) { shutterShakeOffset = 0 }
-                        }
-                    } else {
-                        captureWithFeedback()
-                    }
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(isLocked ? Color.gray.opacity(0.6) : Color.white)
-                            .frame(width: 72, height: 72)
-
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 4)
-                            .frame(width: 82, height: 82)
-
-                        if isLocked {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.white)
-                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 8)
                     }
                 }
-                .offset(x: shutterShakeOffset)
-                .disabled(!cameraController.isSessionRunning)
-                .frame(maxWidth: .infinity)
 
-                // Right placeholder (for symmetry — future: photo stack)
-                Color.clear
-                    .frame(width: 80, height: 80)
+                // Solid black bottom bar
+                HStack(alignment: .center) {
+                    // Rolling film counter (left)
+                    RollingFilmCounter(
+                        remaining: photosRemaining,
+                        total: photoLimit,
+                        isLocked: isLocked
+                    )
                     .frame(maxWidth: .infinity)
+
+                    // Capture button (center)
+                    Button {
+                        if isLocked {
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.error)
+                            withAnimation(.default) {
+                                shutterShakeOffset = 10
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                                withAnimation(.default) { shutterShakeOffset = -8 }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                                withAnimation(.default) { shutterShakeOffset = 6 }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+                                withAnimation(.default) { shutterShakeOffset = 0 }
+                            }
+                        } else {
+                            captureWithFeedback()
+                        }
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(isLocked ? Color.gray.opacity(0.6) : Color.white)
+                                .frame(width: 72, height: 72)
+
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 4)
+                                .frame(width: 82, height: 82)
+
+                            if isLocked {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 22, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                    .offset(x: shutterShakeOffset)
+                    .disabled(!cameraController.isSessionRunning)
+                    .frame(maxWidth: .infinity)
+
+                    // Right placeholder (for symmetry — future: photo stack)
+                    Color.clear
+                        .frame(width: 80, height: 80)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 20)
+                .padding(.bottom, 40)
+                .background(Color.black)
             }
-            .padding(.top, 20)
-            .padding(.bottom, 40)
             .background(Color.black)
+
+            // "That's a wrap" overlay
+            if showThatsAWrap {
+                Color.black.opacity(0.85)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+
+                VStack(spacing: 20) {
+                    Text("Thats A Wrap!")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+
+                    Text("Your \(photoLimit) shots are locked in")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+
+                    Button {
+                        onDismiss()
+                    } label: {
+                        Text("Close Camera")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(AppTheme.Colors.royalPurple)
+                            )
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.top, 12)
+                }
+                .transition(.scale.combined(with: .opacity))
+            }
         }
-        .background(Color.black)
         .onAppear {
             cameraController.startSession()
             photosRemaining = initialRemaining
@@ -208,6 +246,8 @@ struct CameraView: View {
             if let image = newValue {
                 onPhotoCaptured(image)
                 cameraController.clearCapturedImage()
+
+                let wasLastShot = photosRemaining == 1
 
                 // Haptic tick for the counter rolling
                 let tick = UIImpactFeedbackGenerator(style: .light)
@@ -230,19 +270,45 @@ struct CameraView: View {
                         showSavedIndicator = false
                     }
                 }
+
+                // Show "That's a wrap" overlay after last shot
+                if wasLastShot {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        let celebration = UINotificationFeedbackGenerator()
+                        celebration.notificationOccurred(.success)
+
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                            showThatsAWrap = true
+                        }
+                    }
+                }
             }
         }
     }
 
     private func captureWithFeedback() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.prepare()
-        generator.impactOccurred()
+        let isLastShot = photosRemaining == 1
+        
+        // Haptic feedback - celebration for last shot, otherwise medium
+        if isLastShot {
+            let celebration = UINotificationFeedbackGenerator()
+            celebration.prepare()
+            celebration.notificationOccurred(.success)
+        } else {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.prepare()
+            generator.impactOccurred()
+        }
 
-        withAnimation(.easeOut(duration: 0.05)) {
+        // Shutter click sound (system camera shutter sound)
+        AudioServicesPlaySystemSound(1108)
+
+        // Flash animation - longer for last shot
+        let flashDuration = isLastShot ? 0.1 : 0.05
+        withAnimation(.easeOut(duration: flashDuration)) {
             showShutterFlash = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + (isLastShot ? 0.2 : 0.1)) {
             withAnimation(.easeIn(duration: 0.15)) {
                 showShutterFlash = false
             }
@@ -538,7 +604,51 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         cameraController: CameraController(),
         onPhotoCaptured: { _ in },
         onDismiss: {},
-        photoLimit: 12,
+        photoLimit: 10,
         initialRemaining: 8
     )
 }
+// Preview for "That's a wrap" overlay - edit the copy and see changes instantly!
+#Preview("That's A Wrap Overlay") {
+    ZStack {
+        // Black background (simulating camera behind)
+        Color.black.ignoresSafeArea()
+        
+        // Semi-transparent overlay
+        Color.black.opacity(0.85)
+            .ignoresSafeArea()
+        
+        // The overlay content - EDIT THE TEXT BELOW
+        VStack(spacing: 20) {
+            Text("Roll Complete ")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(.white)
+
+            Text("Your 10 shots are now developing.")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+            
+            Text("You'll see everyone's photos tomorrow.")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+
+            Button {
+                // Preview only - no action
+            } label: {
+                Text("Done")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(AppTheme.Colors.royalPurple)
+                    )
+            }
+            .padding(.horizontal, 40)
+            .padding(.top, 40)
+        }
+        .padding(.horizontal, 40)
+    }
+}
+
