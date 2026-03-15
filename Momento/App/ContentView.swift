@@ -110,42 +110,48 @@ struct ContentView: View {
 
     // MARK: - Sorted Events
 
-    /// Events sorted by priority: Live > Ready to Reveal > Upcoming > Revealed
-    private var sortedEvents: [Event] {
-        events.sorted { event1, event2 in
-            let state1 = event1.currentState(at: now)
-            let state2 = event2.currentState(at: now)
+    /// Active events (live/upcoming) — shown as large featured cards
+    private var activeEvents: [Event] {
+        events
+            .filter {
+                let state = $0.currentState(at: now)
+                return state == .live || state == .upcoming
+            }
+            .sorted { e1, e2 in
+                let s1 = e1.currentState(at: now)
+                let s2 = e2.currentState(at: now)
+                // Live first, then upcoming by soonest start
+                if s1 == .live && s2 != .live { return true }
+                if s2 == .live && s1 != .live { return false }
+                return e1.startsAt < e2.startsAt
+            }
+    }
 
-            // Priority: live (0) > revealed-but-not-completed (1) > upcoming (2) > revealed-completed (3)
-            func priority(_ event: Event, _ state: Event.State) -> Int {
-                switch state {
-                case .live: return 0
-                case .revealed:
-                    // Check if user completed reveal
-                    let completed = revealCompletionStatus[event.id] ?? false
-                    return completed ? 3 : 1  // Ready to reveal vs fully revealed
-                case .processing: return 1  // Same priority as ready to reveal
-                case .upcoming: return 2
+    /// Past events (processing/revealed) — shown as compact rows
+    private var pastEvents: [Event] {
+        events
+            .filter {
+                let state = $0.currentState(at: now)
+                return state == .processing || state == .revealed
+            }
+            .sorted { e1, e2 in
+                let s1 = e1.currentState(at: now)
+                let s2 = e2.currentState(at: now)
+                // Processing first, then ready-to-reveal, then revealed
+                func priority(_ event: Event, _ state: Event.State) -> Int {
+                    switch state {
+                    case .processing: return 0
+                    case .revealed:
+                        let completed = revealCompletionStatus[event.id] ?? false
+                        return completed ? 2 : 1
+                    default: return 3
+                    }
                 }
+                let p1 = priority(e1, s1)
+                let p2 = priority(e2, s2)
+                if p1 != p2 { return p1 < p2 }
+                return e1.releaseAt > e2.releaseAt
             }
-
-            let p1 = priority(event1, state1)
-            let p2 = priority(event2, state2)
-
-            if p1 != p2 {
-                return p1 < p2
-            }
-
-            // Within same priority, sort by relevant date
-            switch state1 {
-            case .upcoming:
-                return event1.startsAt < event2.startsAt  // Soonest first
-            case .revealed:
-                return event1.releaseAt > event2.releaseAt  // Most recent first
-            default:
-                return event1.startsAt < event2.startsAt
-            }
-        }
     }
 
     // MARK: - Body
@@ -186,15 +192,111 @@ struct ContentView: View {
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 16) {
-                                ForEach(sortedEvents) { event in
-                                    VStack(spacing: 6) {
-                                        PremiumEventCard(
+                                // MARK: Active Events Section (featured cards)
+                                if !activeEvents.isEmpty {
+                                    // Section header: CURRENT EVENTS + New
+                                    HStack {
+                                        Text("CURRENT EVENTS")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .tracking(1.5)
+                                            .foregroundColor(.white.opacity(0.4))
+
+                                        Spacer()
+
+                                        Button {
+                                            showAddSheet = true
+                                        } label: {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "plus")
+                                                    .font(.system(size: 13, weight: .semibold))
+                                                Text("New")
+                                                    .font(.system(size: 14, weight: .semibold))
+                                            }
+                                            .foregroundColor(.white.opacity(0.7))
+                                        }
+                                    }
+
+                                    ForEach(activeEvents) { event in
+                                        VStack(spacing: 6) {
+                                            PremiumEventCard(
+                                                event: event,
+                                                now: now,
+                                                userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
+                                                likedCount: likedCounts[event.id] ?? 0,
+                                                memberCount: event.memberCount,
+                                                photoCount: event.photoCount,
+                                                onTap: {
+                                                    handleEventTap(event)
+                                                },
+                                                onLongPress: {
+                                                    showInviteSheet(for: event)
+                                                }
+                                            )
+                                            .overlay {
+                                                if newlyJoinedEventId == event.id {
+                                                    RoundedRectangle(cornerRadius: 20)
+                                                        .stroke(Color.green.opacity(0.6), lineWidth: 2)
+                                                        .shadow(color: Color.green.opacity(0.4), radius: 12)
+                                                }
+                                            }
+                                            .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
+                                            .contextMenu {
+                                                Button {
+                                                    showInviteSheet(for: event)
+                                                } label: {
+                                                    Label("Invite Friends", systemImage: "person.badge.plus")
+                                                }
+                                            }
+
+                                            if event.currentState(at: now) == .live {
+                                                Text("Tap card to open camera")
+                                                    .font(.system(size: 12, weight: .medium))
+                                                    .foregroundColor(.white.opacity(0.35))
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // No active events — still show New button
+                                    HStack {
+                                        Text("NO ACTIVE EVENTS")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .tracking(1.5)
+                                            .foregroundColor(.white.opacity(0.4))
+
+                                        Spacer()
+
+                                        Button {
+                                            showAddSheet = true
+                                        } label: {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "plus")
+                                                    .font(.system(size: 13, weight: .semibold))
+                                                Text("New")
+                                                    .font(.system(size: 14, weight: .semibold))
+                                            }
+                                            .foregroundColor(.white.opacity(0.7))
+                                        }
+                                    }
+                                }
+
+                                // MARK: Past Events Section (compact rows)
+                                if !pastEvents.isEmpty {
+                                    HStack {
+                                        Text("PAST MOMENTOS")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .tracking(1.5)
+                                            .foregroundColor(.white.opacity(0.4))
+
+                                        Spacer()
+                                    }
+                                    .padding(.top, 8)
+
+                                    ForEach(pastEvents) { event in
+                                        CompactEventRow(
                                             event: event,
                                             now: now,
                                             userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
                                             likedCount: likedCounts[event.id] ?? 0,
-                                            memberCount: event.memberCount,
-                                            photoCount: event.photoCount,
                                             onTap: {
                                                 handleEventTap(event)
                                             },
@@ -202,27 +304,12 @@ struct ContentView: View {
                                                 showInviteSheet(for: event)
                                             }
                                         )
-                                        .overlay {
-                                            if newlyJoinedEventId == event.id {
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .stroke(Color.green.opacity(0.6), lineWidth: 2)
-                                                    .shadow(color: Color.green.opacity(0.4), radius: 12)
-                                            }
-                                        }
-                                        .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
                                         .contextMenu {
                                             Button {
                                                 showInviteSheet(for: event)
                                             } label: {
                                                 Label("Invite Friends", systemImage: "person.badge.plus")
                                             }
-                                        }
-
-                                        // Camera hint for live events
-                                        if event.currentState(at: now) == .live {
-                                            Text("Tap card to open camera")
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundColor(.white.opacity(0.35))
                                         }
                                     }
                                 }
@@ -326,52 +413,27 @@ struct ContentView: View {
     // MARK: - Header
 
     private var headerView: some View {
-        VStack(spacing: 16) {
-            // Top row: title + profile icon
-            HStack {
-                Text("Momento")
-                    .font(.custom("RalewayDots-Regular", size: 32))
-                    .foregroundColor(.white)
+        HStack {
+            Text("Momento")
+                .font(.custom("RalewayDots-Regular", size: 32))
+                .foregroundColor(.white)
 
-                Spacer()
+            Spacer()
 
-                Button {
-                    showJoinSheet = true
-                } label: {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.system(size: 22, weight: .light))
-                        .foregroundColor(.white.opacity(0.6))
-                }
-
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "person.crop.circle")
-                        .font(.system(size: 28, weight: .light))
-                        .foregroundColor(.white.opacity(0.7))
-                }
+            Button {
+                showJoinSheet = true
+            } label: {
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 22, weight: .light))
+                    .foregroundColor(.white.opacity(0.6))
             }
 
-            // Section row: CURRENT EVENTS + New button
-            HStack {
-                Text("CURRENT EVENTS")
-                    .font(.system(size: 13, weight: .semibold))
-                    .tracking(1.5)
-                    .foregroundColor(.white.opacity(0.4))
-
-                Spacer()
-
-                Button {
-                    showAddSheet = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("New")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "person.crop.circle")
+                    .font(.system(size: 28, weight: .light))
                     .foregroundColor(.white.opacity(0.7))
-                }
             }
         }
         .padding(.horizontal, 16)
