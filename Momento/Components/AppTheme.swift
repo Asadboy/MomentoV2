@@ -28,9 +28,15 @@ enum AppTheme {
         static let textQuaternary = Color.white.opacity(0.4)
         static let textMuted      = Color.white.opacity(0.35)
 
-        // Background gradient stops
+        // Background gradient stops (legacy purple theme)
         static let bgStart = Color(red: 0.05, green: 0.05, blue: 0.12)
         static let bgEnd   = Color(red: 0.08, green: 0.06, blue: 0.15)
+
+        // New black theme tokens (events screen redesign)
+        static let blackBg       = Color.black
+        static let darkCardFill  = Color(white: 0.12)
+        static let darkCardBorder = Color(white: 0.2)
+        static let shotGreen     = Color.green
     }
 
     // MARK: Fonts

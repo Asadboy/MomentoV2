@@ -148,130 +148,96 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Background
-
-    private var backgroundGradient: some View {
-        Color.clear.momentoBackground()
-    }
-
     // MARK: - Body
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                // Full-screen background
-                backgroundGradient
-                
-                // Content
-                if isLoadingEvents {
-                    ProgressView("Loading your momentos...")
-                        .tint(.white)
-                        .foregroundColor(.white)
-                } else if events.isEmpty {
-                    VStack(spacing: 20) {
-                        Image(systemName: "camera.metering.center.weighted")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white.opacity(0.5))
-                        
-                        Text("No momentos yet")
-                            .font(.title2)
+                // Full-screen black background
+                Color.black.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Custom header
+                    headerView
+
+                    // Content
+                    if isLoadingEvents {
+                        Spacer()
+                        ProgressView("Loading your momentos...")
+                            .tint(.white)
                             .foregroundColor(.white)
-                        
-                        Text("Create or join an event to get started")
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                } else {
-                    List {
-                        ForEach(sortedEvents) { event in
-                            PremiumEventCard(
-                                event: event,
-                                now: now,
-                                userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
-                                likedCount: likedCounts[event.id] ?? 0,
-                                memberCount: event.memberCount,
-                                photoCount: event.photoCount,
-                                onTap: {
-                                    handleEventTap(event)
-                                },
-                                onLongPress: {
-                                    showInviteSheet(for: event)
-                                }
-                            )
-                            .overlay {
-                                if newlyJoinedEventId == event.id {
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.purple.opacity(0.8),
-                                                    Color.blue.opacity(0.6),
-                                                    Color.cyan.opacity(0.4)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 3
+                        Spacer()
+                    } else if events.isEmpty {
+                        Spacer()
+                        VStack(spacing: 20) {
+                            Image(systemName: "camera.metering.center.weighted")
+                                .font(.system(size: 60))
+                                .foregroundColor(.white.opacity(0.5))
+
+                            Text("No momentos yet")
+                                .font(.title2)
+                                .foregroundColor(.white)
+
+                            Text("Create or join an event to get started")
+                                .font(.body)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        Spacer()
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                ForEach(sortedEvents) { event in
+                                    VStack(spacing: 6) {
+                                        PremiumEventCard(
+                                            event: event,
+                                            now: now,
+                                            userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
+                                            likedCount: likedCounts[event.id] ?? 0,
+                                            memberCount: event.memberCount,
+                                            photoCount: event.photoCount,
+                                            onTap: {
+                                                handleEventTap(event)
+                                            },
+                                            onLongPress: {
+                                                showInviteSheet(for: event)
+                                            }
                                         )
-                                        .shadow(color: Color.purple.opacity(0.6), radius: 12)
+                                        .overlay {
+                                            if newlyJoinedEventId == event.id {
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .stroke(Color.green.opacity(0.6), lineWidth: 2)
+                                                    .shadow(color: Color.green.opacity(0.4), radius: 12)
+                                            }
+                                        }
+                                        .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
+                                        .contextMenu {
+                                            Button {
+                                                showInviteSheet(for: event)
+                                            } label: {
+                                                Label("Invite Friends", systemImage: "person.badge.plus")
+                                            }
+                                        }
+
+                                        // Camera hint for live events
+                                        if event.currentState(at: now) == .live {
+                                            Text("Tap card to open camera")
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundColor(.white.opacity(0.35))
+                                        }
+                                    }
                                 }
                             }
-                            .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
-                            .listRowBackground(Color.clear)
-                            .contextMenu {
-                                Button {
-                                    showInviteSheet(for: event)
-                                } label: {
-                                    Label("Invite Friends", systemImage: "person.badge.plus")
-                                }
-                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 32)
                         }
-                        // Deletion disabled for safety
-                        // .onDelete(perform: deleteEvents)
-                    }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Momentos")
-                        .foregroundColor(.white)
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showJoinSheet = true
-                    } label: {
-                        Image(systemName: "qrcode.viewfinder")
-                            .font(.system(size: 20, weight: .medium))
-                    }
-                    .tint(.white)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 20, weight: .medium))
+                        .refreshable {
+                            await loadEvents()
                         }
-                        .tint(.white)
-                        
-                        Button {
-                            showAddSheet = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .medium))
-                        }
-                        .tint(.white)
                     }
                 }
             }
-            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
             .onReceive(timer) { now = $0 }
             .task {
                 // Track app opened event
@@ -290,9 +256,6 @@ struct ContentView: View {
                         }
                     }
                 }
-            }
-            .refreshable {
-                await loadEvents()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 // Refresh events when app comes back to foreground (slight delay to let uploads settle)
@@ -358,6 +321,62 @@ struct ContentView: View {
                 ProfileView()
             }
         }
+    }
+
+    // MARK: - Header
+
+    private var headerView: some View {
+        VStack(spacing: 16) {
+            // Top row: title + profile icon
+            HStack {
+                Text("Momento")
+                    .font(.custom("RalewayDots-Regular", size: 32))
+                    .foregroundColor(.white)
+
+                Spacer()
+
+                Button {
+                    showJoinSheet = true
+                } label: {
+                    Image(systemName: "qrcode.viewfinder")
+                        .font(.system(size: 22, weight: .light))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "person.crop.circle")
+                        .font(.system(size: 28, weight: .light))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
+
+            // Section row: CURRENT EVENTS + New button
+            HStack {
+                Text("CURRENT EVENTS")
+                    .font(.system(size: 13, weight: .semibold))
+                    .tracking(1.5)
+                    .foregroundColor(.white.opacity(0.4))
+
+                Spacer()
+
+                Button {
+                    showAddSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text("New")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.white.opacity(0.7))
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     // MARK: - Actions
