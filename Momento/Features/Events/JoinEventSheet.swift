@@ -37,12 +37,8 @@ struct JoinEventSheet: View {
 
     // MARK: - Colors
 
-    private var royalPurple: Color {
-        AppTheme.Colors.royalPurple
-    }
-
     private var cardBackground: Color {
-        AppTheme.Colors.cardFill
+        Color(white: 0.12)
     }
 
     // MARK: - Computed
@@ -57,7 +53,7 @@ struct JoinEventSheet: View {
         NavigationStack {
             ZStack {
                 // Background
-                AppTheme.Colors.bgStart
+                Color.black
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -182,11 +178,10 @@ struct JoinEventSheet: View {
                         )
                 )
 
-            // Soft inner glow on scan zone
+            // Subtle scan zone border
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.06), lineWidth: 30)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
                 .frame(width: 140, height: 140)
-                .blur(radius: 16)
         }
         .allowsHitTesting(false)
     }
@@ -209,12 +204,12 @@ struct JoinEventSheet: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(royalPurple.opacity(0.12))
+                        .fill(Color.white.opacity(0.08))
                         .frame(width: 40, height: 40)
 
                     Image(systemName: "number")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(royalPurple.opacity(0.9))
+                        .foregroundColor(.white.opacity(0.7))
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -236,12 +231,7 @@ struct JoinEventSheet: View {
             .padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(cardBackground.opacity(0.8))
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.ultraThinMaterial)
-                            .opacity(0.3)
-                    )
+                    .fill(cardBackground)
             )
         }
         .padding(.horizontal, 24)
@@ -253,7 +243,7 @@ struct JoinEventSheet: View {
 
             Image(systemName: "camera.fill")
                 .font(.system(size: 44))
-                .foregroundColor(royalPurple.opacity(0.5))
+                .foregroundColor(.white.opacity(0.5))
 
             VStack(spacing: 6) {
                 Text("Camera access needed")
@@ -273,7 +263,7 @@ struct JoinEventSheet: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 28)
                     .padding(.vertical, 12)
-                    .background(royalPurple)
+                    .background(Color.green)
                     .cornerRadius(12)
             }
 
@@ -345,7 +335,7 @@ struct JoinEventSheet: View {
             HStack(spacing: 10) {
                 Image(systemName: "qrcode.viewfinder")
                     .font(.system(size: 15))
-                    .foregroundColor(royalPurple.opacity(0.8))
+                    .foregroundColor(.white.opacity(0.5))
 
                 Text("Scan invite instead")
                     .font(.system(size: 15, weight: .medium))
@@ -355,7 +345,7 @@ struct JoinEventSheet: View {
             .padding(.horizontal, 24)
             .background(
                 Capsule()
-                    .fill(cardBackground.opacity(0.6))
+                    .fill(cardBackground)
             )
         }
     }
@@ -385,18 +375,11 @@ struct JoinEventSheet: View {
             .background(
                 ZStack {
                     if canJoin {
-                        // Ready state - stronger purple
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.55, green: 0.0, blue: 0.9),
-                                Color(red: 0.6, green: 0.15, blue: 0.95)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        // Ready state - solid green
+                        Color.green
                     } else if hasCode {
-                        // Partial state - slight lift
-                        royalPurple.opacity(0.35 + (codeProgress * 0.25))
+                        // Partial state - progressive green
+                        Color.green.opacity(0.3 + (codeProgress * 0.3))
                     } else {
                         // Empty state - dormant
                         Color.white.opacity(0.06)
@@ -405,7 +388,7 @@ struct JoinEventSheet: View {
             )
             .foregroundColor(hasCode ? .white : .white.opacity(0.3))
             .cornerRadius(16)
-            .shadow(color: canJoin ? royalPurple.opacity(0.45) : .clear, radius: 20, y: 8)
+            .shadow(color: .clear, radius: 0)
             .scaleEffect(buttonPressed ? 0.98 : (canJoin ? 1.0 : 0.99))
             .offset(y: hasCode && !isComplete ? -1 : 0)
         }
@@ -434,14 +417,14 @@ struct JoinEventSheet: View {
                     // "Invite found" label
                     Text("Invite found")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(royalPurple.opacity(0.8))
+                        .foregroundColor(.green.opacity(0.8))
                         .textCase(.uppercase)
                         .tracking(0.5)
 
                     HStack(spacing: 12) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 18))
-                            .foregroundColor(royalPurple)
+                            .foregroundColor(.green)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Paste invite")
@@ -449,25 +432,24 @@ struct JoinEventSheet: View {
                                 .foregroundColor(.white)
                             Text(code)
                                 .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                .foregroundColor(royalPurple)
+                                .foregroundColor(.green)
                         }
 
                         Spacer()
 
                         Image(systemName: "arrow.right.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(royalPurple)
+                            .foregroundColor(.green)
                     }
                 }
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(royalPurple.opacity(0.1))
+                        .fill(Color.green.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(royalPurple.opacity(0.2), lineWidth: 1)
+                                .stroke(Color.green.opacity(0.2), lineWidth: 1)
                         )
-                        .shadow(color: royalPurple.opacity(0.15), radius: 12, y: 4)
                 )
             }
             .transition(.asymmetric(

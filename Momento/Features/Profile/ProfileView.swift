@@ -23,8 +23,8 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.clear
-                    .momentoBackground()
+                Color.black
+                    .ignoresSafeArea()
 
                 if isLoading {
                     ProgressView()
@@ -88,18 +88,10 @@ struct ProfileView: View {
 
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Profile icon with single blurred glow
-            ZStack {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 100, weight: .light))
-                    .foregroundColor(AppTheme.Colors.royalPurple)
-                    .blur(radius: 20)
-                    .opacity(0.4)
-
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 100, weight: .light))
-                    .foregroundColor(.white.opacity(0.95))
-            }
+            // Profile icon - clean, no glow
+            Image(systemName: "person.circle.fill")
+                .font(.system(size: 100, weight: .light))
+                .foregroundColor(.white.opacity(0.9))
 
             VStack(spacing: 6) {
                 if let username = username {
@@ -123,7 +115,10 @@ struct ProfileView: View {
         }
         .padding(.vertical, 28)
         .frame(maxWidth: .infinity)
-        .momentoCard()
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(white: 0.12))
+        )
     }
 
     // MARK: - Stats Section
@@ -131,9 +126,9 @@ struct ProfileView: View {
     private func statsSection(stats: ProfileStats) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("STATS")
-                .font(AppTheme.Fonts.micro)
-                .foregroundColor(AppTheme.Colors.textMuted)
-                .tracking(1.2)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.4))
+                .tracking(1.5)
 
             StatsGridView(stats: stats)
         }

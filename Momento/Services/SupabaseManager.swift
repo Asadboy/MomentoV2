@@ -891,6 +891,15 @@ class SupabaseManager: ObservableObject {
             .execute()
             .count ?? 0
 
+        // Events hosted (where user is creator)
+        let eventsHosted = try await client
+            .from("events")
+            .select("*", head: true, count: .exact)
+            .eq("creator_id", value: userId.uuidString)
+            .eq("is_deleted", value: false)
+            .execute()
+            .count ?? 0
+
         // Photos taken
         let photosTaken = try await client
             .from("photos")
@@ -929,6 +938,7 @@ class SupabaseManager: ObservableObject {
 
         return ProfileStats(
             eventsJoined: eventsJoined,
+            eventsHosted: eventsHosted,
             photosTaken: photosTaken,
             photosLiked: photosLiked,
             userNumber: userNumber
@@ -1054,6 +1064,7 @@ struct PhotoLike: Codable {
 /// User profile statistics for display
 struct ProfileStats {
     let eventsJoined: Int
+    let eventsHosted: Int
     let photosTaken: Int
     let photosLiked: Int
     let userNumber: Int

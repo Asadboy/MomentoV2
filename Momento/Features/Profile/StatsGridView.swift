@@ -24,6 +24,12 @@ struct StatsGridView: View {
             )
 
             StatCardView(
+                value: "\(stats.eventsHosted)",
+                label: "Events hosted",
+                icon: "star.fill"
+            )
+
+            StatCardView(
                 value: "\(stats.photosTaken)",
                 label: "Photos taken",
                 icon: "camera.fill"
@@ -46,6 +52,7 @@ struct StatsGridView: View {
             VStack(spacing: 16) {
                 StatsGridView(stats: ProfileStats(
                     eventsJoined: 8,
+                    eventsHosted: 3,
                     photosTaken: 42,
                     photosLiked: 18,
                     userNumber: 47

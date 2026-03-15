@@ -17,7 +17,7 @@ struct StatCardView: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(AppTheme.Colors.royalPurple.opacity(0.7))
+                .foregroundColor(.white.opacity(0.5))
 
             Text(value)
                 .font(.system(size: 22, weight: .bold))
@@ -33,12 +33,8 @@ struct StatCardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: AppTheme.Radii.innerElement)
-                .fill(AppTheme.Colors.fieldFill)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.Radii.innerElement)
-                .stroke(AppTheme.Colors.fieldStroke, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(white: 0.12))
         )
     }
 }

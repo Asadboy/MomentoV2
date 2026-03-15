@@ -14,8 +14,7 @@ struct VerificationCodeInput: View {
 
     @FocusState private var isFocused: Bool
 
-    private var royalPurple: Color { AppTheme.Colors.royalPurple }
-    private var cardBackground: Color { AppTheme.Colors.cardFill }
+    private var cardBackground: Color { Color(white: 0.12) }
 
     var body: some View {
         ZStack {
@@ -47,9 +46,7 @@ struct VerificationCodeInput: View {
                     CharacterBox(
                         character: characterAt(index),
                         isCurrent: index == code.count && isFocused,
-                        isFilled: index < code.count,
-                        royalPurple: royalPurple,
-                        cardBackground: cardBackground
+                        isFilled: index < code.count
                     )
                 }
             }
@@ -92,34 +89,24 @@ private struct CharacterBox: View {
     let character: String
     let isCurrent: Bool
     let isFilled: Bool
-    let royalPurple: Color
-    let cardBackground: Color
 
     @State private var cursorVisible = true
 
     var body: some View {
         ZStack {
-            // Ambient glow when current - soft, not harsh
-            if isCurrent {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(royalPurple.opacity(0.12))
-                    .frame(width: 44, height: 54)
-                    .blur(radius: 8)
-            }
-
             // Soft filled background
             RoundedRectangle(cornerRadius: 14)
                 .fill(
                     isFilled
-                        ? royalPurple.opacity(0.15)
+                        ? Color.white.opacity(0.1)
                         : (isCurrent ? Color.white.opacity(0.08) : Color.white.opacity(0.04))
                 )
                 .frame(width: 40, height: 50)
 
-            // Ultra-subtle border
+            // Subtle border
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isCurrent ? royalPurple.opacity(0.5) : (isFilled ? royalPurple.opacity(0.2) : Color.white.opacity(0.04)),
+                    isCurrent ? Color.white.opacity(0.3) : Color.white.opacity(0.04),
                     lineWidth: isCurrent ? 1 : 0.5
                 )
                 .frame(width: 40, height: 50)
@@ -127,7 +114,7 @@ private struct CharacterBox: View {
             if isCurrent && character.isEmpty {
                 // Gentle breathing cursor
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(royalPurple.opacity(0.7))
+                    .fill(Color.white.opacity(0.7))
                     .frame(width: 2, height: 18)
                     .opacity(cursorVisible ? 0.9 : 0.3)
                     .onAppear {
@@ -141,7 +128,6 @@ private struct CharacterBox: View {
                 .font(.system(size: 20, weight: .medium, design: .rounded))
                 .foregroundColor(isFilled ? .white.opacity(0.95) : .white.opacity(0.3))
         }
-        .shadow(color: isFilled ? royalPurple.opacity(0.15) : .clear, radius: 6)
         .scaleEffect(isFilled ? 1.02 : 1.0)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isFilled)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isCurrent)

@@ -15,8 +15,7 @@ struct EventPreviewModal: View {
     @State private var isJoining = false
     @State private var appeared = false
 
-    private var royalPurple: Color { AppTheme.Colors.royalPurple }
-    private var cardBackground: Color { AppTheme.Colors.cardFill }
+    private var cardBackground: Color { Color(white: 0.12) }
 
     /// Humanized timing text
     private var timingText: String {
@@ -100,19 +99,9 @@ struct EventPreviewModal: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 15)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.55, green: 0.0, blue: 0.9),
-                            Color(red: 0.6, green: 0.15, blue: 0.95)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .background(Color.green)
                 .foregroundColor(.white)
                 .cornerRadius(14)
-                .shadow(color: royalPurple.opacity(0.4), radius: 16, y: 6)
             }
             .disabled(isJoining)
             .padding(.horizontal, 16)
@@ -134,11 +123,7 @@ struct EventPreviewModal: View {
         .background(
             RoundedRectangle(cornerRadius: 24)
                 .fill(cardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(royalPurple.opacity(0.1), lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.5), radius: 32, y: 12)
+                .shadow(color: Color.black.opacity(0.3), radius: 32, y: 12)
         )
         .padding(.horizontal, 28)
         .scaleEffect(appeared ? 1.0 : 0.92)
