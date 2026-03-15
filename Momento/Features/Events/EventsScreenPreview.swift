@@ -164,28 +164,33 @@ private struct EventsScreenPreviewContent: View {
                         }
                         .padding(.top, 8)
 
-                        // Processing
-                        CompactEventRow(
+                        // Processing (shimmer placeholders)
+                        PastEventCard(
                             event: processingEvent,
                             now: now,
                             onTap: {},
                             onLongPress: {}
                         )
 
-                        // Ready to reveal
-                        CompactEventRow(
+                        // Ready to reveal (no photos yet)
+                        PastEventCard(
                             event: readyToRevealEvent,
                             now: now,
                             onTap: {},
                             onLongPress: {}
                         )
 
-                        // Revealed (completed)
-                        CompactEventRow(
+                        // Revealed with mock photos
+                        PastEventCard(
                             event: revealedEvent,
                             now: now,
-                            userHasCompletedReveal: true,
-                            likedCount: 14,
+                            photos: [
+                                PhotoData(id: "1", url: nil, capturedAt: now, photographerName: nil),
+                                PhotoData(id: "2", url: nil, capturedAt: now, photographerName: nil),
+                                PhotoData(id: "3", url: nil, capturedAt: now, photographerName: nil),
+                                PhotoData(id: "4", url: nil, capturedAt: now, photographerName: nil),
+                            ],
+                            totalPhotoCount: 67,
                             onTap: {},
                             onLongPress: {}
                         )
@@ -234,12 +239,12 @@ private struct EventsScreenPreviewContent: View {
     }
 }
 
-#Preview("Compact Rows Only") {
+#Preview("Past Event Cards Only") {
     let now = Date()
     ZStack {
         Color.black.ignoresSafeArea()
         VStack(spacing: 8) {
-            CompactEventRow(
+            PastEventCard(
                 event: Event(
                     name: "Weekend Getaway",
                     coverEmoji: "\u{1F3D6}",
@@ -251,7 +256,7 @@ private struct EventsScreenPreviewContent: View {
                 onTap: {},
                 onLongPress: {}
             )
-            CompactEventRow(
+            PastEventCard(
                 event: Event(
                     name: "Sarah's Graduation",
                     coverEmoji: "\u{1F393}",
@@ -263,7 +268,7 @@ private struct EventsScreenPreviewContent: View {
                 onTap: {},
                 onLongPress: {}
             )
-            CompactEventRow(
+            PastEventCard(
                 event: Event(
                     name: "Summer BBQ",
                     coverEmoji: "\u{1F356}",
@@ -272,8 +277,13 @@ private struct EventsScreenPreviewContent: View {
                     releaseAt: now.addingTimeInterval(-3600 * 120)
                 ),
                 now: now,
-                userHasCompletedReveal: true,
-                likedCount: 14,
+                photos: [
+                    PhotoData(id: "1", url: nil, capturedAt: now, photographerName: nil),
+                    PhotoData(id: "2", url: nil, capturedAt: now, photographerName: nil),
+                    PhotoData(id: "3", url: nil, capturedAt: now, photographerName: nil),
+                    PhotoData(id: "4", url: nil, capturedAt: now, photographerName: nil),
+                ],
+                totalPhotoCount: 14,
                 onTap: {},
                 onLongPress: {}
             )

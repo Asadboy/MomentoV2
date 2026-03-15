@@ -41,7 +41,7 @@
 		C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B72F26C55A00F905AE /* StatsGridView.swift */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
 		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
-		C3CMPR002F6C000000000002 /* CompactEventRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CMPR002F6C000000000001 /* CompactEventRow.swift */; };
+		C3CMPR002F6C000000000002 /* PastEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CMPR002F6C000000000001 /* PastEventCard.swift */; };
 		C3EVPR002F6B000000000002 /* EventsScreenPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */; };
 		C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */; };
 		C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7682EC0E45B004B23B1 /* Auth */; };
@@ -124,7 +124,7 @@
 		C372E3B72F26C55A00F905AE /* StatsGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsGridView.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
 		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
-		C3CMPR002F6C000000000001 /* CompactEventRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactEventRow.swift; sourceTree = "<group>"; };
+		C3CMPR002F6C000000000001 /* PastEventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PastEventCard.swift; sourceTree = "<group>"; };
 		C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsScreenPreview.swift; sourceTree = "<group>"; };
 		C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteSheet.swift; sourceTree = "<group>"; };
 		C3ACE7722EC0F096004B23B1 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -313,7 +313,7 @@
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
 				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
-				C3CMPR002F6C000000000001 /* CompactEventRow.swift */,
+				C3CMPR002F6C000000000001 /* PastEventCard.swift */,
 				C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */,
 				C36446BE2EF8200000000005 /* CreateMomento */,
 			);
@@ -548,7 +548,7 @@
 				C3C4112E2EFEF5F8002D8DB5 /* PhotoGalleryView.swift in Sources */,
 				C3C570A12F26579F00A8024C /* EventPreviewModal.swift in Sources */,
 				C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */,
-				C3CMPR002F6C000000000002 /* CompactEventRow.swift in Sources */,
+				C3CMPR002F6C000000000002 /* PastEventCard.swift in Sources */,
 				C3EVPR002F6B000000000002 /* EventsScreenPreview.swift in Sources */,
 				C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */,
 				C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */,

@@ -59,6 +59,31 @@ class ImageCacheManager {
         return image
     }
 
+    /// Get image from cache (by stable ID) or download from URL
+    /// Use this when the URL changes (e.g. signed URLs) but the content is the same.
+    func image(for url: URL, cacheId: String) async -> UIImage? {
+        let key = "id_\(cacheId)"
+
+        // 1. Check memory cache
+        if let cached = memoryCache.object(forKey: key as NSString) {
+            return cached
+        }
+
+        // 2. Check disk cache
+        if let diskCached = loadFromDisk(key: key) {
+            memoryCache.setObject(diskCached, forKey: key as NSString)
+            return diskCached
+        }
+
+        // 3. Download and cache
+        guard let image = await downloadImage(url: url) else { return nil }
+
+        memoryCache.setObject(image, forKey: key as NSString)
+        saveToDisk(image: image, key: key)
+
+        return image
+    }
+
     /// Clear all caches
     func clearAll() {
         memoryCache.removeAllObjects()

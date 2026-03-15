@@ -75,6 +75,9 @@ struct ContentView: View {
     /// Tracks liked photo count per revealed event (event ID -> count)
     @State private var likedCounts: [String: Int] = [:]
 
+    /// Liked photos per revealed event (event ID -> photos) for album cards
+    @State private var pastEventPhotos: [String: [PhotoData]] = [:]
+
 
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
@@ -292,11 +295,11 @@ struct ContentView: View {
                                     .padding(.top, 8)
 
                                     ForEach(pastEvents) { event in
-                                        CompactEventRow(
+                                        PastEventCard(
                                             event: event,
                                             now: now,
-                                            userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
-                                            likedCount: likedCounts[event.id] ?? 0,
+                                            photos: pastEventPhotos[event.id] ?? [],
+                                            totalPhotoCount: event.photoCount,
                                             onTap: {
                                                 handleEventTap(event)
                                             },
@@ -524,6 +527,15 @@ struct ContentView: View {
                 }
             }
 
+            // Fetch liked photos for revealed events (for album cards)
+            var pastPhotos: [String: [PhotoData]] = [:]
+            for event in loadedEvents where event.currentState() == .revealed {
+                if let eventUUID = UUID(uuidString: event.id) {
+                    let photos = try? await supabaseManager.getLikedPhotos(eventId: eventUUID)
+                    pastPhotos[event.id] = photos ?? []
+                }
+            }
+
             // Restore reveal completion from persistent storage
             var restoredRevealStatus: [String: Bool] = [:]
             for event in loadedEvents {
@@ -540,6 +552,12 @@ struct ContentView: View {
 
             events = loadedEvents
             likedCounts = likeCounts
+            // Merge photo data: keep existing entries, only update with non-empty fetches
+            for (eventId, photos) in pastPhotos {
+                if !photos.isEmpty || pastEventPhotos[eventId] == nil {
+                    pastEventPhotos[eventId] = photos
+                }
+            }
             revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
             isLoadingEvents = false
             isRefreshing = false
