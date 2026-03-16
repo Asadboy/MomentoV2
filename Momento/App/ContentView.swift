@@ -529,27 +529,7 @@ struct ContentView: View {
             let eventModels = try await supabaseManager.getMyEvents()
             let loadedEvents = eventModels.map { Event(fromSupabase: $0) }
 
-            // Fetch liked counts for revealed events
-            var likeCounts: [String: Int] = [:]
-
-            for event in loadedEvents where event.currentState() == .revealed {
-                if let eventUUID = UUID(uuidString: event.id) {
-                    if let count = try? await supabaseManager.getLikedPhotoCount(eventId: eventUUID) {
-                        likeCounts[event.id] = count
-                    }
-                }
-            }
-
-            // Fetch liked photos for revealed events (for album cards)
-            var pastPhotos: [String: [PhotoData]] = [:]
-            for event in loadedEvents where event.currentState() == .revealed {
-                if let eventUUID = UUID(uuidString: event.id) {
-                    let photos = try? await supabaseManager.getLikedPhotos(eventId: eventUUID)
-                    pastPhotos[event.id] = photos ?? []
-                }
-            }
-
-            // Restore reveal completion from persistent storage
+            // Restore reveal completion from persistent storage (local, instant)
             var restoredRevealStatus: [String: Bool] = [:]
             for event in loadedEvents {
                 if RevealStateManager.shared.hasCompletedReveal(for: event.id) {
@@ -557,13 +537,43 @@ struct ContentView: View {
                 }
             }
 
-            // Also mark as revealed if user has liked photos (they must have revealed)
-            for (eventId, count) in likeCounts where count > 0 {
-                restoredRevealStatus[eventId] = true
-                RevealStateManager.shared.markRevealCompleted(for: eventId)
+            // Show events immediately — don't wait for liked counts/photos
+            events = loadedEvents
+            revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
+            isLoadingEvents = false
+
+            // Fetch liked counts + photos for revealed events IN PARALLEL
+            let revealedEvents = loadedEvents.filter { $0.currentState() == .revealed }
+
+            let fetchResults = await withTaskGroup(of: (String, Int, [PhotoData]).self) { group in
+                for event in revealedEvents {
+                    guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                    group.addTask {
+                        let count = (try? await self.supabaseManager.getLikedPhotoCount(eventId: eventUUID)) ?? 0
+                        let photos = (try? await self.supabaseManager.getLikedPhotos(eventId: eventUUID)) ?? []
+                        return (event.id, count, photos)
+                    }
+                }
+
+                var results: [(String, Int, [PhotoData])] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results
             }
 
-            events = loadedEvents
+            // Apply results
+            var likeCounts: [String: Int] = [:]
+            var pastPhotos: [String: [PhotoData]] = [:]
+            for (eventId, count, photos) in fetchResults {
+                likeCounts[eventId] = count
+                pastPhotos[eventId] = photos
+                if count > 0 {
+                    restoredRevealStatus[eventId] = true
+                    RevealStateManager.shared.markRevealCompleted(for: eventId)
+                }
+            }
+
             likedCounts = likeCounts
             // Merge photo data: keep existing entries, only update with non-empty fetches
             for (eventId, photos) in pastPhotos {
@@ -572,7 +582,6 @@ struct ContentView: View {
                 }
             }
             revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
-            isLoadingEvents = false
             isRefreshing = false
             debugLog("✅ Loaded \(eventModels.count) events")
         } catch {

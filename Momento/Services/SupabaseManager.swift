@@ -37,11 +37,6 @@ class SupabaseManager: ObservableObject {
             )
         )
         
-        // Check for existing session
-        Task {
-            await checkSession()
-        }
-        
         debugLog("✅ Supabase configured successfully")
         debugLog("📍 URL: \(SupabaseConfig.supabaseURL)")
     }
@@ -612,15 +607,13 @@ class SupabaseManager: ObservableObject {
 
     /// Get the number of photos a user has taken for a specific event
     func getPhotoCount(eventId: UUID, userId: UUID) async throws -> Int {
-        let photos: [PhotoModel] = try await client
+        try await client
             .from("photos")
-            .select()
+            .select("*", head: true, count: .exact)
             .eq("event_id", value: eventId.uuidString)
             .eq("user_id", value: userId.uuidString)
             .execute()
-            .value
-
-        return photos.count
+            .count ?? 0
     }
 
     /// Get photos for an event (String ID overload for convenience)
@@ -656,21 +649,31 @@ class SupabaseManager: ObservableObject {
             .execute()
             .value
         
-        // Convert to PhotoData with signed storage URLs (bucket is private)
-        var photoDataArray: [PhotoData] = []
-        
-        for photo in photos {
-            // Get signed URL for photo (expires in 7 days)
-            let signedURL = try? await client.storage
-                .from("momento-photos")
-                .createSignedURL(path: photo.storagePath, expiresIn: 604800)
-            
-            photoDataArray.append(PhotoData(
-                id: photo.id.uuidString,
-                url: signedURL,
-                capturedAt: photo.capturedAt,
-                photographerName: photo.username ?? "Unknown"
-            ))
+        // Convert to PhotoData with signed storage URLs in parallel
+        let photoDataArray = await withTaskGroup(of: (Int, PhotoData?).self) { group in
+            for (index, photo) in photos.enumerated() {
+                group.addTask {
+                    let signedURL = try? await self.client.storage
+                        .from("momento-photos")
+                        .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+
+                    let photoData = PhotoData(
+                        id: photo.id.uuidString,
+                        url: signedURL,
+                        capturedAt: photo.capturedAt,
+                        photographerName: photo.username ?? "Unknown"
+                    )
+                    return (index, photoData)
+                }
+            }
+
+            var results: [(Int, PhotoData)] = []
+            for await result in group {
+                if let photoData = result.1 {
+                    results.append((result.0, photoData))
+                }
+            }
+            return results.sorted { $0.0 < $1.0 }.map { $0.1 }
         }
 
         debugLog("📸 Loaded \(photoDataArray.count) photos with signed URLs")
@@ -818,10 +821,30 @@ class SupabaseManager: ObservableObject {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
 
-        // Get photos for this event that user has liked
-        let photos = try await getPhotos(eventId: eventId)
-        let photoIds = photos.map { $0.id.uuidString }
+        // Get photo IDs + storage paths for this event (lightweight query)
+        struct PhotoRow: Decodable {
+            let id: UUID
+            let storagePath: String
+            let capturedAt: Date
+            let username: String?
 
+            enum CodingKeys: String, CodingKey {
+                case id
+                case storagePath = "storage_path"
+                case capturedAt = "captured_at"
+                case username
+            }
+        }
+
+        let photos: [PhotoRow] = try await client
+            .from("photos")
+            .select("id, storage_path, captured_at, username")
+            .eq("event_id", value: eventId.uuidString)
+            .order("captured_at", ascending: true)
+            .execute()
+            .value
+
+        let photoIds = photos.map { $0.id.uuidString }
         if photoIds.isEmpty { return [] }
 
         // Get user's likes for these photos
@@ -834,23 +857,38 @@ class SupabaseManager: ObservableObject {
             .value
 
         let likedPhotoIds = Set(likes.map { $0.photoId.uuidString })
+        let likedPhotos = photos.filter { likedPhotoIds.contains($0.id.uuidString) }
 
-        // Filter and convert to PhotoData with signed URLs
-        var likedPhotos: [PhotoData] = []
-        for photo in photos where likedPhotoIds.contains(photo.id.uuidString) {
-            let signedURL = try? await client.storage
-                .from("momento-photos")
-                .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+        if likedPhotos.isEmpty { return [] }
 
-            likedPhotos.append(PhotoData(
-                id: photo.id.uuidString,
-                url: signedURL,
-                capturedAt: photo.capturedAt,
-                photographerName: photo.username
-            ))
+        // Sign URLs in parallel (like fetchPhotosForRevealPaginated does)
+        let result = await withTaskGroup(of: (Int, PhotoData?).self) { group in
+            for (index, photo) in likedPhotos.enumerated() {
+                group.addTask {
+                    let signedURL = try? await self.client.storage
+                        .from("momento-photos")
+                        .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+
+                    let photoData = PhotoData(
+                        id: photo.id.uuidString,
+                        url: signedURL,
+                        capturedAt: photo.capturedAt,
+                        photographerName: photo.username
+                    )
+                    return (index, photoData)
+                }
+            }
+
+            var results: [(Int, PhotoData)] = []
+            for await r in group {
+                if let photoData = r.1 {
+                    results.append((r.0, photoData))
+                }
+            }
+            return results.sorted { $0.0 < $1.0 }.map { $0.1 }
         }
 
-        return likedPhotos.sorted { $0.capturedAt < $1.capturedAt }
+        return result
     }
 
     /// Get count of user's liked photos for an event
@@ -859,20 +897,26 @@ class SupabaseManager: ObservableObject {
             throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
         }
 
-        let photos = try await getPhotos(eventId: eventId)
-        let photoIds = photos.map { $0.id.uuidString }
-
-        if photoIds.isEmpty { return 0 }
-
-        let likes: [PhotoLike] = try await client
-            .from("photo_likes")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .in("photo_id", values: photoIds)
+        // Get photo IDs for this event (lightweight — only IDs, no full rows)
+        struct PhotoId: Decodable { let id: UUID }
+        let photos: [PhotoId] = try await client
+            .from("photos")
+            .select("id")
+            .eq("event_id", value: eventId.uuidString)
             .execute()
             .value
 
-        return likes.count
+        let photoIds = photos.map { $0.id.uuidString }
+        if photoIds.isEmpty { return 0 }
+
+        // Count likes using HEAD request
+        return try await client
+            .from("photo_likes")
+            .select("*", head: true, count: .exact)
+            .eq("user_id", value: userId.uuidString)
+            .in("photo_id", values: photoIds)
+            .execute()
+            .count ?? 0
     }
 
     // MARK: - Profile Stats
@@ -883,50 +927,54 @@ class SupabaseManager: ObservableObject {
             throw NSError(domain: "MomentoError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not logged in"])
         }
 
-        // Events joined
-        let eventsJoined = try await client
+        let uid = userId.uuidString
+
+        // Run all independent count queries in parallel
+        async let eventsJoinedTask = client
             .from("event_members")
             .select("*", head: true, count: .exact)
-            .eq("user_id", value: userId.uuidString)
+            .eq("user_id", value: uid)
             .execute()
-            .count ?? 0
 
-        // Events hosted (where user is creator)
-        let eventsHosted = try await client
+        async let eventsHostedTask = client
             .from("events")
             .select("*", head: true, count: .exact)
-            .eq("creator_id", value: userId.uuidString)
+            .eq("creator_id", value: uid)
             .eq("is_deleted", value: false)
             .execute()
-            .count ?? 0
 
-        // Photos taken
-        let photosTaken = try await client
+        async let photosTakenTask = client
             .from("photos")
             .select("*", head: true, count: .exact)
-            .eq("user_id", value: userId.uuidString)
+            .eq("user_id", value: uid)
             .execute()
-            .count ?? 0
 
-        // Photos liked
-        let photosLiked = try await client
+        async let photosLikedTask = client
             .from("photo_likes")
             .select("*", head: true, count: .exact)
-            .eq("user_id", value: userId.uuidString)
+            .eq("user_id", value: uid)
             .execute()
-            .count ?? 0
 
-        // User number
-        let profile = try await client
+        async let profileTask = client
             .from("profiles")
             .select("created_at")
-            .eq("id", value: userId.uuidString)
+            .eq("id", value: uid)
             .single()
             .execute()
 
+        // Await all in parallel
+        let (eventsJoinedResult, eventsHostedResult, photosTakenResult, photosLikedResult, profileResult) =
+            try await (eventsJoinedTask, eventsHostedTask, photosTakenTask, photosLikedTask, profileTask)
+
+        let eventsJoined = eventsJoinedResult.count ?? 0
+        let eventsHosted = eventsHostedResult.count ?? 0
+        let photosTaken = photosTakenResult.count ?? 0
+        let photosLiked = photosLikedResult.count ?? 0
+
+        // User number needs the profile created_at first
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        let profileData = try decoder.decode([String: String].self, from: profile.data)
+        let profileData = try decoder.decode([String: String].self, from: profileResult.data)
         let createdAt = profileData["created_at"] ?? ""
 
         let userNumber = try await client

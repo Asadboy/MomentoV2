@@ -119,9 +119,10 @@ struct AuthenticationRootView: View {
                 await MainActor.run {
                     if needsUsername {
                         appState = .needsUsername
-                    } else {
-                        // TODO: restore hasSeenOnboarding check once onboarding is finalised
+                    } else if !hasSeenOnboarding {
                         appState = .needsOnboarding
+                    } else {
+                        appState = .authenticated
                     }
                     isCheckingUsername = false
                 }
@@ -129,8 +130,11 @@ struct AuthenticationRootView: View {
                 debugLog("❌ Failed to check username status: \(error)")
                 // Default to authenticated to avoid blocking user
                 await MainActor.run {
-                    // TODO: restore hasSeenOnboarding check once onboarding is finalised
-                    appState = .needsOnboarding
+                    if !hasSeenOnboarding {
+                        appState = .needsOnboarding
+                    } else {
+                        appState = .authenticated
+                    }
                     isCheckingUsername = false
                 }
             }
