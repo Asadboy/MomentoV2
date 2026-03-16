@@ -40,7 +40,7 @@ struct LikedGalleryView: View {
         NavigationStack {
             ZStack {
                 // Background
-                AppTheme.Colors.bgStart
+                Color.black
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {

@@ -216,13 +216,13 @@ struct CameraView: View {
                         onDismiss()
                     } label: {
                         Text("Done")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 52)
+                            .frame(height: 56)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(AppTheme.Colors.royalPurple)
+                                RoundedRectangle(cornerRadius: 28)
+                                    .fill(Color.white)
                             )
                     }
                     .padding(.horizontal, 40)

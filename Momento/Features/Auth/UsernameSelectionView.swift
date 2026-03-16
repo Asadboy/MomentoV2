@@ -25,8 +25,7 @@ struct UsernameSelectionView: View {
 
     var body: some View {
         ZStack {
-            Color.clear
-                .momentoGlowOrb()
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 40) {
                 Spacer()
@@ -53,7 +52,7 @@ struct UsernameSelectionView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "at")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(AppTheme.Colors.royalPurple)
+                                .foregroundColor(Color.white.opacity(0.4))
 
                             TextField("username", text: $username)
                                 .font(AppTheme.Fonts.body)
@@ -105,9 +104,14 @@ struct UsernameSelectionView: View {
                             }
 
                             Text(isSubmitting ? "Setting username..." : "Continue")
+                                .font(.system(size: 17, weight: .semibold))
                         }
+                        .foregroundColor(isContinueEnabled ? .black : .white.opacity(0.3))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(isContinueEnabled ? Color.white : Color.white.opacity(0.08))
+                        .cornerRadius(28)
                     }
-                    .buttonStyle(MomentoPrimaryButtonStyle())
                     .disabled(!isContinueEnabled)
                 }
                 .padding(.horizontal, AppTheme.Spacing.screenH)
@@ -145,7 +149,7 @@ struct UsernameSelectionView: View {
 
         case .validating:
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.Colors.royalPurple))
+                .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.4)))
                 .scaleEffect(0.8)
 
         case .available:

@@ -234,27 +234,7 @@ struct FeedRevealView: View {
 
     private var preRevealScreen: some View {
         ZStack {
-            // Gradient background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.06, green: 0.04, blue: 0.14),
-                    Color(red: 0.03, green: 0.03, blue: 0.07)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            // Radial glow behind the reveal button area
-            RadialGradient(
-                colors: [
-                    Color.purple.opacity(0.2),
-                    Color.blue.opacity(0.08),
-                    Color.clear
-                ],
-                center: .init(x: 0.5, y: 0.65),
-                startRadius: 30,
-                endRadius: 250
-            )
+            Color.black
 
             VStack(spacing: 32) {
                 // Close button
@@ -313,32 +293,15 @@ struct FeedRevealView: View {
 
     private var completeScreen: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.06, green: 0.04, blue: 0.12),
-                    Color(red: 0.04, green: 0.04, blue: 0.08)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [
-                    Color.purple.opacity(0.15),
-                    Color.clear
-                ],
-                center: .center,
-                startRadius: 20,
-                endRadius: 300
-            )
+            Color.black
+                .ignoresSafeArea()
 
             VStack(spacing: 40) {
                 Spacer()
 
                 Image(systemName: "sparkles")
                     .font(.system(size: 32, weight: .light))
-                    .foregroundColor(Color.purple.opacity(0.6))
+                    .foregroundColor(.white.opacity(0.3))
 
                 Text("That was the night.")
                     .font(.system(size: 28, weight: .medium, design: .serif))
@@ -471,26 +434,7 @@ struct FeedRevealView: View {
 
     private var completionCard: some View {
         ZStack {
-            // Gradient background matching app aesthetic
-            LinearGradient(
-                colors: [
-                    Color(red: 0.06, green: 0.04, blue: 0.12),
-                    Color(red: 0.04, green: 0.04, blue: 0.08)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            // Subtle radial glow
-            RadialGradient(
-                colors: [
-                    Color.purple.opacity(0.15),
-                    Color.clear
-                ],
-                center: .center,
-                startRadius: 20,
-                endRadius: 300
-            )
+            Color.black
 
             VStack(spacing: 24) {
                 Spacer()
@@ -498,7 +442,7 @@ struct FeedRevealView: View {
                 // Decorative icon
                 Image(systemName: "sparkles")
                     .font(.system(size: 32, weight: .light))
-                    .foregroundColor(Color.purple.opacity(0.6))
+                    .foregroundColor(.white.opacity(0.3))
 
                 Text("That was the night.")
                     .font(.system(size: 28, weight: .medium, design: .serif))
@@ -561,7 +505,7 @@ struct FeedRevealView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 32)
                     .padding(.vertical, 14)
-                    .background(AppTheme.Colors.royalPurple)
+                    .background(Color.white.opacity(0.1))
                     .cornerRadius(12)
             }
         }

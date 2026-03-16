@@ -23,11 +23,6 @@ struct PhotoCaptureSheet: View {
 
     // MARK: - Constants
     
-    /// Royal purple accent color
-    private var royalPurple: Color {
-        AppTheme.Colors.royalPurple
-    }
-    
     var body: some View {
         ZStack {
             if cameraController.hasPermission {
@@ -59,7 +54,7 @@ struct PhotoCaptureSheet: View {
                 VStack(spacing: 24) {
                     Image(systemName: "camera.fill")
                         .font(.system(size: 64))
-                        .foregroundColor(royalPurple)
+                        .foregroundColor(.white.opacity(0.5))
                     
                     Text("Camera Permission Required")
                         .font(.title2)
@@ -76,7 +71,7 @@ struct PhotoCaptureSheet: View {
                         cameraController.requestPermission()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(royalPurple)
+                    .tint(.white)
                     
                     Button("Cancel") {
                         isPresented = false
@@ -85,17 +80,7 @@ struct PhotoCaptureSheet: View {
                     .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            AppTheme.Colors.bgStart,
-                            AppTheme.Colors.bgEnd
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                )
+                .background(Color.black.ignoresSafeArea())
             }
             
             // Error message overlay
