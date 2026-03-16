@@ -161,10 +161,12 @@ struct FeedRevealView: View {
     let event: Event
     let onComplete: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = FeedRevealViewModel()
     @State private var flowPhase: FeedRevealPhase = .preReveal
     @State private var currentPhotoIndex = 0
     @State private var isScrollLocked = false
+    @State private var showExitConfirmation = false
 
     private var uniqueContributorCount: Int {
         Set(viewModel.photos.compactMap { $0.photographerName }).count
@@ -255,6 +257,21 @@ struct FeedRevealView: View {
             )
 
             VStack(spacing: 32) {
+                // Close button
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
+                            .frame(width: 32, height: 32)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+
                 Spacer()
 
                 VStack(spacing: 16) {
@@ -365,24 +382,51 @@ struct FeedRevealView: View {
 
     private var progressHeader: some View {
         HStack {
-            // Show current position out of loaded photos
-            Text("\(currentPhotoIndex + 1) of \(viewModel.photos.count)")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.7))
+            // Close button
+            Button {
+                showExitConfirmation = true
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .frame(width: 32, height: 32)
+            }
 
             Spacer()
 
-            HStack(spacing: 4) {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(.red)
-                Text("\(viewModel.likedCount) liked")
+            // Photo counter
+            Text("\(currentPhotoIndex + 1) / \(viewModel.photos.count)")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+
+            Spacer()
+
+            // Skip to end
+            Button {
+                HapticsManager.shared.light()
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    flowPhase = .complete
+                }
+            } label: {
+                Text("Skip")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
             }
-            .font(.subheadline)
-            .foregroundColor(.white.opacity(0.7))
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.8))
+        .confirmationDialog("Leave reveal?", isPresented: $showExitConfirmation, titleVisibility: .visible) {
+            Button("Leave", role: .destructive) {
+                Task {
+                    await viewModel.saveLikedPhotos()
+                }
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your liked photos will be saved, but you'll need to reveal again to continue.")
+        }
     }
 
     private var pagedPhotoView: some View {
