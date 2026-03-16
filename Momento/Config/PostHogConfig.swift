@@ -1,10 +1,29 @@
+//
+//  PostHogConfig.swift
+//  Momento
+//
+//  PostHog analytics configuration — reads from Info.plist (set via Secrets.xcconfig)
+//
+
 import Foundation
 
 enum PostHogConfiguration {
-    static let apiKey = "phc_KVNhcvv03c91MCTm6YmeVxmiM2rglQXKf3Vh0F9YNRm"
-    static let host = "https://eu.i.posthog.com"
+    static let apiKey: String = {
+        guard let value = Bundle.main.infoDictionary?["POSTHOG_API_KEY"] as? String, !value.isEmpty, !value.contains("YOUR_") else {
+            // Analytics is non-critical — don't crash, just return empty
+            return ""
+        }
+        return value
+    }()
+
+    static let host: String = {
+        guard let value = Bundle.main.infoDictionary?["POSTHOG_HOST"] as? String, !value.isEmpty else {
+            return "https://eu.i.posthog.com"
+        }
+        return value
+    }()
 
     static var isConfigured: Bool {
-        return !apiKey.isEmpty && apiKey != "phc_YOUR_PROJECT_API_KEY"
+        !apiKey.isEmpty && !apiKey.contains("YOUR_")
     }
 }
