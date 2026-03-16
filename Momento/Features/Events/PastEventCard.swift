@@ -94,13 +94,12 @@ struct PastEventCard: View {
             .frame(height: 64)
         } else {
             HStack(spacing: 4) {
-                ForEach(Array(photos.prefix(displayCount).enumerated()), id: \.element.id) { index, photo in
-                    if index == 3 && overflowCount > 0 {
-                        // +N overflow tile
-                        overflowTile
-                    } else {
-                        photoThumbnail(photo)
-                    }
+                ForEach(Array(photos.prefix(maxPhotos).enumerated()), id: \.element.id) { _, photo in
+                    photoThumbnail(photo)
+                }
+
+                if overflowCount > 0 {
+                    overflowTile
                 }
 
                 Spacer()
@@ -108,12 +107,10 @@ struct PastEventCard: View {
         }
     }
 
-    private var displayCount: Int {
-        min(photos.count, 4)
-    }
+    private let maxPhotos = 4
 
     private var overflowCount: Int {
-        max(0, totalPhotoCount - 3)
+        max(0, totalPhotoCount - maxPhotos)
     }
 
     private func photoThumbnail(_ photo: PhotoData) -> some View {
