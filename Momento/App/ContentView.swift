@@ -113,45 +113,58 @@ struct ContentView: View {
 
     // MARK: - Sorted Events
 
-    /// Active events (live/upcoming) — shown as large featured cards
+    /// Active events (live/upcoming/ready-to-reveal) — shown as large featured cards
     private var activeEvents: [Event] {
         events
             .filter {
                 let state = $0.currentState(at: now)
-                return state == .live || state == .upcoming
+                if state == .live || state == .upcoming { return true }
+                // Ready-to-reveal events get the big card treatment
+                if state == .revealed && !(revealCompletionStatus[$0.id] ?? false) { return true }
+                return false
             }
             .sorted { e1, e2 in
                 let s1 = e1.currentState(at: now)
                 let s2 = e2.currentState(at: now)
-                // Live first, then upcoming by soonest start
-                if s1 == .live && s2 != .live { return true }
-                if s2 == .live && s1 != .live { return false }
-                return e1.startsAt < e2.startsAt
-            }
-    }
-
-    /// Past events (processing/revealed) — shown as compact rows
-    private var pastEvents: [Event] {
-        events
-            .filter {
-                let state = $0.currentState(at: now)
-                return state == .processing || state == .revealed
-            }
-            .sorted { e1, e2 in
-                let s1 = e1.currentState(at: now)
-                let s2 = e2.currentState(at: now)
-                // Processing first, then ready-to-reveal, then revealed
+                // Priority: live > ready-to-reveal > upcoming
                 func priority(_ event: Event, _ state: Event.State) -> Int {
                     switch state {
-                    case .processing: return 0
-                    case .revealed:
-                        let completed = revealCompletionStatus[event.id] ?? false
-                        return completed ? 2 : 1
+                    case .live: return 0
+                    case .revealed: return 1 // ready-to-reveal
+                    case .upcoming: return 2
                     default: return 3
                     }
                 }
                 let p1 = priority(e1, s1)
                 let p2 = priority(e2, s2)
+                if p1 != p2 { return p1 < p2 }
+                return e1.startsAt < e2.startsAt
+            }
+    }
+
+    /// Past events (processing/revealed-and-completed) — shown as compact rows
+    private var pastEvents: [Event] {
+        events
+            .filter {
+                let state = $0.currentState(at: now)
+                if state == .processing { return true }
+                // Only completed reveals go in past
+                if state == .revealed && (revealCompletionStatus[$0.id] ?? false) { return true }
+                return false
+            }
+            .sorted { e1, e2 in
+                let s1 = e1.currentState(at: now)
+                let s2 = e2.currentState(at: now)
+                // Processing first, then revealed
+                func priority(_ state: Event.State) -> Int {
+                    switch state {
+                    case .processing: return 0
+                    case .revealed: return 1
+                    default: return 2
+                    }
+                }
+                let p1 = priority(s1)
+                let p2 = priority(s2)
                 if p1 != p2 { return p1 < p2 }
                 return e1.releaseAt > e2.releaseAt
             }

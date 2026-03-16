@@ -21,6 +21,9 @@ struct PremiumEventCard: View {
 
     private let totalShots = 10
 
+    // Pulsing glow for ready-to-reveal
+    @State private var glowPulsing = false
+
     // MARK: - Event State
 
     private enum EventState {
@@ -92,11 +95,24 @@ struct PremiumEventCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(AppTheme.Colors.darkCardFill)
+                .fill(eventState == .readyToReveal
+                    ? Color(red: 0.06, green: 0.08, blue: 0.14)
+                    : AppTheme.Colors.darkCardFill)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(AppTheme.Colors.darkCardBorder, lineWidth: 1)
+                .stroke(
+                    eventState == .readyToReveal
+                        ? Color.cyan.opacity(glowPulsing ? 0.8 : 0.3)
+                        : AppTheme.Colors.darkCardBorder,
+                    lineWidth: eventState == .readyToReveal ? 1.5 : 1
+                )
+        )
+        .shadow(
+            color: eventState == .readyToReveal
+                ? Color.cyan.opacity(glowPulsing ? 0.3 : 0.1)
+                : .clear,
+            radius: glowPulsing ? 16 : 8
         )
         .contentShape(Rectangle())
         .onTapGesture {
@@ -106,6 +122,16 @@ struct PremiumEventCard: View {
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
             onLongPress()
+        }
+        .onAppear {
+            if eventState == .readyToReveal {
+                withAnimation(
+                    .easeInOut(duration: 2.0)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    glowPulsing = true
+                }
+            }
         }
     }
 
@@ -231,9 +257,13 @@ struct PremiumEventCard: View {
                 .foregroundColor(.orange.opacity(0.7))
 
         case .readyToReveal:
-            Text("Your photos are ready")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.cyan.opacity(0.8))
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12))
+                Text("Your photos are ready")
+                    .font(.system(size: 15, weight: .medium))
+            }
+            .foregroundColor(.cyan.opacity(0.8))
 
         case .revealed:
             Text(likedCount > 0 ? "\(likedCount) liked" : "Tap to relive")
@@ -271,7 +301,33 @@ struct PremiumEventCard: View {
             EmptyView()
 
         case .readyToReveal:
-            EmptyView()
+            HStack {
+                // Photo count
+                HStack(spacing: 6) {
+                    Image(systemName: "photo.stack")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("\(photoCount) photos")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.5))
+
+                Spacer()
+
+                // Reveal CTA
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Tap to reveal")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundColor(.cyan)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(Color.cyan.opacity(0.15))
+                )
+            }
 
         case .revealed:
             if let code = event.joinCode {
@@ -352,6 +408,22 @@ struct PremiumEventCard: View {
                 ),
                 now: now,
                 memberCount: 8,
+                onTap: {},
+                onLongPress: {}
+            )
+
+            // Ready to reveal state
+            PremiumEventCard(
+                event: Event(
+                    name: "Hijack x DoubleDip",
+                    coverEmoji: "\u{1F3B6}",
+                    startsAt: now.addingTimeInterval(-3600 * 48),
+                    endsAt: now.addingTimeInterval(-3600 * 24),
+                    releaseAt: now.addingTimeInterval(-3600)
+                ),
+                now: now,
+                memberCount: 5,
+                photoCount: 143,
                 onTap: {},
                 onLongPress: {}
             )
