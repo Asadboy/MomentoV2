@@ -15,15 +15,19 @@ struct InviteSheet: View {
     @State private var showCopiedConfirmation = false
     @State private var qrCodeImage: UIImage?
 
+    private var joinCode: String {
+        event.joinCode ?? "INVITE"
+    }
+
     private var inviteLink: String {
-        "https://momento.app/join/\(event.joinCode ?? "INVITE")"
+        "https://momento.app/join/\(joinCode)"
     }
 
     private var shareText: String {
         """
-        Join my Momento "\(event.name)"! 📸
+        Join my Momento "\(event.name)"!
 
-        Use code: \(event.joinCode ?? "INVITE")
+        Use code: \(joinCode)
 
         Or open: \(inviteLink)
         """
@@ -31,135 +35,120 @@ struct InviteSheet: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.clear
-                    .momentoBackground()
+            VStack(spacing: 0) {
+                Spacer()
 
-                VStack(spacing: AppTheme.Spacing.sectionGap) {
-                    // Event info header
-                    VStack(spacing: AppTheme.Spacing.elementGap) {
-                        Text(event.name)
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-
-                        HStack(spacing: 16) {
-                            if let joinCode = event.joinCode {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "key.fill")
-                                        .font(.system(size: 12))
-                                    Text(joinCode)
-                                        .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                }
-                                .foregroundColor(AppTheme.Colors.royalPurple)
-                            }
-                        }
-                    }
-                    .padding(.top, AppTheme.Spacing.sectionGap)
+                // Main content
+                VStack(spacing: 28) {
+                    // Event name
+                    Text(event.name)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
 
                     // QR Code
-                    VStack(spacing: 16) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: AppTheme.Radii.card)
-                                .fill(Color.white)
-                                .frame(width: 220, height: 220)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .frame(width: 200, height: 200)
 
-                            if let qrImage = qrCodeImage {
-                                Image(uiImage: qrImage)
-                                    .interpolation(.none)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 180, height: 180)
-                            } else {
-                                ProgressView()
-                                    .tint(.black)
-                            }
-                        }
-                        .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
-
-                        VStack(spacing: 4) {
-                            Text("Scan to join")
-                                .font(AppTheme.Fonts.bodySmall)
-                                .foregroundColor(AppTheme.Colors.textTertiary)
-
-                            Text("Code: \(event.joinCode ?? "INVITE")")
-                                .font(AppTheme.Fonts.mono(size: 13))
-                                .foregroundColor(AppTheme.Colors.royalPurple)
+                        if let qrImage = qrCodeImage {
+                            Image(uiImage: qrImage)
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 170, height: 170)
+                        } else {
+                            ProgressView()
+                                .tint(.black)
                         }
                     }
-                    .onAppear {
-                        generateQRCode()
-                    }
 
-                    Spacer()
+                    // Join code — tappable to copy
+                    Button(action: copyCode) {
+                        HStack(spacing: 10) {
+                            Text(joinCode)
+                                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                                .tracking(4)
+                                .foregroundColor(.white)
 
-                    // Action buttons
-                    VStack(spacing: 16) {
-                        Button {
-                            copyInviteLink()
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: showCopiedConfirmation ? "checkmark.circle.fill" : "link.circle.fill")
-                                    .font(.system(size: 20, weight: .semibold))
-                                Text(showCopiedConfirmation ? "Link Copied!" : "Copy Invite Link")
-                                    .font(.system(size: 17, weight: .semibold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: AppTheme.Dimensions.primaryButtonHeight)
-                            .background(
-                                RoundedRectangle(cornerRadius: AppTheme.Radii.tertiaryButton)
-                                    .fill(showCopiedConfirmation ? Color.green : AppTheme.Colors.royalPurple)
-                            )
+                            Image(systemName: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(showCopiedConfirmation ? .green : .white.opacity(0.4))
                         }
-                        .animation(.spring(response: 0.3), value: showCopiedConfirmation)
-
-                        Button {
-                            shareInvite()
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 20, weight: .semibold))
-                                Text("Share Invite")
-                                    .font(.system(size: 17, weight: .semibold))
-                            }
-                        }
-                        .buttonStyle(MomentoTertiaryButtonStyle())
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.06))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(showCopiedConfirmation ? 0.2 : 0.08), lineWidth: 1)
+                                )
+                        )
                     }
-                    .padding(.horizontal, AppTheme.Spacing.screenH)
-                    .padding(.bottom, 32)
+                    .animation(.spring(response: 0.3), value: showCopiedConfirmation)
+
+                    if showCopiedConfirmation {
+                        Text("Copied to clipboard")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
+                            .transition(.opacity)
+                    }
                 }
+
+                Spacer()
+
+                // Action buttons
+                VStack(spacing: 14) {
+                    Button(action: shareInvite) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 15, weight: .semibold))
+                            Text("Share Invite")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color.white)
+                        .cornerRadius(28)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
             }
+            .background(Color.black.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") {
                         onDismiss()
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(.white.opacity(0.5))
                 }
+            }
+            .onAppear {
+                generateQRCode()
             }
         }
     }
 
     // MARK: - Actions
 
-    private func copyInviteLink() {
-        UIPasteboard.general.string = inviteLink
+    private func copyCode() {
+        UIPasteboard.general.string = joinCode
+        HapticsManager.shared.medium()
 
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-
-        showCopiedConfirmation = true
+        withAnimation { showCopiedConfirmation = true }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            showCopiedConfirmation = false
+            withAnimation { showCopiedConfirmation = false }
         }
     }
 
     private func shareInvite() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        HapticsManager.shared.medium()
 
         var shareItems: [Any] = [shareText]
 
