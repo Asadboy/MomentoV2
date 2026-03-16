@@ -21,41 +21,24 @@ struct SignInView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VStack(spacing: 40) {
+            VStack(spacing: 0) {
                 Spacer()
 
-                // App Title — Raleway Dots
-                VStack(spacing: 16) {
+                // Logo + tagline
+                VStack(spacing: 12) {
                     Text("Momento")
-                        .font(.custom("RalewayDots-Regular", size: 64))
+                        .font(.custom("RalewayDots-Regular", size: 72))
                         .foregroundColor(.white)
 
-                    Text("Your Shared Disposable Camera")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
+                    Text("Your shared disposable camera")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.35))
                 }
 
                 Spacer()
 
                 // Sign In Buttons
-                VStack(spacing: 14) {
-                    // Google Sign In
-                    Button {
-                        signInWithGoogle()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "g.circle.fill")
-                                .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(.black)
-
-                            Text("Sign in with Google")
-                                .font(.system(size: 17, weight: .semibold))
-                        }
-                    }
-                    .buttonStyle(MomentoPrimaryButtonStyle())
-                    .disabled(isSigningIn)
-
+                VStack(spacing: 12) {
                     // Apple Sign In
                     SignInWithAppleButton(.signIn) { request in
                         let nonce = randomNonceString()
@@ -66,59 +49,84 @@ struct SignInView: View {
                         handleAppleSignIn(result)
                     }
                     .signInWithAppleButtonStyle(.white)
-                    .frame(height: AppTheme.Dimensions.primaryButtonHeight)
-                    .cornerRadius(AppTheme.Radii.primaryButton)
+                    .frame(height: 56)
+                    .cornerRadius(28)
+                    .disabled(isSigningIn)
+
+                    // Google Sign In
+                    Button {
+                        signInWithGoogle()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "g.circle.fill")
+                                .font(.system(size: 20, weight: .medium))
+
+                            Text("Sign in with Google")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 28)
+                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                )
+                        )
+                    }
                     .disabled(isSigningIn)
                 }
-                .padding(.horizontal, AppTheme.Spacing.screenH)
+                .padding(.horizontal, 24)
 
                 // Error message
                 if let error = errorMessage {
                     Text(error)
-                        .font(.system(size: 14))
-                        .foregroundColor(.red)
+                        .font(.system(size: 13))
+                        .foregroundColor(.red.opacity(0.8))
                         .padding(.horizontal, 32)
+                        .padding(.top, 16)
                         .multilineTextAlignment(.center)
                 }
 
-                Spacer()
-
                 // Terms & Privacy
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     Text("By continuing, you agree to our")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.25))
 
                     HStack(spacing: 4) {
                         Link("Terms of Service", destination: URL(string: "https://yourmomento.app/terms")!)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
 
                         Text("and")
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.25))
 
                         Link("Privacy Policy", destination: URL(string: "https://yourmomento.app/privacy")!)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
                     }
                 }
-                .padding(.bottom, 32)
+                .padding(.top, 32)
+                .padding(.bottom, 40)
             }
 
             // Loading overlay
             if isSigningIn {
-                Color.black.opacity(0.6)
+                Color.black.opacity(0.7)
                     .ignoresSafeArea()
 
                 VStack(spacing: 16) {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(1.5)
+                        .scaleEffect(1.2)
 
                     Text("Signing in...")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.white.opacity(0.4))
                 }
             }
         }
