@@ -2,10 +2,11 @@
 //  CreateStep3ShareView.swift
 //  Momento
 //
-//  Step 3 of Create Momento flow: Share your momento
+//  Step 3 of Create Momento flow: QR code invite page
 //
 
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct CreateStep3ShareView: View {
     let momentoName: String
@@ -17,6 +18,8 @@ struct CreateStep3ShareView: View {
     @State private var copiedCode = false
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
+    @State private var qrCodeImage: UIImage?
+    @State private var appeared = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +29,7 @@ struct CreateStep3ShareView: View {
 
                 Text("Step 3 of 3")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.white.opacity(0.35))
 
                 Spacer()
             }
@@ -36,67 +39,78 @@ struct CreateStep3ShareView: View {
             Spacer()
 
             // Main content
-            VStack(spacing: 24) {
-                // Success icon
-                ZStack {
-                    Circle()
-                        .fill(Color.green.opacity(0.15))
-                        .frame(width: 80, height: 80)
-
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.green)
-                }
-
+            VStack(spacing: 32) {
                 // Title
-                VStack(spacing: 12) {
-                    Text("Invite your people")
-                        .font(.system(size: 32, weight: .bold))
+                VStack(spacing: 8) {
+                    Text("Invite your\npeople")
+                        .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(2)
 
-                    Text("Share with friends to invite them")
-                        .font(.system(size: 16, weight: .regular))
-                        .foregroundColor(.white.opacity(0.6))
+                    Text("Scan or share the code below")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.4))
                 }
 
-                // Invite Card
-                InviteCardView(
-                    eventName: momentoName,
-                    joinCode: joinCode,
-                    startDate: startsAt,
-                    hostName: hostName
-                )
-                .padding(.horizontal, 30)
+                // QR Code
+                VStack(spacing: 20) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white)
+                            .frame(width: 200, height: 200)
 
-                // Copy code button
-                Button(action: copyCode) {
-                    HStack(spacing: 12) {
-                        Text(joinCode)
-                            .font(.system(size: 20, weight: .bold, design: .monospaced))
-                            .tracking(3)
-
-                        Image(systemName: copiedCode ? "checkmark.circle.fill" : "doc.on.doc")
-                            .font(.system(size: 18, weight: .medium))
+                        if let qrImage = qrCodeImage {
+                            Image(uiImage: qrImage)
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 170, height: 170)
+                        } else {
+                            ProgressView()
+                                .tint(.black)
+                        }
                     }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 14)
-                    .background(Color.white.opacity(copiedCode ? 0.2 : 0.1))
-                    .cornerRadius(16)
-                }
+                    .opacity(appeared ? 1 : 0)
+                    .scaleEffect(appeared ? 1 : 0.9)
 
-                if copiedCode {
-                    Text("Copied to clipboard")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                        .transition(.opacity)
+                    // Join code — tappable to copy
+                    Button(action: copyCode) {
+                        HStack(spacing: 10) {
+                            Text(joinCode)
+                                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                                .tracking(4)
+                                .foregroundColor(.white)
+
+                            Image(systemName: copiedCode ? "checkmark" : "doc.on.doc")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(copiedCode ? .green : .white.opacity(0.4))
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.06))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(copiedCode ? 0.2 : 0.08), lineWidth: 1)
+                                )
+                        )
+                    }
+
+                    if copiedCode {
+                        Text("Copied to clipboard")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
+                            .transition(.opacity)
+                    }
                 }
             }
 
             Spacer()
 
             // Action buttons
-            VStack(spacing: 16) {
+            VStack(spacing: 14) {
                 // Share button
                 Button(action: shareInvite) {
                     HStack(spacing: 8) {
@@ -117,14 +131,20 @@ struct CreateStep3ShareView: View {
                 Button(action: onDone) {
                     Text("Done")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(.white.opacity(0.4))
                 }
-                .padding(.top, 8)
+                .padding(.top, 4)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
-        .background(backgroundGradient)
+        .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            generateQRCode()
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1)) {
+                appeared = true
+            }
+        }
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
                 ShareSheet(items: [image, shareMessage]) { activityType, completed in
@@ -150,6 +170,8 @@ struct CreateStep3ShareView: View {
         }
     }
 
+    // MARK: - Actions
+
     private var shareMessage: String {
         """
         Join my Momento: \(momentoName)!
@@ -163,45 +185,42 @@ struct CreateStep3ShareView: View {
 
     private func copyCode() {
         UIPasteboard.general.string = joinCode
+        HapticsManager.shared.medium()
 
-        withAnimation {
-            copiedCode = true
-        }
+        withAnimation { copiedCode = true }
 
-        // Reset after 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation {
-                copiedCode = false
-            }
+            withAnimation { copiedCode = false }
         }
-
-        // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
     }
 
     private func shareInvite() {
-        // Render the invite card image
         shareImage = InviteCardRenderer.render(
             eventName: momentoName,
             joinCode: joinCode,
             startDate: startsAt,
             hostName: hostName
         )
-
         showShareSheet = true
     }
 
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                AppTheme.Colors.bgStart,
-                AppTheme.Colors.bgEnd
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+    // MARK: - QR Code
+
+    private func generateQRCode() {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+
+        filter.message = Data(joinCode.utf8)
+        filter.correctionLevel = "M"
+
+        guard let outputImage = filter.outputImage else { return }
+
+        let scale: CGFloat = 10
+        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            qrCodeImage = UIImage(cgImage: cgImage)
+        }
     }
 }
 

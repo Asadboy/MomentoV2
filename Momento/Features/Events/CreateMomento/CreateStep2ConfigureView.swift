@@ -1,3 +1,10 @@
+//
+//  CreateStep2ConfigureView.swift
+//  Momento
+//
+//  Step 2 of Create Momento flow: Pick when the event starts
+//
+
 import SwiftUI
 
 struct CreateStep2ConfigureView: View {
@@ -8,11 +15,9 @@ struct CreateStep2ConfigureView: View {
     let onNext: () -> Void
     let onBack: () -> Void
 
-
-
     var body: some View {
         ZStack {
-            backgroundGradient
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -20,18 +25,17 @@ struct CreateStep2ConfigureView: View {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(.white.opacity(0.5))
                     }
 
                     Spacer()
 
                     Text("Step 2 of 3")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(.white.opacity(0.35))
 
                     Spacer()
 
-                    // Invisible spacer for balance
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.clear)
@@ -42,117 +46,33 @@ struct CreateStep2ConfigureView: View {
                 Spacer()
 
                 // Main content
-                VStack(spacing: 32) {
-                    // Title + subtitle
+                VStack(spacing: 40) {
+                    // Title
                     VStack(spacing: 8) {
-                        Text("When's the party?")
-                            .font(.system(size: 32, weight: .bold))
+                        Text("When does it\nstart?")
+                            .font(.system(size: 36, weight: .bold))
                             .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(2)
 
-                        Text("Pick when your event starts")
+                        Text(eventName)
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white.opacity(0.4))
                     }
 
-                    // Compact date picker row
-                    HStack {
-                        Text("Starts")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
-
-                        Spacer()
-
+                    // Date picker — clean inline style
+                    VStack(spacing: 0) {
                         DatePicker("", selection: $startsAt, displayedComponents: [.date, .hourAndMinute])
-                            .datePickerStyle(.compact)
+                            .datePickerStyle(.wheel)
                             .labelsHidden()
                             .colorScheme(.dark)
-                            .tint(AppTheme.Colors.glowBlue)
+                            .frame(height: 160)
+                            .clipped()
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.white.opacity(0.06))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                    )
                     .padding(.horizontal, 24)
 
-                    // Timeline info card
-                    VStack(spacing: 0) {
-                        // Photo Window row
-                        HStack(spacing: 14) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.08))
-                                    .frame(width: 44, height: 44)
-                                Image(systemName: "camera.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Photo Window")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.4))
-                                Text("12 hours")
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(.white)
-                                Text("Until \(formatDateTime(endsAt))")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.35))
-                            }
-
-                            Spacer()
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-
-                        // Divider
-                        Rectangle()
-                            .fill(Color.white.opacity(0.06))
-                            .frame(height: 1)
-                            .padding(.horizontal, 20)
-
-                        // Photos Reveal row
-                        HStack(spacing: 14) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.08))
-                                    .frame(width: 44, height: 44)
-                                Image(systemName: "clock.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Photos Reveal")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.4))
-                                Text("24 hours after start")
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(.white)
-                                Text(formatDateTime(releaseAt))
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.35))
-                            }
-
-                            Spacer()
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-                    }
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.white.opacity(0.06))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                    )
-                    .padding(.horizontal, 24)
+                    // Timeline summary
+                    timelineSummary
                 }
 
                 Spacer()
@@ -160,7 +80,7 @@ struct CreateStep2ConfigureView: View {
                 // Next button
                 Button(action: onNext) {
                     HStack(spacing: 8) {
-                        Text("Next")
+                        Text("Create Momento")
                             .font(.system(size: 17, weight: .semibold))
 
                         Image(systemName: "arrow.right")
@@ -182,49 +102,82 @@ struct CreateStep2ConfigureView: View {
         }
     }
 
-    private func formatDateTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE, MMM d 'at' h:mm a"
-        return formatter.string(from: date)
-    }
+    // MARK: - Timeline Summary
 
-    private var backgroundGradient: some View {
-        ZStack {
-            // Base gradient
-            LinearGradient(
-                colors: [
-                    AppTheme.Colors.bgStart,
-                    AppTheme.Colors.bgEnd
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+    private var timelineSummary: some View {
+        HStack(spacing: 0) {
+            // Start
+            timelineNode(
+                label: "Start",
+                time: formatShortTime(startsAt),
+                isActive: true
             )
 
-            // Ambient glow orb (blue + purple reveal colors)
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            AppTheme.Colors.royalPurple.opacity(0.2),
-                            AppTheme.Colors.glowBlue.opacity(0.08),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 20,
-                        endRadius: 200
-                    )
-                )
-                .frame(width: 400, height: 400)
-                .offset(x: 50, y: -200)
-                .blur(radius: 60)
+            // Connector line
+            Rectangle()
+                .fill(Color.white.opacity(0.15))
+                .frame(height: 1)
+
+            // End (photos close)
+            timelineNode(
+                label: "Photos close",
+                time: formatShortTime(endsAt),
+                isActive: false
+            )
+
+            // Connector line
+            Rectangle()
+                .fill(Color.white.opacity(0.15))
+                .frame(height: 1)
+
+            // Reveal
+            timelineNode(
+                label: "Reveal",
+                time: formatShortTime(releaseAt),
+                isActive: false
+            )
         }
-        .ignoresSafeArea()
+        .padding(.horizontal, 32)
+    }
+
+    private func timelineNode(label: String, time: String, isActive: Bool) -> some View {
+        VStack(spacing: 6) {
+            Circle()
+                .fill(isActive ? Color.white : Color.white.opacity(0.2))
+                .frame(width: 8, height: 8)
+
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(isActive ? 0.6 : 0.35))
+
+            Text(time)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(isActive ? 0.8 : 0.5))
+        }
+        .frame(minWidth: 80)
+    }
+
+    // MARK: - Formatting
+
+    private func formatShortTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+
+        if calendar.isDateInToday(date) {
+            formatter.dateFormat = "h:mm a"
+        } else if calendar.isDateInTomorrow(date) {
+            formatter.dateFormat = "'Tmrw' h:mm a"
+        } else {
+            formatter.dateFormat = "MMM d, h:mm a"
+        }
+
+        return formatter.string(from: date)
     }
 }
 
 #Preview {
     CreateStep2ConfigureView(
-        eventName: "Asad's Birthday",
+        eventName: "Sopranos Party",
         startsAt: .constant(Date()),
         endsAt: .constant(Date().addingTimeInterval(12 * 3600)),
         releaseAt: .constant(Date().addingTimeInterval(24 * 3600)),

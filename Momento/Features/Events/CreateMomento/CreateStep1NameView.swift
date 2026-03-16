@@ -13,7 +13,6 @@ struct CreateStep1NameView: View {
     let onCancel: () -> Void
 
     @FocusState private var isNameFocused: Bool
-    @State private var showSuggestions = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,17 +21,17 @@ struct CreateStep1NameView: View {
                 Button(action: onCancel) {
                     Image(systemName: "xmark")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.5))
                 }
-                
+
                 Spacer()
-                
+
                 Text("Step 1 of 3")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-                
+                    .foregroundColor(.white.opacity(0.35))
+
                 Spacer()
-                
+
                 // Invisible spacer for balance
                 Image(systemName: "xmark")
                     .font(.system(size: 17, weight: .medium))
@@ -40,176 +39,167 @@ struct CreateStep1NameView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
-            
+
             Spacer()
-            
+
             // Main content
-            VStack(spacing: 32) {
+            VStack(spacing: 40) {
                 // Title
-                VStack(spacing: 12) {
-                    Text("Name your momento")
-                        .font(.system(size: 32, weight: .bold))
+                VStack(spacing: 8) {
+                    Text("Name your\nMomento")
+                        .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(2)
 
                     Text("What are you capturing?")
-                        .font(.system(size: 16, weight: .regular))
-                        .foregroundColor(.white.opacity(0.5))
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.4))
                 }
-                
-                // Name input with glow effect
-                ZStack {
-                    // Glow effect when focused
-                    if isNameFocused {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppTheme.Colors.glowBlue.opacity(0.3), AppTheme.Colors.royalPurple.opacity(0.3)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(height: 60)
-                            .blur(radius: 20)
-                            .animation(.easeInOut(duration: 0.3), value: isNameFocused)
-                    }
 
-                    VStack(spacing: 8) {
-                        TextField("", text: $momentoName)
-                            .placeholder(when: momentoName.isEmpty) {
-                                Text("e.g. Sopranos Party")
-                                    .foregroundColor(.white.opacity(0.3))
-                            }
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .focused($isNameFocused)
-                            .submitLabel(.next)
-                            .onSubmit {
-                                if isValidName {
-                                    onNext()
-                                }
-                            }
+                // Name input — minimal underline style
+                VStack(spacing: 12) {
+                    TextField("", text: $momentoName)
+                        .placeholder(when: momentoName.isEmpty) {
+                            Text("e.g. Sopranos Party")
+                                .foregroundColor(.white.opacity(0.2))
+                        }
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .focused($isNameFocused)
+                        .submitLabel(.next)
+                        .onSubmit {
+                            if isValidName { onNext() }
+                        }
 
-                        // Underline with glow when focused
-                        Rectangle()
-                            .fill(
-                                isNameFocused
-                                    ? LinearGradient(
-                                        colors: [AppTheme.Colors.glowBlue, AppTheme.Colors.royalPurple],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                      )
-                                    : LinearGradient(
-                                        colors: [Color.white.opacity(momentoName.isEmpty ? 0.2 : 0.6)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                      )
-                            )
-                            .frame(height: 2)
-                            .frame(maxWidth: 280)
-                            .animation(.easeInOut(duration: 0.2), value: isNameFocused)
-                    }
+                    // Simple white underline
+                    Rectangle()
+                        .fill(Color.white.opacity(isNameFocused ? 0.4 : 0.15))
+                        .frame(height: 1)
+                        .frame(maxWidth: 260)
+                        .animation(.easeInOut(duration: 0.2), value: isNameFocused)
                 }
                 .padding(.horizontal, 40)
 
-                // Suggested names - prominent chips
-                if showSuggestions && momentoName.isEmpty {
-                    VStack(spacing: 10) {
-                        ForEach(suggestedNames, id: \.self) { suggestion in
-                            Button(action: {
-                                momentoName = suggestion
-                                showSuggestions = false
-                                HapticsManager.shared.selectionChanged()
-                            }) {
-                                Text(suggestion)
-                                    .font(.system(size: 17, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(Color.white.opacity(0.12))
-                                    .cornerRadius(24)
-                            }
-                        }
-                    }
-                    .padding(.top, 24)
+                // Suggestion chips
+                if momentoName.isEmpty {
+                    suggestionChips
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }
-            
+
             Spacer()
-            
+
             // Next button
             Button(action: onNext) {
                 HStack(spacing: 8) {
                     Text("Next")
                         .font(.system(size: 17, weight: .semibold))
-                    
+
                     Image(systemName: "arrow.right")
                         .font(.system(size: 15, weight: .semibold))
                 }
                 .foregroundColor(isValidName ? .black : .white.opacity(0.3))
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(
-                    isValidName
-                        ? Color.white
-                        : Color.white.opacity(0.1)
-                )
-                .cornerRadius(16)
+                .background(isValidName ? Color.white : Color.white.opacity(0.08))
+                .cornerRadius(28)
             }
             .disabled(!isValidName)
-            .padding(.horizontal, 20)
+            .animation(.easeInOut(duration: 0.2), value: isValidName)
+            .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
-        .background(backgroundGradient)
+        .background(Color.black.ignoresSafeArea())
         .onAppear {
-            // Delay focus slightly so the view layout settles before keyboard appears
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isNameFocused = true
             }
         }
     }
-    
+
+    // MARK: - Suggestion Chips
+
+    private var suggestionChips: some View {
+        let suggestions = ["Birthday", "Night Out", "Weekend Trip", "Game Day", "Celebration"]
+
+        return FlowLayout(spacing: 8) {
+            ForEach(suggestions, id: \.self) { suggestion in
+                Button {
+                    momentoName = suggestion
+                    HapticsManager.shared.selectionChanged()
+                } label: {
+                    Text(suggestion)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.06))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                )
+                        )
+                }
+            }
+        }
+        .padding(.horizontal, 40)
+    }
+
     private var isValidName: Bool {
         !momentoName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+}
 
-    private var suggestedNames: [String] {
-        ["Birthday", "Weekend Trip", "Night Out", "Game Day", "Celebration"]
+// MARK: - Flow Layout (wrapping chips)
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = layout(in: proposal.width ?? 0, subviews: subviews)
+        return result.size
     }
-    
-    private var backgroundGradient: some View {
-        ZStack {
-            // Base gradient
-            LinearGradient(
-                colors: [
-                    AppTheme.Colors.bgStart,
-                    AppTheme.Colors.bgEnd
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
 
-            // Ambient glow orb in upper portion (blue + purple reveal colors)
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            AppTheme.Colors.royalPurple.opacity(0.25),
-                            AppTheme.Colors.glowBlue.opacity(0.1),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 20,
-                        endRadius: 200
-                    )
-                )
-                .frame(width: 400, height: 400)
-                .offset(x: 50, y: -200)
-                .blur(radius: 60)
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = layout(in: bounds.width, subviews: subviews)
+        for (index, position) in result.positions.enumerated() {
+            subviews[index].place(at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y), proposal: .unspecified)
         }
-        .ignoresSafeArea()
     }
 
+    private func layout(in width: CGFloat, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+        var positions: [CGPoint] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
+
+        // First pass: get all sizes
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+
+        // Calculate total width of all items + spacing to center rows
+        for (index, size) in sizes.enumerated() {
+            if x + size.width > width && x > 0 {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            positions.append(CGPoint(x: x, y: y))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+            totalWidth = max(totalWidth, x - spacing)
+        }
+
+        // Center the layout
+        let offsetX = max(0, (width - totalWidth) / 2)
+        positions = positions.map { CGPoint(x: $0.x + offsetX, y: $0.y) }
+
+        return (CGSize(width: width, height: y + rowHeight), positions)
+    }
 }
 
 // MARK: - Placeholder Extension
@@ -234,4 +224,3 @@ extension View {
         onCancel: {}
     )
 }
-
