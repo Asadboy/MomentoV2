@@ -21,15 +21,17 @@ class ImageCacheManager {
     private init() {
         // Set up disk cache directory
         let fileManager = FileManager.default
-        let cacheDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        guard let cacheDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to locate caches directory")
+        }
         cacheDirectory = cacheDir.appendingPathComponent("ImageCache", isDirectory: true)
 
         // Create directory if needed
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
 
         // Configure memory cache
-        memoryCache.countLimit = 50 // Max 50 images in memory
-        memoryCache.totalCostLimit = 50 * 1024 * 1024 // ~50MB
+        memoryCache.countLimit = 30 // Max 30 images in memory
+        memoryCache.totalCostLimit = 30 * 1024 * 1024 // ~30MB
     }
 
     // MARK: - Public API

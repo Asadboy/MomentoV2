@@ -19,7 +19,6 @@ struct RevealCardView: View {
     @State private var loadedImage: UIImage?
     @State private var isLoadingImage = false
     @State private var showButtons = false
-    @State private var buttonTimer: Timer?
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
 
@@ -84,10 +83,7 @@ struct RevealCardView: View {
                 showButtons = false
             }
         }
-        .onDisappear {
-            buttonTimer?.invalidate()
-            buttonTimer = nil
-        }
+        .onDisappear { }
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
                 PhotoShareSheet(image: image, eventId: eventId)
@@ -188,15 +184,14 @@ struct RevealCardView: View {
 
     private func startButtonTimer() {
         showButtons = false
-        buttonTimer?.invalidate()
-        buttonTimer = nil
 
-        // Schedule timer on main run loop
-        buttonTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled else { return }
             withAnimation(.easeIn(duration: 0.3)) {
                 showButtons = true
             }
-            self.onButtonsVisible?()
+            onButtonsVisible?()
         }
     }
 

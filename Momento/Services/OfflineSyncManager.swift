@@ -55,7 +55,15 @@ class OfflineSyncManager: ObservableObject {
     private let queueFileName = "upload_queue.json"
     
     private var cancellables = Set<AnyCancellable>()
-    
+
+    /// Safe accessor for the documents directory (avoids force-unwrap on array index)
+    private var documentsDirectory: URL {
+        guard let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to locate documents directory")
+        }
+        return dir
+    }
+
     private init() {
         loadQueue()
         setupNetworkMonitoring()
@@ -272,7 +280,7 @@ class OfflineSyncManager: ObservableObject {
             throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG"])
         }
         
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsDirectory = documentsDirectory
         let queueDirectory = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
         
         // Create queue directory if it doesn't exist
@@ -307,7 +315,7 @@ class OfflineSyncManager: ObservableObject {
     
     /// Save queue to disk
     private func saveQueue() {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsDirectory = documentsDirectory
         let queueFileURL = documentsDirectory.appendingPathComponent(queueFileName)
         
         do {
@@ -322,7 +330,7 @@ class OfflineSyncManager: ObservableObject {
     
     /// Load queue from disk
     private func loadQueue() {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsDirectory = documentsDirectory
         let queueFileURL = documentsDirectory.appendingPathComponent(queueFileName)
         
         guard FileManager.default.fileExists(atPath: queueFileURL.path) else {
@@ -420,7 +428,7 @@ class OfflineSyncManager: ObservableObject {
         saveQueue()
         
         // Also delete the queue directory
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsDirectory = documentsDirectory
         let queueDirectory = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
         try? FileManager.default.removeItem(at: queueDirectory)
         

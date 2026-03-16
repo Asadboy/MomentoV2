@@ -345,7 +345,7 @@ struct ContentView: View {
             .task {
                 // Track app opened event
                 AnalyticsManager.shared.track(.appOpened, properties: [
-                    "has_active_evento": !events.filter { $0.currentState(at: now) == .live }.isEmpty
+                    "has_active_event": !events.filter { $0.currentState(at: now) == .live }.isEmpty
                 ])
                 await loadEvents()
             }

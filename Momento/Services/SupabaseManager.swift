@@ -9,12 +9,29 @@
 import Foundation
 import Supabase
 
+enum SupabaseError: LocalizedError {
+    case userNotAuthenticated
+    case eventNotFound
+    case invalidEventID
+    case configurationError(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .userNotAuthenticated: return "User not authenticated"
+        case .eventNotFound: return "Event not found"
+        case .invalidEventID: return "Invalid event ID"
+        case .configurationError(let msg): return msg
+        }
+    }
+}
+
 /// Centralized Supabase client manager
 class SupabaseManager: ObservableObject {
     static let shared = SupabaseManager()
     
     let client: SupabaseClient
-    
+    private let storageBucket = "momento-photos"
+
     @Published var currentUser: User?
     @Published var isAuthenticated = false
     /// True once the initial session check has completed (prevents login screen flash)
@@ -28,7 +45,12 @@ class SupabaseManager: ObservableObject {
         
         // Initialize Supabase client with OAuth redirect
         client = SupabaseClient(
-            supabaseURL: URL(string: SupabaseConfig.supabaseURL)!,
+            supabaseURL: {
+                guard let url = URL(string: SupabaseConfig.supabaseURL) else {
+                    fatalError("Invalid Supabase URL: '\(SupabaseConfig.supabaseURL)'. Check SupabaseConfig.swift")
+                }
+                return url
+            }(),
             supabaseKey: SupabaseConfig.supabaseAnonKey,
             options: SupabaseClientOptions(
                 auth: SupabaseClientOptions.AuthOptions(
@@ -218,7 +240,7 @@ class SupabaseManager: ObservableObject {
             .value
         
         guard let profile = response.first else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Profile not found"])
+            throw SupabaseError.configurationError("Profile not found")
         }
         
         return profile
@@ -267,11 +289,7 @@ class SupabaseManager: ObservableObject {
         // Verify uniqueness
         let isAvailable = try await checkUsernameAvailability(normalized)
         guard isAvailable else {
-            throw NSError(
-                domain: "SupabaseManager",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Username is already taken"]
-            )
+            throw SupabaseError.configurationError("Username is already taken")
         }
 
         // Update profile
@@ -295,7 +313,7 @@ class SupabaseManager: ObservableObject {
     func createEvent(name: String, startsAt: Date, joinCode: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
             debugLog("[createEvent] Error: User not authenticated")
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         // Auto-calculate event times from start
@@ -348,7 +366,7 @@ class SupabaseManager: ObservableObject {
     /// Join an event with a code (uses secure RPC for lookup)
     func joinEvent(code: String) async throws -> EventModel {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         // Find event by join code using secure RPC
@@ -401,7 +419,7 @@ class SupabaseManager: ObservableObject {
             .value
 
         guard let event = events.first else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No event found with code: \(code)"])
+            throw SupabaseError.eventNotFound
         }
 
         return event
@@ -410,7 +428,7 @@ class SupabaseManager: ObservableObject {
     /// Get all events the user is a member of
     func getMyEvents() async throws -> [EventModel] {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
         
         // Get event IDs from event_members
@@ -451,7 +469,7 @@ class SupabaseManager: ObservableObject {
             .value
         
         guard let event = events.first else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Event not found"])
+            throw SupabaseError.eventNotFound
         }
         
         return event
@@ -460,7 +478,7 @@ class SupabaseManager: ObservableObject {
     /// Soft-delete an event (creator only) - marks as deleted instead of removing
     func deleteEvent(id: UUID) async throws {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         try await client
@@ -476,7 +494,7 @@ class SupabaseManager: ObservableObject {
     /// Restore a soft-deleted event
     func restoreEvent(id: UUID) async throws {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         try await client
@@ -494,7 +512,7 @@ class SupabaseManager: ObservableObject {
     /// Leave an event
     func leaveEvent(id: UUID) async throws {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
         
         try await client
@@ -535,7 +553,7 @@ class SupabaseManager: ObservableObject {
     func uploadPhoto(image: Data, eventId: UUID, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
             debugLog("❌ [uploadPhoto] User not authenticated")
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
         
         // Get user's username for photo attribution
@@ -560,7 +578,7 @@ class SupabaseManager: ObservableObject {
         
         // Upload to storage
         _ = try await client.storage
-            .from("momento-photos")
+            .from(storageBucket)
             .upload(
                 fileName,
                 data: image,
@@ -616,31 +634,31 @@ class SupabaseManager: ObservableObject {
             .count ?? 0
     }
 
+    /// Lightweight photo row used when joining profile info for reveal/gallery
+    private struct PhotoWithProfile: Codable {
+        let id: UUID
+        let eventId: UUID
+        let userId: UUID
+        let storagePath: String
+        let capturedAt: Date
+        let username: String?
+
+        enum CodingKeys: String, CodingKey {
+            case id
+            case eventId = "event_id"
+            case userId = "user_id"
+            case storagePath = "storage_path"
+            case capturedAt = "captured_at"
+            case username
+        }
+    }
+
     /// Get photos for an event (String ID overload for convenience)
     func getPhotos(for eventId: String) async throws -> [PhotoData] {
         guard let uuid = UUID(uuidString: eventId) else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid event ID"])
+            throw SupabaseError.invalidEventID
         }
-        
-        // Fetch photos with user profile info
-        struct PhotoWithProfile: Codable {
-            let id: UUID
-            let eventId: UUID
-            let userId: UUID
-            let storagePath: String
-            let capturedAt: Date
-            let username: String?
 
-            enum CodingKeys: String, CodingKey {
-                case id
-                case eventId = "event_id"
-                case userId = "user_id"
-                case storagePath = "storage_path"
-                case capturedAt = "captured_at"
-                case username
-            }
-        }
-        
         let photos: [PhotoWithProfile] = try await client
             .from("photos")
             .select()
@@ -654,7 +672,7 @@ class SupabaseManager: ObservableObject {
             for (index, photo) in photos.enumerated() {
                 group.addTask {
                     let signedURL = try? await self.client.storage
-                        .from("momento-photos")
+                        .from(storageBucket)
                         .createSignedURL(path: photo.storagePath, expiresIn: 604800)
 
                     let photoData = PhotoData(
@@ -692,25 +710,7 @@ class SupabaseManager: ObservableObject {
         limit: Int = 10
     ) async throws -> (photos: [PhotoData], hasMore: Bool) {
         guard let uuid = UUID(uuidString: eventId) else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid event ID"])
-        }
-
-        struct PhotoWithProfile: Decodable {
-            let id: UUID
-            let eventId: UUID
-            let userId: UUID
-            let storagePath: String
-            let capturedAt: Date
-            let username: String?
-
-            enum CodingKeys: String, CodingKey {
-                case id
-                case eventId = "event_id"
-                case userId = "user_id"
-                case storagePath = "storage_path"
-                case capturedAt = "captured_at"
-                case username
-            }
+            throw SupabaseError.invalidEventID
         }
 
         // Fetch limit + 1 to know if there are more
@@ -731,7 +731,7 @@ class SupabaseManager: ObservableObject {
             for (index, photo) in photosToProcess.enumerated() {
                 group.addTask {
                     let signedURL = try? await self.client.storage
-                        .from("momento-photos")
+                        .from(storageBucket)
                         .createSignedURL(path: photo.storagePath, expiresIn: 604800)
 
                     let photoData = PhotoData(
@@ -818,7 +818,7 @@ class SupabaseManager: ObservableObject {
     /// Get user's liked photos for an event
     func getLikedPhotos(eventId: UUID) async throws -> [PhotoData] {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         // Get photo IDs + storage paths for this event (lightweight query)
@@ -866,7 +866,7 @@ class SupabaseManager: ObservableObject {
             for (index, photo) in likedPhotos.enumerated() {
                 group.addTask {
                     let signedURL = try? await self.client.storage
-                        .from("momento-photos")
+                        .from(storageBucket)
                         .createSignedURL(path: photo.storagePath, expiresIn: 604800)
 
                     let photoData = PhotoData(
@@ -894,7 +894,7 @@ class SupabaseManager: ObservableObject {
     /// Get count of user's liked photos for an event
     func getLikedPhotoCount(eventId: UUID) async throws -> Int {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "SupabaseManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         // Get photo IDs for this event (lightweight — only IDs, no full rows)
@@ -924,7 +924,7 @@ class SupabaseManager: ObservableObject {
     /// Get all stats for the user's profile
     func getProfileStats() async throws -> ProfileStats {
         guard let userId = currentUser?.id else {
-            throw NSError(domain: "MomentoError", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not logged in"])
+            throw SupabaseError.userNotAuthenticated
         }
 
         let uid = userId.uuidString
