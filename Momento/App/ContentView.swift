@@ -399,10 +399,18 @@ struct ContentView: View {
             .sheet(item: $eventForInvite) { event in
                 InviteSheet(event: event, onDismiss: { eventForInvite = nil })
             }
-            .fullScreenCover(isPresented: $showStackReveal) {
+            .fullScreenCover(isPresented: $showStackReveal, onDismiss: {
+                // When reveal is dismissed (any way), sync completion status from persistent storage
+                if let event = selectedEventForReveal,
+                   RevealStateManager.shared.hasCompletedReveal(for: event.id) {
+                    revealCompletionStatus[event.id] = true
+                    // Refresh liked data in background
+                    Task { await loadEvents() }
+                }
+            }) {
                 if let event = selectedEventForReveal {
                     FeedRevealView(event: event) {
-                        // On complete - mark as completed and show liked gallery
+                        // On complete via "View Liked Photos" button
                         revealCompletionStatus[event.id] = true
                         RevealStateManager.shared.markRevealCompleted(for: event.id)
                         showStackReveal = false
@@ -412,7 +420,9 @@ struct ContentView: View {
             }
             .fullScreenCover(isPresented: $showLikedGallery) {
                 if let event = selectedEventForReveal {
-                    LikedGalleryView(event: event)
+                    LikedGalleryView(event: event) {
+                        reReveal(for: event)
+                    }
                 }
             }
             .alert("Error", isPresented: $showErrorAlert) {
@@ -512,6 +522,15 @@ struct ContentView: View {
             HapticsManager.shared.unlock()
             showStackReveal = true
         }
+    }
+
+    /// Re-reveal: reset completion status and show reveal flow again
+    private func reReveal(for event: Event) {
+        revealCompletionStatus[event.id] = nil
+        RevealStateManager.shared.clearRevealCompleted(for: event.id)
+        selectedEventForReveal = event
+        HapticsManager.shared.unlock()
+        showStackReveal = true
     }
     
     /// Load events from Supabase (debounced to prevent duplicate requests)

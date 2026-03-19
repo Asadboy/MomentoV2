@@ -186,7 +186,7 @@ struct RevealCardView: View {
         showButtons = false
 
         Task {
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
             guard !Task.isCancelled else { return }
             withAnimation(.easeIn(duration: 0.3)) {
                 showButtons = true

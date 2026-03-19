@@ -210,6 +210,10 @@ struct FeedRevealView: View {
             Task {
                 await viewModel.saveLikedPhotos()
             }
+            // Mark as complete if user entered the reveal (viewed or skipped)
+            if flowPhase == .viewing || flowPhase == .complete {
+                RevealStateManager.shared.markRevealCompleted(for: event.id)
+            }
         }
     }
 
@@ -240,7 +244,7 @@ struct FeedRevealView: View {
         ZStack {
             Color.black
 
-            VStack(spacing: 32) {
+            VStack(spacing: 0) {
                 // Close button
                 HStack {
                     Button {
@@ -258,23 +262,33 @@ struct FeedRevealView: View {
 
                 Spacer()
 
-                VStack(spacing: 16) {
+                // Hero: photo count
+                VStack(spacing: 8) {
+                    Text("\(viewModel.photos.count)")
+                        .font(.system(size: 64, weight: .bold))
+                        .foregroundColor(.white)
+
+                    Text("photos waiting")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+
+                Spacer().frame(height: 24)
+
+                // Event info
+                VStack(spacing: 6) {
                     Text(event.name)
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
 
-                    Text("Photos")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                    Text("\(event.memberCount) people contributed")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.3))
                 }
-
-                Text("Revealed together at \(formatRevealTime(event.releaseAt))")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.5))
-                    .padding(.top, 8)
 
                 Spacer()
 
+                // Reveal button with pulsing glow
                 Button {
                     HapticsManager.shared.soft()
                     withAnimation(.easeInOut(duration: 0.5)) {
@@ -282,10 +296,9 @@ struct FeedRevealView: View {
                     }
                 } label: {
                     Text("Reveal")
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.black)
-                        .frame(width: 160, height: 56)
+                        .frame(width: 180, height: 56)
                         .background(Color.white)
                         .cornerRadius(28)
                 }
@@ -300,20 +313,58 @@ struct FeedRevealView: View {
             Color.black
                 .ignoresSafeArea()
 
-            VStack(spacing: 40) {
+            VStack(spacing: 32) {
                 Spacer()
 
-                Image(systemName: "sparkles")
-                    .font(.system(size: 32, weight: .light))
-                    .foregroundColor(.white.opacity(0.3))
+                // Title
+                VStack(spacing: 12) {
+                    Text("That was the night.")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
 
-                Text("That was the night.")
-                    .font(.system(size: 28, weight: .medium, design: .serif))
-                    .foregroundColor(.white)
+                    Text(event.name)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+
+                // Stats
+                HStack(spacing: 0) {
+                    VStack(spacing: 4) {
+                        Text("\(viewModel.photos.count)")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("Photos")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 4) {
+                        Text("\(viewModel.likedCount)")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("Liked")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 4) {
+                        Text("\(uniqueContributorCount)")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("People")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.horizontal, 40)
 
                 Spacer()
 
-                VStack(spacing: 16) {
+                // Buttons
+                VStack(spacing: 14) {
                     Button {
                         Task {
                             await viewModel.saveLikedPhotos()
@@ -326,15 +377,27 @@ struct FeedRevealView: View {
                         }
                     } label: {
                         Text("View Liked Photos")
-                            .font(.headline)
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(Color.white)
                             .cornerRadius(28)
                     }
-                    .padding(.horizontal, 40)
+
+                    if let code = event.joinCode {
+                        ShareLink(
+                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
+                            subject: Text(event.name),
+                            message: Text("Check out the photos from \(event.name)!")
+                        ) {
+                            Text("Share album")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                    }
                 }
+                .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
         }
@@ -362,7 +425,7 @@ struct FeedRevealView: View {
             Spacer()
 
             // Photo counter
-            Text("\(currentPhotoIndex + 1) / \(viewModel.photos.count)")
+            Text("\(currentPhotoIndex + 1) / \(event.photoCount)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
 
@@ -439,54 +502,97 @@ struct FeedRevealView: View {
     private var completionCard: some View {
         ZStack {
             Color.black
+                .ignoresSafeArea()
 
-            VStack(spacing: 24) {
+            VStack(spacing: 32) {
                 Spacer()
 
-                // Decorative icon
-                Image(systemName: "sparkles")
-                    .font(.system(size: 32, weight: .light))
-                    .foregroundColor(.white.opacity(0.3))
+                // Title
+                VStack(spacing: 12) {
+                    Text("That was the night.")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
 
-                Text("That was the night.")
-                    .font(.system(size: 28, weight: .medium, design: .serif))
-                    .foregroundColor(.white)
-
-                HStack(spacing: 6) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.red.opacity(0.8))
-                    Text("\(viewModel.likedCount) photos liked")
+                    Text(event.name)
                         .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.4))
                 }
-                .foregroundColor(.white.opacity(0.6))
+
+                // Stats
+                HStack(spacing: 0) {
+                    VStack(spacing: 4) {
+                        Text("\(viewModel.photos.count)")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("Photos")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 4) {
+                        Text("\(viewModel.likedCount)")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("Liked")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 4) {
+                        Text("\(uniqueContributorCount)")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("People")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.horizontal, 40)
 
                 Spacer()
 
-                Button {
-                    HapticsManager.shared.celebration()
-                    Task {
-                        await viewModel.saveLikedPhotos()
-                        AnalyticsManager.shared.track(.revealCompleted, properties: [
-                            "event_id": event.id,
-                            "photos_revealed": viewModel.photos.count,
-                            "photos_liked": viewModel.likedCount
-                        ])
-                        onComplete()
+                // Buttons
+                VStack(spacing: 14) {
+                    Button {
+                        Task {
+                            await viewModel.saveLikedPhotos()
+                            AnalyticsManager.shared.track(.revealCompleted, properties: [
+                                "event_id": event.id,
+                                "photos_revealed": viewModel.photos.count,
+                                "photos_liked": viewModel.likedCount
+                            ])
+                            onComplete()
+                        }
+                    } label: {
+                        Text("View Liked Photos")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.white)
+                            .cornerRadius(28)
                     }
-                } label: {
-                    Text("View Liked Photos")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.white)
-                        .cornerRadius(28)
+
+                    if let code = event.joinCode {
+                        ShareLink(
+                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
+                            subject: Text(event.name),
+                            message: Text("Check out the photos from \(event.name)!")
+                        ) {
+                            Text("Share album")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                    }
                 }
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var completionSection: some View {

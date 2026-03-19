@@ -11,6 +11,7 @@ import Photos
 
 struct LikedGalleryView: View {
     let event: Event
+    var onReReveal: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var supabaseManager = SupabaseManager.shared
@@ -123,6 +124,8 @@ struct LikedGalleryView: View {
                 }
 
                 Spacer()
+
+                // Re-reveal button hidden for now — logic kept in ContentView.reReveal()
             }
 
             // Event name
@@ -159,7 +162,7 @@ struct LikedGalleryView: View {
     private var statsRow: some View {
         HStack(spacing: 0) {
             statItem(
-                value: "\(allPhotos.count)",
+                value: "\(event.photoCount)",
                 label: "Photos",
                 icon: "photo"
             )
@@ -232,7 +235,7 @@ struct LikedGalleryView: View {
 
     private var filterTabs: some View {
         HStack(spacing: 24) {
-            filterTab("All", count: allPhotos.count, isActive: activeFilter == .all) {
+            filterTab("All", count: event.photoCount, isActive: activeFilter == .all) {
                 withAnimation(.easeInOut(duration: 0.2)) { activeFilter = .all }
             }
             filterTab("Liked", count: likedPhotos.count, isActive: activeFilter == .liked) {

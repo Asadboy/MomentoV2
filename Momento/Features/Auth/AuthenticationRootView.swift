@@ -119,7 +119,7 @@ struct AuthenticationRootView: View {
                 await MainActor.run {
                     if needsUsername {
                         appState = .needsUsername
-                    } else if !hasSeenOnboarding {
+                    } else if !hasSeenOnboarding  {
                         appState = .needsOnboarding
                     } else {
                         appState = .authenticated
