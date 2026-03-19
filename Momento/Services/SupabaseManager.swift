@@ -578,7 +578,7 @@ class SupabaseManager: ObservableObject {
         
         // Upload to storage
         _ = try await client.storage
-            .from(storageBucket)
+            .from(self.storageBucket)
             .upload(
                 fileName,
                 data: image,
@@ -672,7 +672,7 @@ class SupabaseManager: ObservableObject {
             for (index, photo) in photos.enumerated() {
                 group.addTask {
                     let signedURL = try? await self.client.storage
-                        .from(storageBucket)
+                        .from(self.storageBucket)
                         .createSignedURL(path: photo.storagePath, expiresIn: 604800)
 
                     let photoData = PhotoData(
@@ -731,7 +731,7 @@ class SupabaseManager: ObservableObject {
             for (index, photo) in photosToProcess.enumerated() {
                 group.addTask {
                     let signedURL = try? await self.client.storage
-                        .from(storageBucket)
+                        .from(self.storageBucket)
                         .createSignedURL(path: photo.storagePath, expiresIn: 604800)
 
                     let photoData = PhotoData(
@@ -866,7 +866,7 @@ class SupabaseManager: ObservableObject {
             for (index, photo) in likedPhotos.enumerated() {
                 group.addTask {
                     let signedURL = try? await self.client.storage
-                        .from(storageBucket)
+                        .from(self.storageBucket)
                         .createSignedURL(path: photo.storagePath, expiresIn: 604800)
 
                     let photoData = PhotoData(
