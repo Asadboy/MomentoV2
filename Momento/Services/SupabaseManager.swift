@@ -567,9 +567,6 @@ class SupabaseManager: ObservableObject {
             debugLog("⚠️ Could not fetch username, using 'Unknown'")
         }
         
-        // Photo limit check - disabled for beta testing
-        // TODO: Re-enable with premium tier check after beta
-        
         // Generate unique filename
         let photoId = UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
@@ -781,17 +778,6 @@ class SupabaseManager: ObservableObject {
     }
     
     // MARK: - Real-time Subscriptions
-
-    /// Subscribe to event updates (member count, photo count, reveal status)
-    /// TODO: Fix RealtimeV2 API once we have proper documentation
-    func subscribeToEvent(eventId: UUID) -> AsyncStream<EventModel> {
-        // Temporarily disabled - RealtimeV2 API has changed
-        // Not critical for reveal system testing
-        AsyncStream { continuation in
-            // Return empty stream for now
-            continuation.finish()
-        }
-    }
 
     // MARK: - Photo Likes
 

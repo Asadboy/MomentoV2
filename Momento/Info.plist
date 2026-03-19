@@ -14,6 +14,8 @@
 	<array>
 		<string>RalewayDots-Regular.ttf</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Momento needs camera access to capture photos at events</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Momento needs access to save photos to your camera roll</string>
 	<key>CFBundleURLTypes</key>
