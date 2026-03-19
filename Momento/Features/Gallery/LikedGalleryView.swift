@@ -2,160 +2,322 @@
 //  LikedGalleryView.swift
 //  Momento
 //
-//  Gallery view showing liked and all photos with download functionality.
+//  Unified gallery view for an event's photos.
+//  Shows event info header, stats, share button, and 2-column photo grid.
 //
 
 import SwiftUI
 import Photos
-
-enum GalleryFilter: String, CaseIterable {
-    case liked = "Liked"
-    case all = "All"
-}
 
 struct LikedGalleryView: View {
     let event: Event
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var supabaseManager = SupabaseManager.shared
-    @State private var likedPhotos: [PhotoData] = []
     @State private var allPhotos: [PhotoData] = []
+    @State private var likedPhotos: [PhotoData] = []
+    @State private var totalLikes: Int = 0
     @State private var isLoading = true
+    @State private var isLoadingMore = false
+    @State private var hasMorePhotos = true
+    @State private var currentOffset = 0
     @State private var selectedPhoto: PhotoData?
     @State private var showingSaveAlert = false
     @State private var saveAlertMessage = ""
-    @State private var activeFilter: GalleryFilter = .liked
+    @State private var activeFilter: GalleryFilter = .all
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 2),
-        GridItem(.flexible(), spacing: 2),
-        GridItem(.flexible(), spacing: 2)
-    ]
+    private let pageSize = 12
 
-    private var displayedPhotos: [PhotoData] {
-        activeFilter == .liked ? likedPhotos : allPhotos
+    private enum GalleryFilter {
+        case all, liked
     }
 
+    private var displayedPhotos: [PhotoData] {
+        activeFilter == .all ? allPhotos : likedPhotos
+    }
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 6),
+        GridItem(.flexible(), spacing: 6)
+    ]
+
+    // MARK: - Body
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Background
-                Color.black
-                    .ignoresSafeArea()
+        ZStack {
+            Color.black.ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    // Filter toggle
-                    Picker("Filter", selection: $activeFilter) {
-                        ForEach(GalleryFilter.allCases, id: \.self) { filter in
-                            Text(filter == .liked ? "Liked (\(likedPhotos.count))" : "All (\(allPhotos.count))")
-                                .tag(filter)
+            VStack(spacing: 0) {
+                // Custom header
+                headerView
+
+                if isLoading {
+                    Spacer()
+                    ProgressView()
+                        .tint(.white)
+                    Spacer()
+                } else if allPhotos.isEmpty {
+                    emptyStateView
+                } else {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            // Stats row
+                            statsRow
+
+                            // Share button
+                            if let code = event.joinCode {
+                                shareButton(code: code)
+                            }
+
+                            // Divider
+                            Rectangle()
+                                .fill(Color.white.opacity(0.08))
+                                .frame(height: 1)
+                                .padding(.horizontal, 16)
+
+                            // Filter tabs
+                            filterTabs
+
+                            // Photo grid
+                            photoGrid
                         }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-
-                    if isLoading {
-                        loadingView
-                    } else {
-                        photoGridView
+                        .padding(.top, 8)
+                        .padding(.bottom, 40)
                     }
                 }
-            }
-            .navigationTitle(event.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-
-                if let code = event.joinCode {
-                    ToolbarItem(placement: .primaryAction) {
-                        ShareLink(
-                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
-                            subject: Text(event.name),
-                            message: Text("Check out the photos from \(event.name)")
-                        ) {
-                            Image(systemName: "link")
-                                .font(.system(size: 15, weight: .medium))
-                        }
-                    }
-                }
-            }
-            .sheet(item: $selectedPhoto) { photo in
-                GalleryDetailView(
-                    photo: photo,
-                    eventId: event.id,
-                    onSave: {
-                        saveToPhotos(photo)
-                    }
-                )
-            }
-            .alert("Photo Saved", isPresented: $showingSaveAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(saveAlertMessage)
             }
         }
         .preferredColorScheme(.dark)
         .task {
             await loadPhotos()
         }
-    }
-
-    // MARK: - Subviews
-
-    private var loadingView: some View {
-        VStack {
-            Spacer()
-            ProgressView()
-                .tint(.white)
-            Spacer()
+        .sheet(item: $selectedPhoto) { photo in
+            GalleryDetailView(
+                photo: photo,
+                eventId: event.id,
+                onSave: { saveToPhotos(photo) }
+            )
+        }
+        .alert("Photo Saved", isPresented: $showingSaveAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveAlertMessage)
         }
     }
 
-    private var photoGridView: some View {
-        ScrollView {
-            if displayedPhotos.isEmpty {
-                emptyStateView
+    // MARK: - Header
+
+    private var headerView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Nav row
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
+                        .frame(width: 40, height: 40)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(Circle())
+                }
+
+                Spacer()
+            }
+
+            // Event name
+            Text(event.name)
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(.white)
+
+            // Meta info
+            HStack(spacing: 16) {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 12))
+                    Text("Ended")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.4))
+
+                HStack(spacing: 6) {
+                    Image(systemName: "person.2")
+                        .font(.system(size: 12))
+                    Text("\(event.memberCount) joined")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.4))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Stats
+
+    private var statsRow: some View {
+        HStack(spacing: 0) {
+            statItem(
+                value: "\(allPhotos.count)",
+                label: "Photos",
+                icon: "photo"
+            )
+
+            statItem(
+                value: "\(totalLikes)",
+                label: "Likes",
+                icon: "heart.fill"
+            )
+
+            statItem(
+                value: "\(event.memberCount)",
+                label: "People",
+                icon: "person.2"
+            )
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func statItem(value: String, label: String, icon: String) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.35))
+                Text(value)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.35))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Share Button
+
+    private func shareButton(code: String) -> some View {
+        let albumURL = URL(string: "https://yourmomento.app/album/\(code)")!
+
+        return ShareLink(
+            item: albumURL,
+            subject: Text(event.name),
+            message: Text("Check out the photos from \(event.name)!")
+        ) {
+            HStack(spacing: 8) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 14, weight: .medium))
+                Text("Share album")
+                    .font(.system(size: 15, weight: .medium))
+            }
+            .foregroundColor(.white.opacity(0.7))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+            )
+        }
+    }
+
+    // MARK: - Photo Grid
+
+    // MARK: - Filter Tabs
+
+    private var filterTabs: some View {
+        HStack(spacing: 24) {
+            filterTab("All", count: allPhotos.count, isActive: activeFilter == .all) {
+                withAnimation(.easeInOut(duration: 0.2)) { activeFilter = .all }
+            }
+            filterTab("Liked", count: likedPhotos.count, isActive: activeFilter == .liked) {
+                withAnimation(.easeInOut(duration: 0.2)) { activeFilter = .liked }
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func filterTab(_ label: String, count: Int, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Text("\(label) (\(count))")
+                    .font(.system(size: 14, weight: isActive ? .semibold : .medium))
+                    .foregroundColor(isActive ? .white : .white.opacity(0.4))
+
+                Rectangle()
+                    .fill(isActive ? Color.white : Color.clear)
+                    .frame(height: 1.5)
+            }
+        }
+    }
+
+    // MARK: - Photo Grid
+
+    private var photoGrid: some View {
+        Group {
+            if displayedPhotos.isEmpty && activeFilter == .liked {
+                VStack(spacing: 12) {
+                    Image(systemName: "heart.slash")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white.opacity(0.25))
+                    Text("No liked photos yet")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 60)
             } else {
-                LazyVGrid(columns: columns, spacing: 2) {
+                LazyVGrid(columns: columns, spacing: 6) {
                     ForEach(displayedPhotos) { photo in
-                        GalleryThumbnail(photo: photo)
+                        GalleryPhotoCell(photo: photo)
                             .onTapGesture {
                                 selectedPhoto = photo
                             }
+                            .onAppear {
+                                // Load more when near the end (All tab only — liked is loaded at once)
+                                if activeFilter == .all,
+                                   photo.id == allPhotos.last?.id,
+                                   hasMorePhotos,
+                                   !isLoadingMore {
+                                    Task { await loadMorePhotos() }
+                                }
+                            }
                     }
                 }
-                .padding(.horizontal, 2)
+                .padding(.horizontal, 6)
+
+                if isLoadingMore {
+                    ProgressView()
+                        .tint(.white.opacity(0.5))
+                        .padding(.vertical, 16)
+                }
             }
         }
     }
+
+    // MARK: - Empty State
 
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: activeFilter == .liked ? "heart.slash" : "photo.on.rectangle.angled")
+            Spacer()
+            Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 48))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(.white.opacity(0.3))
 
-            Text(activeFilter == .liked ? "No liked photos yet" : "No photos yet")
-                .font(.headline)
-                .foregroundColor(.white.opacity(0.6))
-
-            if activeFilter == .liked {
-                Text("Like photos during reveal to save them here")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.4))
-            }
+            Text("No photos yet")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, 100)
     }
 
-    // MARK: - Actions
+    // MARK: - Data Loading
 
     private func loadPhotos() async {
         guard let eventUUID = UUID(uuidString: event.id) else {
@@ -164,23 +326,54 @@ struct LikedGalleryView: View {
         }
 
         do {
+            // Load first page of all photos + liked photos + total likes in parallel
+            async let firstPageResult = supabaseManager.fetchPhotosForRevealPaginated(
+                eventId: event.id, offset: 0, limit: pageSize
+            )
             async let likedResult = supabaseManager.getLikedPhotos(eventId: eventUUID)
-            async let allResult = supabaseManager.getPhotos(for: event.id)
+            async let totalLikesResult = supabaseManager.getTotalLikeCount(eventId: eventUUID)
 
-            let (liked, all) = try await (likedResult, allResult)
+            let (firstPage, liked, likes) = try await (firstPageResult, likedResult, totalLikesResult)
 
             await MainActor.run {
+                allPhotos = firstPage.photos
+                hasMorePhotos = firstPage.hasMore
+                currentOffset = firstPage.photos.count
                 likedPhotos = liked
-                allPhotos = all
+                totalLikes = likes
                 isLoading = false
             }
         } catch {
-            debugLog("❌ Failed to load photos: \(error)")
+            debugLog("❌ Failed to load gallery photos: \(error)")
             await MainActor.run {
                 isLoading = false
             }
         }
     }
+
+    private func loadMorePhotos() async {
+        isLoadingMore = true
+
+        do {
+            let result = try await supabaseManager.fetchPhotosForRevealPaginated(
+                eventId: event.id, offset: currentOffset, limit: pageSize
+            )
+
+            await MainActor.run {
+                allPhotos.append(contentsOf: result.photos)
+                hasMorePhotos = result.hasMore
+                currentOffset = allPhotos.count
+                isLoadingMore = false
+            }
+        } catch {
+            debugLog("❌ Failed to load more photos: \(error)")
+            await MainActor.run {
+                isLoadingMore = false
+            }
+        }
+    }
+
+    // MARK: - Save to Photos
 
     private func saveToPhotos(_ photo: PhotoData) {
         guard let url = photo.url else { return }
@@ -189,12 +382,9 @@ struct LikedGalleryView: View {
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard let image = UIImage(data: data) else {
-                    throw NSError(domain: "LikedGalleryView", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create image"])
+                    throw NSError(domain: "Gallery", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create image"])
                 }
 
-                let saveImage = image
-
-                // Request photo library access
                 let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
                 guard status == .authorized || status == .limited else {
                     await MainActor.run {
@@ -204,9 +394,8 @@ struct LikedGalleryView: View {
                     return
                 }
 
-                // Save to camera roll
                 try await PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.creationRequestForAsset(from: saveImage)
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
                 }
 
                 await MainActor.run {
@@ -214,7 +403,6 @@ struct LikedGalleryView: View {
                     saveAlertMessage = "Saved to camera roll"
                     showingSaveAlert = true
 
-                    // Track photo download
                     AnalyticsManager.shared.track(.photoDownloaded, properties: [
                         "event_id": event.id,
                         "has_watermark": false
@@ -228,40 +416,47 @@ struct LikedGalleryView: View {
             }
         }
     }
-
 }
 
-// MARK: - Gallery Thumbnail
+// MARK: - Gallery Photo Cell
 
-struct GalleryThumbnail: View {
+private struct GalleryPhotoCell: View {
     let photo: PhotoData
+    @State private var image: UIImage?
 
     var body: some View {
-        AsyncImage(url: photo.url) { phase in
-            switch phase {
-            case .empty:
-                Rectangle()
-                    .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
-                    .aspectRatio(1, contentMode: .fill)
-                    .overlay(ProgressView().tint(.white))
-            case .success(let image):
-                image
+        ZStack(alignment: .topLeading) {
+            // Photo
+            if let image {
+                Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                    .aspectRatio(1, contentMode: .fill)
+                    .frame(minHeight: 200, maxHeight: 200)
                     .clipped()
-            case .failure:
+            } else {
                 Rectangle()
-                    .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
-                    .aspectRatio(1, contentMode: .fill)
+                    .fill(Color(white: 0.12))
+                    .frame(minHeight: 200, maxHeight: 200)
                     .overlay(
-                        Image(systemName: "photo")
-                            .foregroundColor(.white.opacity(0.3))
+                        ProgressView()
+                            .tint(.white.opacity(0.3))
                     )
-            @unknown default:
-                EmptyView()
             }
+
+            // Photographer name overlay
+            if let name = photo.photographerName, !name.isEmpty {
+                Text(name)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.6), radius: 4, x: 0, y: 1)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 10)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .task(id: photo.id) {
+            guard image == nil, let url = photo.url else { return }
+            image = await ImageCacheManager.shared.image(for: url, cacheId: photo.id)
         }
     }
 }
@@ -282,7 +477,9 @@ struct GalleryDetailView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                VStack {
+                VStack(spacing: 0) {
+                    Spacer()
+
                     // Photo
                     AsyncImage(url: photo.url) { phase in
                         switch phase {
@@ -295,59 +492,83 @@ struct GalleryDetailView: View {
                         case .failure:
                             Image(systemName: "photo")
                                 .font(.system(size: 48))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(.white.opacity(0.3))
                         @unknown default:
                             EmptyView()
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity)
+
+                    Spacer()
 
                     // Photo info
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(formatFilmDate(photo.capturedAt))
-                                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                .foregroundColor(Color(red: 1.0, green: 0.42, blue: 0.21))
+                    VStack(spacing: 16) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(formatFilmDate(photo.capturedAt))
+                                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                    .foregroundColor(.white.opacity(0.5))
 
-                            if let photographer = photo.photographerName {
-                                Text("by \(photographer)")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.6))
+                                if let photographer = photo.photographerName {
+                                    Text("by \(photographer)")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
                             }
+                            Spacer()
                         }
-                        Spacer()
+
+                        // Action buttons
+                        HStack(spacing: 12) {
+                            Button {
+                                onSave()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.down.circle")
+                                        .font(.system(size: 15, weight: .medium))
+                                    Text("Save")
+                                        .font(.system(size: 15, weight: .medium))
+                                }
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.white.opacity(0.06))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                        )
+                                )
+                            }
+
+                            Button {
+                                loadImageForSharing()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 15, weight: .medium))
+                                    Text("Share")
+                                        .font(.system(size: 15, weight: .medium))
+                                }
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.white.opacity(0.06))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                        )
+                                )
+                            }
+
+                            Spacer()
+                        }
                     }
-                    .padding()
-
-                    // Action buttons
-                    HStack(spacing: 24) {
-                        Button {
-                            onSave()
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: "arrow.down.circle.fill")
-                                    .font(.system(size: 24))
-                                Text("Save")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.white)
-                            .frame(width: 80)
-                        }
-
-                        Button {
-                            loadImageForSharing()
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 24))
-                                Text("Share")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.white)
-                            .frame(width: 80)
-                        }
-                    }
-                    .padding(.bottom, 32)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 40)
                 }
             }
             .toolbar {
@@ -355,9 +576,9 @@ struct GalleryDetailView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.white.opacity(0.7))
-                            .font(.title2)
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
                     }
                 }
             }
@@ -378,10 +599,8 @@ struct GalleryDetailView: View {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 guard let image = UIImage(data: data) else { return }
 
-                let finalImage = image
-
                 await MainActor.run {
-                    shareImage = finalImage
+                    shareImage = image
                     showShareSheet = true
                 }
             } catch {
@@ -422,11 +641,12 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
 
 #Preview {
     let event = Event(
-        name: "Test Event",
+        name: "Sopranos Party",
         coverEmoji: "🎉",
         startsAt: Date().addingTimeInterval(-86400),
         endsAt: Date().addingTimeInterval(-43200),
         releaseAt: Date().addingTimeInterval(-3600),
+        memberCount: 5,
         joinCode: "TEST"
     )
 

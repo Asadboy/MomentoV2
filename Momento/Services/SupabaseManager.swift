@@ -919,6 +919,27 @@ class SupabaseManager: ObservableObject {
             .count ?? 0
     }
 
+    /// Get total likes across ALL users for an event's photos
+    func getTotalLikeCount(eventId: UUID) async throws -> Int {
+        struct PhotoId: Decodable { let id: UUID }
+        let photos: [PhotoId] = try await client
+            .from("photos")
+            .select("id")
+            .eq("event_id", value: eventId.uuidString)
+            .execute()
+            .value
+
+        let photoIds = photos.map { $0.id.uuidString }
+        if photoIds.isEmpty { return 0 }
+
+        return try await client
+            .from("photo_likes")
+            .select("*", head: true, count: .exact)
+            .in("photo_id", values: photoIds)
+            .execute()
+            .count ?? 0
+    }
+
     // MARK: - Profile Stats
 
     /// Get all stats for the user's profile
