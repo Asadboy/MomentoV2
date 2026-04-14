@@ -384,11 +384,11 @@ struct OnboardingScreen3: View {
             HapticsManager.shared.light()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
-            withAnimation(.easeOut(duration: 1.2)) { blurOpacity1 = 0 }
+            withAnimation(.easeOut(duration: 2.2)) { blurOpacity1 = 0 }
             HapticsManager.shared.light()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
-            withAnimation(.easeOut(duration: 1.2)) { blurOpacity2 = 0 }
+            withAnimation(.easeOut(duration: 2.2)) { blurOpacity2 = 0 }
             HapticsManager.shared.light()
         }
 
