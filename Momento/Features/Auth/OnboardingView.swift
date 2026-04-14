@@ -16,56 +16,56 @@ struct OnboardingView: View {
     @State private var currentPage = 0
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack {
             Color.black.ignoresSafeArea()
 
             TabView(selection: $currentPage) {
-                OnboardingScreen1()
-                    .overlay(alignment: .bottom) { pageButton(title: "Next", index: 0) }
-                    .tag(0)
-
-                OnboardingScreen2()
-                    .overlay(alignment: .bottom) { pageButton(title: "Next", index: 1) }
-                    .tag(1)
-
-                OnboardingScreen3()
-                    .overlay(alignment: .bottom) { pageButton(title: "Get Started", index: 2) }
-                    .tag(2)
+                OnboardingScreen1().tag(0)
+                OnboardingScreen2().tag(1)
+                OnboardingScreen3().tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
 
-            Button { onComplete() } label: {
-                Text("Skip")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(.gray)
+            // Button lives outside the TabView so it always gets screen width
+            VStack {
+                Spacer()
+                Button {
+                    if currentPage < 2 {
+                        withAnimation(.easeInOut(duration: 0.3)) { currentPage += 1 }
+                    } else {
+                        onComplete()
+                    }
+                } label: {
+                    Text(currentPage == 2 ? "Get Started" : "Next")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(RoundedRectangle(cornerRadius: 28).fill(Color.white.opacity(0.12)))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 28)
+                                .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                        )
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, 56)
             }
-            .padding(.trailing, 24)
+
+            // Skip button
+            VStack {
+                HStack {
+                    Spacer()
+                    Button { onComplete() } label: {
+                        Text("Skip")
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.trailing, 24)
+                }
+                Spacer()
+            }
             .padding(.top, 16)
         }
-    }
-
-    @ViewBuilder
-    private func pageButton(title: String, index: Int) -> some View {
-        Button {
-            if index < 2 {
-                withAnimation(.easeInOut(duration: 0.3)) { currentPage = index + 1 }
-            } else {
-                onComplete()
-            }
-        } label: {
-            Text(title)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(RoundedRectangle(cornerRadius: 28).fill(Color.white.opacity(0.12)))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28)
-                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                )
-        }
-        .padding(.horizontal, 40)
-        .padding(.bottom, 40)
     }
 }
 
