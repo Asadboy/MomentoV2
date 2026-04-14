@@ -191,18 +191,53 @@ struct ContentView: View {
                         Spacer()
                     } else if events.isEmpty {
                         Spacer()
-                        VStack(spacing: 20) {
-                            Image(systemName: "camera.metering.center.weighted")
-                                .font(.system(size: 60))
-                                .foregroundColor(.white.opacity(0.5))
+                        VStack(spacing: 32) {
+                            VStack(spacing: 12) {
+                                Text("📷")
+                                    .font(.system(size: 56))
 
-                            Text("No momentos yet")
-                                .font(.title2)
-                                .foregroundColor(.white)
+                                Text("Start your first\nMomento")
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .multilineTextAlignment(.center)
+                                    .lineSpacing(2)
 
-                            Text("Create or join an event to get started")
-                                .font(.body)
-                                .foregroundColor(.white.opacity(0.7))
+                                Text("10 shots. No retakes. Revealed together.")
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundColor(.white.opacity(0.4))
+                                    .multilineTextAlignment(.center)
+                            }
+
+                            VStack(spacing: 12) {
+                                Button {
+                                    showAddSheet = true
+                                } label: {
+                                    Text("Create a Momento")
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .foregroundColor(.black)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 56)
+                                        .background(Color.white)
+                                        .cornerRadius(28)
+                                }
+
+                                Button {
+                                    showJoinSheet = true
+                                } label: {
+                                    Text("Join with a code")
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 56)
+                                        .background(Color.white.opacity(0.08))
+                                        .cornerRadius(28)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 28)
+                                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                        )
+                                }
+                            }
+                            .padding(.horizontal, 40)
                         }
                         Spacer()
                     } else {
@@ -473,19 +508,17 @@ struct ContentView: View {
     private func handleEventTap(_ event: Event) {
         switch event.currentState(at: now) {
         case .upcoming:
-            // Event hasn't started yet - show info message
-            errorMessage = "This momento starts in \(formatTimeUntil(event.startsAt))"
-            showErrorAlert = true
-            
+            // Event hasn't started yet — nothing to do
+            break
+
         case .live:
             // Event is live - open camera for photo capture
             selectedEventForPhoto = event
             showPhotoCapture = true
-            
+
         case .processing:
-            // Photos are developing - show countdown to reveal
-            errorMessage = "Photos are developing! They'll be ready in \(formatTimeUntil(event.releaseAt))"
-            showErrorAlert = true
+            // Photos are developing — nothing to do, card already shows countdown
+            break
             
         case .revealed:
             // Check if user has already completed the reveal swipe

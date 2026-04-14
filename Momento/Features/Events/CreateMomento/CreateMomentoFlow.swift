@@ -19,7 +19,6 @@ struct CreateMomentoFlow: View {
     @State private var startsAt = Date().addingTimeInterval(3600) // 1 hour from now
     @State private var endsAt = Date().addingTimeInterval(13 * 3600) // 12 hours after start
     @State private var releaseAt = Date().addingTimeInterval(25 * 3600) // 24 hours after start
-    @State private var selectedFilter: PhotoFilter = .br
     @State private var joinCode = ""
     
     // State
@@ -156,8 +155,7 @@ struct CreateMomentoFlow: View {
                 // Track momento creation
                 AnalyticsManager.shared.track(.momentoCreated, properties: [
                     "event_id": event.id,
-                    "event_name": event.name,
-                    "filter": selectedFilter.rawValue
+                    "event_name": event.name
                 ])
 
                 await MainActor.run {
