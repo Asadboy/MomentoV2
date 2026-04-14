@@ -287,9 +287,9 @@ struct OnboardingScreen2: View {
 
 struct OnboardingScreen3: View {
     @State private var titleVisible = false
-    @State private var blur0: Double = 20
-    @State private var blur1: Double = 20
-    @State private var blur2: Double = 20
+    @State private var blur0: Double = 30
+    @State private var blur1: Double = 30
+    @State private var blur2: Double = 30
     @State private var photoVisible: [Bool] = [false, false, false]
     @State private var line1Visible = false
     @State private var line2Visible = false
@@ -297,7 +297,7 @@ struct OnboardingScreen3: View {
 
     private let stackPhotos: [(name: String, rotation: Double, offset: CGSize)] = [
         ("ob_p3", -16.0, CGSize(width: -120, height: 12)),
-        ("ob_bg",  14.0, CGSize(width:  120, height: -8)),
+        ("ob_p5",  14.0, CGSize(width:  120, height: -8)),
         ("ob_p4",   0.0, CGSize(width:    0, height:  0)),
     ]
 
@@ -378,6 +378,7 @@ struct OnboardingScreen3: View {
             .scaledToFill()
             .frame(width: 150, height: 200)
             .blur(radius: blur)
+            .animation(.easeOut(duration: 1.0), value: blur)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.5), radius: 18, x: 0, y: 8)
             .rotationEffect(.degrees(stackPhotos[index].rotation))
@@ -400,26 +401,26 @@ struct OnboardingScreen3: View {
 
         // Photos fan in blurred, then unveil one by one
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { photoVisible[0] = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.62) { photoVisible[1] = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.74) { photoVisible[2] = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) { photoVisible[1] = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { photoVisible[2] = true }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-            withAnimation(.easeOut(duration: 0.9)) { blur0 = 0 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+            blur0 = 0
             HapticsManager.shared.light()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
-            withAnimation(.easeOut(duration: 0.9)) { blur1 = 0 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
+            blur1 = 0
             HapticsManager.shared.light()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            withAnimation(.easeOut(duration: 0.9)) { blur2 = 0 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
+            blur2 = 0
             HapticsManager.shared.light()
         }
 
         // Sub-lines after all photos clear
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.1) { line1Visible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) { line2Visible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.7) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) { line1Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { line2Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
             line3Visible = true
             HapticsManager.shared.light()
         }
