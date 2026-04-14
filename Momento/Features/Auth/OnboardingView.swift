@@ -287,26 +287,18 @@ struct OnboardingScreen2: View {
 
 struct OnboardingScreen3: View {
     @State private var titleVisible = false
-    @State private var photo0Blurred = true
-    @State private var photo1Blurred = true
-    @State private var photo2Blurred = true
+    @State private var blurOpacity0: Double = 1
+    @State private var blurOpacity1: Double = 1
+    @State private var blurOpacity2: Double = 1
     @State private var photoVisible: [Bool] = [false, false, false]
     @State private var line1Visible = false
     @State private var line2Visible = false
     @State private var line3Visible = false
 
-    // ob_p4 left, ob_p5 right, ob_p6 center/front (ob_p3 removed — same event as ob_p2/DJ)
-    private let stackPhotos: [(name: String, rotation: Double, offset: CGSize)] = [
-        ("ob_p4",  10.0, CGSize(width: -120, height: 12)),
-        ("ob_p5",  14.0, CGSize(width:  120, height: -8)),
-        ("ob_p6", -10.0, CGSize(width:    0, height:  0)),
-    ]
-
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            // Glow orb fades in as photos reveal
             RadialGradient(
                 colors: [
                     Color(red: 0.5, green: 0.0, blue: 0.8).opacity(0.18),
@@ -335,14 +327,16 @@ struct OnboardingScreen3: View {
 
                 Spacer().frame(height: 36)
 
-                // Photos fanned out — blurred overlay fades out via withAnimation+transition
                 ZStack {
-                    fanCard(name: stackPhotos[0].name, rotation: stackPhotos[0].rotation,
-                            offset: stackPhotos[0].offset, visible: photoVisible[0], blurred: photo0Blurred)
-                    fanCard(name: stackPhotos[1].name, rotation: stackPhotos[1].rotation,
-                            offset: stackPhotos[1].offset, visible: photoVisible[1], blurred: photo1Blurred)
-                    fanCard(name: stackPhotos[2].name, rotation: stackPhotos[2].rotation,
-                            offset: stackPhotos[2].offset, visible: photoVisible[2], blurred: photo2Blurred)
+                    // Card 0 — left (ob_p4)
+                    OnboardingPhotoCard(name: "ob_p4", rotation: 10, offset: CGSize(width: -120, height: 12),
+                                        visible: photoVisible[0], blurOpacity: blurOpacity0)
+                    // Card 1 — right (ob_p5)
+                    OnboardingPhotoCard(name: "ob_p5", rotation: 14, offset: CGSize(width: 120, height: -8),
+                                        visible: photoVisible[1], blurOpacity: blurOpacity1)
+                    // Card 2 — center/front (ob_p6)
+                    OnboardingPhotoCard(name: "ob_p6", rotation: -10, offset: CGSize(width: 0, height: 0),
+                                        visible: photoVisible[2], blurOpacity: blurOpacity2)
                 }
                 .frame(height: 260)
 
@@ -375,15 +369,54 @@ struct OnboardingScreen3: View {
         .onAppear { startAnimation() }
     }
 
-    private func fanCard(name: String, rotation: Double, offset: CGSize, visible: Bool, blurred: Bool) -> some View {
+    private func startAnimation() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            titleVisible = true
+            HapticsManager.shared.medium()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5)  { photoVisible[0] = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) { photoVisible[1] = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8)  { photoVisible[2] = true }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+            withAnimation(.easeOut(duration: 1.2)) { blurOpacity0 = 0 }
+            HapticsManager.shared.light()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
+            withAnimation(.easeOut(duration: 1.2)) { blurOpacity1 = 0 }
+            HapticsManager.shared.light()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
+            withAnimation(.easeOut(duration: 1.2)) { blurOpacity2 = 0 }
+            HapticsManager.shared.light()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) { line1Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { line2Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
+            line3Visible = true
+            HapticsManager.shared.light()
+        }
+    }
+}
+
+// Dedicated View struct — SwiftUI can properly diff its body and animate
+// the blurOpacity Double change when withAnimation drives it from parent.
+private struct OnboardingPhotoCard: View {
+    let name: String
+    let rotation: Double
+    let offset: CGSize
+    let visible: Bool
+    let blurOpacity: Double
+
+    var body: some View {
         ZStack {
             Image(name).resizable().scaledToFill().frame(width: 150, height: 200)
-            // Blurred overlay — removed via withAnimation+transition so opacity definitely animates
-            if blurred {
-                Image(name).resizable().scaledToFill().frame(width: 150, height: 200)
-                    .blur(radius: 20)
-                    .transition(.opacity)
-            }
+            // Blurred overlay — opacity animates 1→0 driven by withAnimation in parent
+            Image(name).resizable().scaledToFill().frame(width: 150, height: 200)
+                .blur(radius: 20)
+                .opacity(blurOpacity)
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.5), radius: 18, x: 0, y: 8)
@@ -392,40 +425,6 @@ struct OnboardingScreen3: View {
         .opacity(visible ? 1 : 0)
         .scaleEffect(visible ? 1 : 0.9)
         .animation(.spring(response: 0.55, dampingFraction: 0.75), value: visible)
-    }
-
-    private func startAnimation() {
-        // Title first
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            titleVisible = true
-            HapticsManager.shared.medium()
-        }
-
-        // Photos fan in blurred, then unveil one by one
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { photoVisible[0] = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) { photoVisible[1] = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { photoVisible[2] = true }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-            withAnimation(.easeOut(duration: 1.2)) { photo0Blurred = false }
-            HapticsManager.shared.light()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
-            withAnimation(.easeOut(duration: 1.2)) { photo1Blurred = false }
-            HapticsManager.shared.light()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
-            withAnimation(.easeOut(duration: 1.2)) { photo2Blurred = false }
-            HapticsManager.shared.light()
-        }
-
-        // Sub-lines after all photos clear
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) { line1Visible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { line2Visible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
-            line3Visible = true
-            HapticsManager.shared.light()
-        }
     }
 }
 
