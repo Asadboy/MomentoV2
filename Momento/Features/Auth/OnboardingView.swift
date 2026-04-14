@@ -22,7 +22,7 @@ struct OnboardingView: View {
             TabView(selection: $currentPage) {
                 OnboardingScreen1().tag(0)
                 OnboardingScreen2().tag(1)
-                OnboardingScreen3().tag(2)
+                OnboardingScreen3(isActive: currentPage == 2).tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
 
@@ -286,6 +286,7 @@ struct OnboardingScreen2: View {
 // MARK: - Screen 3: The Payoff
 
 struct OnboardingScreen3: View {
+    let isActive: Bool
     @State private var titleVisible = false
     @State private var blurOpacity0: Double = 1
     @State private var blurOpacity1: Double = 1
@@ -366,7 +367,9 @@ struct OnboardingScreen3: View {
                 Spacer().frame(height: 80)
             }
         }
-        .onAppear { startAnimation() }
+        .onChange(of: isActive) { active in
+            if active { startAnimation() }
+        }
     }
 
     private func startAnimation() {
