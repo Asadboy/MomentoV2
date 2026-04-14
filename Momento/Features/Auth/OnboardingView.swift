@@ -55,11 +55,14 @@ struct OnboardingView: View {
         } label: {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(Color.white)
-                .cornerRadius(28)
+                .background(RoundedRectangle(cornerRadius: 28).fill(Color.white.opacity(0.12)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28)
+                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                )
         }
         .padding(.horizontal, 40)
         .padding(.bottom, 40)
@@ -78,10 +81,14 @@ struct OnboardingScreen1: View {
 
     var body: some View {
         ZStack {
+            Color.black.ignoresSafeArea()
+
             // Real photo background — very dark, blurred, just texture
             Image("ob_bg")
                 .resizable()
                 .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
                 .ignoresSafeArea()
                 .blur(radius: 24)
                 .opacity(bgVisible ? 0.22 : 0)
@@ -243,12 +250,8 @@ struct OnboardingScreen2: View {
             .resizable()
             .scaledToFill()
             .frame(width: 110, height: 148)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .padding(6)
-            .padding(.bottom, 24)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .shadow(color: .black.opacity(0.5), radius: 12, x: 0, y: 6)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .shadow(color: .black.opacity(0.6), radius: 16, x: 0, y: 8)
     }
 
     private func startAnimation() {
@@ -284,43 +287,43 @@ struct OnboardingScreen2: View {
 
 struct OnboardingScreen3: View {
     @State private var titleVisible = false
-    @State private var photosFanned = false
+    @State private var blur0: Double = 20
+    @State private var blur1: Double = 20
+    @State private var blur2: Double = 20
+    @State private var photoVisible: [Bool] = [false, false, false]
     @State private var line1Visible = false
     @State private var line2Visible = false
     @State private var line3Visible = false
 
     private let stackPhotos: [(name: String, rotation: Double, offset: CGSize)] = [
-        ("ob_p3", -12.0, CGSize(width: -30, height: 8)),
-        ("ob_bg",  4.0,  CGSize(width: 14,  height: -4)),
-        ("ob_p4",  0.0,  CGSize(width: 0,   height: 0)),
+        ("ob_p3", -16.0, CGSize(width: -120, height: 12)),
+        ("ob_bg",  14.0, CGSize(width:  120, height: -8)),
+        ("ob_p4",   0.0, CGSize(width:    0, height:  0)),
     ]
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            // Glow orb — only screen it earns its place
-            if photosFanned {
-                RadialGradient(
-                    colors: [
-                        Color(red: 0.5, green: 0.0, blue: 0.8).opacity(0.18),
-                        Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.06),
-                        .clear
-                    ],
-                    center: .center,
-                    startRadius: 20,
-                    endRadius: 280
-                )
-                .ignoresSafeArea()
-                .offset(y: -60)
-                .opacity(photosFanned ? 1 : 0)
-                .animation(.easeIn(duration: 1.0), value: photosFanned)
-            }
+            // Glow orb fades in as photos reveal
+            RadialGradient(
+                colors: [
+                    Color(red: 0.5, green: 0.0, blue: 0.8).opacity(0.18),
+                    Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.06),
+                    .clear
+                ],
+                center: .center,
+                startRadius: 20,
+                endRadius: 280
+            )
+            .ignoresSafeArea()
+            .offset(y: -60)
+            .opacity(line1Visible ? 1 : 0)
+            .animation(.easeIn(duration: 1.2), value: line1Visible)
 
             VStack(spacing: 0) {
                 Spacer()
 
-                // Title
                 Text("Everyone reveals\ntogether")
                     .font(.system(size: 32, weight: .bold))
                     .foregroundColor(.white)
@@ -331,33 +334,16 @@ struct OnboardingScreen3: View {
 
                 Spacer().frame(height: 36)
 
-                // Fanning photo stack
+                // Photos fanned out, each starts blurred and unveils in sequence
                 ZStack {
-                    ForEach(0..<3, id: \.self) { i in
-                        Image(stackPhotos[i].name)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 140, height: 188)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .padding(8)
-                            .padding(.bottom, 28)
-                            .background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .shadow(color: .black.opacity(0.45), radius: 16, x: 0, y: 8)
-                            .rotationEffect(.degrees(photosFanned ? stackPhotos[i].rotation : 0))
-                            .offset(photosFanned ? stackPhotos[i].offset : .zero)
-                            .animation(
-                                .spring(response: 0.6, dampingFraction: 0.7)
-                                .delay(Double(i) * 0.08),
-                                value: photosFanned
-                            )
-                    }
+                    photoCard(index: 0, blur: blur0)
+                    photoCard(index: 1, blur: blur1)
+                    photoCard(index: 2, blur: blur2)
                 }
-                .frame(height: 240)
+                .frame(height: 260)
 
                 Spacer().frame(height: 36)
 
-                // Sub-lines animate in one by one
                 VStack(spacing: 6) {
                     Text("The blurry ones.")
                         .opacity(line1Visible ? 1 : 0)
@@ -385,17 +371,55 @@ struct OnboardingScreen3: View {
         .onAppear { startAnimation() }
     }
 
+    @ViewBuilder
+    private func photoCard(index: Int, blur: Double) -> some View {
+        Image(stackPhotos[index].name)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 150, height: 200)
+            .blur(radius: blur)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.5), radius: 18, x: 0, y: 8)
+            .rotationEffect(.degrees(stackPhotos[index].rotation))
+            .offset(stackPhotos[index].offset)
+            .opacity(photoVisible[index] ? 1 : 0)
+            .scaleEffect(photoVisible[index] ? 1 : 0.9)
+            .animation(
+                .spring(response: 0.55, dampingFraction: 0.75)
+                .delay(Double(index) * 0.1),
+                value: photoVisible[index]
+            )
+    }
+
     private func startAnimation() {
+        // Title first
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             titleVisible = true
             HapticsManager.shared.medium()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            photosFanned = true
+
+        // Photos fan in blurred, then unveil one by one
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { photoVisible[0] = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.62) { photoVisible[1] = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.74) { photoVisible[2] = true }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation(.easeOut(duration: 0.9)) { blur0 = 0 }
+            HapticsManager.shared.light()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { line1Visible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { line2Visible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
+            withAnimation(.easeOut(duration: 0.9)) { blur1 = 0 }
+            HapticsManager.shared.light()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            withAnimation(.easeOut(duration: 0.9)) { blur2 = 0 }
+            HapticsManager.shared.light()
+        }
+
+        // Sub-lines after all photos clear
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.1) { line1Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) { line2Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.7) {
             line3Visible = true
             HapticsManager.shared.light()
         }
