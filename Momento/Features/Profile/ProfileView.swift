@@ -19,6 +19,7 @@ struct ProfileView: View {
     @State private var showLogoutConfirmation = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = true
 
     var body: some View {
         NavigationStack {
@@ -40,6 +41,15 @@ struct ProfileView: View {
                             }
 
                             Spacer(minLength: AppTheme.Spacing.ctaBottom)
+
+                            #if DEBUG
+                            Button("Replay Onboarding") {
+                                hasSeenOnboarding = false
+                                dismiss()
+                            }
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.3))
+                            #endif
 
                             signOutButton
                         }

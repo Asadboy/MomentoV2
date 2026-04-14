@@ -1,0 +1,70 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Supabase",
+        "repositoryURL": "https://github.com/supabase-community/supabase-swift",
+        "state": {
+          "branch": null,
+          "revision": "0f8bf83b55709e5530cd842a0185b9abba7a3c6c",
+          "version": "2.41.1"
+        }
+      },
+      {
+        "package": "swift-asn1",
+        "repositoryURL": "https://github.com/apple/swift-asn1.git",
+        "state": {
+          "branch": null,
+          "revision": "810496cf121e525d660cd0ea89a758740476b85f",
+          "version": "1.5.1"
+        }
+      },
+      {
+        "package": "swift-clocks",
+        "repositoryURL": "https://github.com/pointfreeco/swift-clocks",
+        "state": {
+          "branch": null,
+          "revision": "cc46202b53476d64e824e0b6612da09d84ffde8e",
+          "version": "1.0.6"
+        }
+      },
+      {
+        "package": "swift-concurrency-extras",
+        "repositoryURL": "https://github.com/pointfreeco/swift-concurrency-extras",
+        "state": {
+          "branch": null,
+          "revision": "5a3825302b1a0d744183200915a47b508c828e6f",
+          "version": "1.3.2"
+        }
+      },
+      {
+        "package": "swift-crypto",
+        "repositoryURL": "https://github.com/apple/swift-crypto.git",
+        "state": {
+          "branch": null,
+          "revision": "fa308c07a6fa04a727212d793e761460e41049c3",
+          "version": "4.3.0"
+        }
+      },
+      {
+        "package": "swift-http-types",
+        "repositoryURL": "https://github.com/apple/swift-http-types.git",
+        "state": {
+          "branch": null,
+          "revision": "45eb0224913ea070ec4fba17291b9e7ecf4749ca",
+          "version": "1.5.1"
+        }
+      },
+      {
+        "package": "xctest-dynamic-overlay",
+        "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
+        "state": {
+          "branch": null,
+          "revision": "dfd70507def84cb5fb821278448a262c6ff2bbad",
+          "version": "1.9.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

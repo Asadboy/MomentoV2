@@ -119,22 +119,15 @@ struct AuthenticationRootView: View {
                 await MainActor.run {
                     if needsUsername {
                         appState = .needsUsername
-                    } else if !hasSeenOnboarding  {
-                        appState = .needsOnboarding
                     } else {
-                        appState = .authenticated
+                        appState = .needsOnboarding
                     }
                     isCheckingUsername = false
                 }
             } catch {
                 debugLog("❌ Failed to check username status: \(error)")
-                // Default to authenticated to avoid blocking user
                 await MainActor.run {
-                    if !hasSeenOnboarding {
-                        appState = .needsOnboarding
-                    } else {
-                        appState = .authenticated
-                    }
+                    appState = .needsOnboarding
                     isCheckingUsername = false
                 }
             }

@@ -2,7 +2,10 @@
 //  OnboardingView.swift
 //  Momento
 //
-//  3-screen onboarding: dots ring → logo, 10 shots mechanic, reveal payoff.
+//  3-screen onboarding using real beta photos.
+//  Screen 1: dots → logo over moody background
+//  Screen 2: 10 dots + real photo prints → "10 Shots. No retakes."
+//  Screen 3: photo fan reveal → "Everyone reveals together"
 //
 
 import SwiftUI
@@ -31,10 +34,7 @@ struct OnboardingView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
 
-            // Skip button
-            Button {
-                onComplete()
-            } label: {
+            Button { onComplete() } label: {
                 Text("Skip")
                     .font(.system(size: 15, weight: .regular))
                     .foregroundColor(.gray)
@@ -48,9 +48,7 @@ struct OnboardingView: View {
     private func pageButton(title: String, index: Int) -> some View {
         Button {
             if index < 2 {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    currentPage = index + 1
-                }
+                withAnimation(.easeInOut(duration: 0.3)) { currentPage = index + 1 }
             } else {
                 onComplete()
             }
@@ -76,50 +74,63 @@ struct OnboardingScreen1: View {
     @State private var dotsFaded = false
     @State private var logoVisible = false
     @State private var subtitleVisible = false
+    @State private var bgVisible = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            Spacer()
+        ZStack {
+            // Real photo background — very dark, blurred, just texture
+            Image("ob_bg")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .blur(radius: 24)
+                .opacity(bgVisible ? 0.22 : 0)
+                .animation(.easeIn(duration: 1.2).delay(0.8), value: bgVisible)
 
-            ZStack {
-                // 10 dots in a ring
-                ForEach(0..<10, id: \.self) { index in
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 8, height: 8)
-                        .offset(
-                            x: dotsConverged ? 0 : dotOffset(for: index).x,
-                            y: dotsConverged ? 0 : dotOffset(for: index).y
-                        )
-                        .opacity(dotsVisible[index] ? (dotsFaded ? 0 : 1) : 0)
-                        .scaleEffect(dotsVisible[index] ? (dotsConverged ? 0.3 : 1) : 0)
-                        .animation(.easeOut(duration: 0.25), value: dotsVisible[index])
-                        .animation(.easeInOut(duration: 0.4), value: dotsConverged)
-                        .animation(.easeOut(duration: 0.4), value: dotsFaded)
+            // Dark overlay to keep legibility
+            Color.black.opacity(0.55).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Spacer()
+                Spacer()
+
+                ZStack {
+                    ForEach(0..<10, id: \.self) { index in
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 8, height: 8)
+                            .offset(
+                                x: dotsConverged ? 0 : dotOffset(for: index).x,
+                                y: dotsConverged ? 0 : dotOffset(for: index).y
+                            )
+                            .opacity(dotsVisible[index] ? (dotsFaded ? 0 : 1) : 0)
+                            .scaleEffect(dotsVisible[index] ? (dotsConverged ? 0.3 : 1) : 0)
+                            .animation(.easeOut(duration: 0.25), value: dotsVisible[index])
+                            .animation(.easeInOut(duration: 0.4), value: dotsConverged)
+                            .animation(.easeOut(duration: 0.4), value: dotsFaded)
+                    }
+
+                    Text("Momento")
+                        .font(.custom("RalewayDots-Regular", size: 56))
+                        .foregroundColor(.white)
+                        .opacity(logoVisible ? 1 : 0)
+                        .animation(.easeIn(duration: 0.5), value: logoVisible)
                 }
+                .frame(height: 80)
 
-                // Logo appears after dots converge and fade
-                Text("Momento")
-                    .font(.custom("RalewayDots-Regular", size: 56))
-                    .foregroundColor(.white)
-                    .opacity(logoVisible ? 1 : 0)
-                    .animation(.easeIn(duration: 0.5), value: logoVisible)
+                Spacer().frame(height: 16)
+
+                Text("Your shared disposable camera")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(.white.opacity(0.4))
+                    .multilineTextAlignment(.center)
+                    .opacity(subtitleVisible ? 1 : 0)
+                    .animation(.easeIn(duration: 0.4), value: subtitleVisible)
+
+                Spacer()
+                Spacer()
+                Spacer().frame(height: 80)
             }
-            .frame(height: 80)
-
-            Spacer().frame(height: 16)
-
-            Text("Your shared disposable camera")
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.white.opacity(0.4))
-                .multilineTextAlignment(.center)
-                .opacity(subtitleVisible ? 1 : 0)
-                .animation(.easeIn(duration: 0.4), value: subtitleVisible)
-
-            Spacer()
-            Spacer()
-            Spacer().frame(height: 80)
         }
         .onAppear { startAnimation() }
     }
@@ -131,181 +142,269 @@ struct OnboardingScreen1: View {
     }
 
     private func startAnimation() {
-        // Dots appear one by one (0.06s delay each)
+        bgVisible = true
+
         for i in 0..<10 {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.06) {
                 dotsVisible[i] = true
                 HapticsManager.shared.light()
             }
         }
-
-        // After all dots visible (0.6s), converge to center
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            dotsConverged = true
-        }
-
-        // Fade out dots during convergence
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-            dotsFaded = true
-        }
-
-        // Logo fades in after dots gone
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { dotsConverged = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { dotsFaded = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             logoVisible = true
             HapticsManager.shared.medium()
         }
-
-        // Subtitle fades in shortly after
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-            subtitleVisible = true
-        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { subtitleVisible = true }
     }
 }
 
-// MARK: - Screen 2: The Rules
+// MARK: - Screen 2: The Rule
 
 struct OnboardingScreen2: View {
     @State private var dotsFilled: [Bool] = Array(repeating: false, count: 10)
     @State private var dotScales: [CGFloat] = Array(repeating: 1.0, count: 10)
+    @State private var photoVisible: [Bool] = [false, false, false]
     @State private var titleVisible = false
     @State private var subtitleVisible = false
 
+    // Photo names, rotations, offsets for the scattered print look
+    private let photos: [(name: String, rotation: Double, offsetX: CGFloat)] = [
+        ("ob_p1", -6.0, -80),
+        ("ob_p4", 2.0,  0),
+        ("ob_p2", 7.0,  80),
+    ]
+
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ZStack {
+            Color.black.ignoresSafeArea()
 
-            // 10 dots in a horizontal row
-            HStack(spacing: 8) {
-                ForEach(0..<10, id: \.self) { index in
-                    Circle()
-                        .fill(dotsFilled[index] ? Color.white : Color.white.opacity(0.15))
-                        .frame(width: 12, height: 12)
-                        .scaleEffect(dotScales[index])
+            VStack(spacing: 0) {
+                Spacer()
+
+                // 10 shot dots
+                HStack(spacing: 8) {
+                    ForEach(0..<10, id: \.self) { index in
+                        Circle()
+                            .fill(dotsFilled[index] ? Color.white : Color.white.opacity(0.15))
+                            .frame(width: 12, height: 12)
+                            .scaleEffect(dotScales[index])
+                    }
                 }
+
+                Spacer().frame(height: 44)
+
+                // Scattered photo prints
+                ZStack {
+                    ForEach(0..<3, id: \.self) { i in
+                        photoCard(photos[i].name)
+                            .rotationEffect(.degrees(photos[i].rotation))
+                            .offset(x: photos[i].offsetX, y: 0)
+                            .opacity(photoVisible[i] ? 1 : 0)
+                            .scaleEffect(photoVisible[i] ? 1 : 0.85)
+                            .animation(
+                                .spring(response: 0.45, dampingFraction: 0.72)
+                                .delay(Double(i) * 0.12),
+                                value: photoVisible[i]
+                            )
+                    }
+                }
+                .frame(height: 180)
+
+                Spacer().frame(height: 40)
+
+                // Title
+                Text("10 Shots.\nNo retakes.")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+                    .opacity(titleVisible ? 1 : 0)
+                    .animation(.easeIn(duration: 0.4), value: titleVisible)
+
+                Spacer().frame(height: 10)
+
+                Text("Like a real disposable camera")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(.white.opacity(0.4))
+                    .opacity(subtitleVisible ? 1 : 0)
+                    .animation(.easeIn(duration: 0.4), value: subtitleVisible)
+
+                Spacer()
+                Spacer().frame(height: 80)
             }
-
-            Spacer().frame(height: 48)
-
-            // Title
-            Text("10 Shots. No retakes.")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .opacity(titleVisible ? 1 : 0)
-                .animation(.easeIn(duration: 0.4), value: titleVisible)
-
-            Spacer().frame(height: 12)
-
-            // Subtitle
-            Text("Like a real disposable camera")
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.white.opacity(0.4))
-                .multilineTextAlignment(.center)
-                .opacity(subtitleVisible ? 1 : 0)
-                .animation(.easeIn(duration: 0.4), value: subtitleVisible)
-
-            Spacer()
-            Spacer().frame(height: 80)
         }
         .onAppear { startAnimation() }
     }
 
+    private func photoCard(_ name: String) -> some View {
+        Image(name)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 110, height: 148)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .padding(6)
+            .padding(.bottom, 24)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .shadow(color: .black.opacity(0.5), radius: 12, x: 0, y: 6)
+    }
+
     private func startAnimation() {
-        // Dots fill one by one (0.1s per dot)
         for i in 0..<10 {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
                 dotsFilled[i] = true
                 HapticsManager.shared.light()
-
-                // Spring scale bump
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) {
-                    dotScales[i] = 1.3
-                }
-                // Settle back
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) { dotScales[i] = 1.3 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
-                        dotScales[i] = 1.0
-                    }
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) { dotScales[i] = 1.0 }
                 }
             }
         }
 
-        // Text appears after dots complete + 1.2s wait
-        // Dots finish at 0.9s, so text at 0.9 + 1.2 = ~2.1s
-        // But spec says "after dots complete (1.2s wait)" — dots take 1.0s total, so 1.0 + 1.2 = 2.2s
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+        // Photos appear as dots complete (dots finish at ~1.0s)
+        for i in 0..<3 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0 + Double(i) * 0.15) {
+                photoVisible[i] = true
+                HapticsManager.shared.light()
+            }
+        }
+
+        // Text after photos settle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             titleVisible = true
             HapticsManager.shared.medium()
         }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            subtitleVisible = true
-        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) { subtitleVisible = true }
     }
 }
 
 // MARK: - Screen 3: The Payoff
 
 struct OnboardingScreen3: View {
-    @State private var appeared = false
+    @State private var titleVisible = false
+    @State private var photosFanned = false
+    @State private var line1Visible = false
+    @State private var line2Visible = false
+    @State private var line3Visible = false
+
+    private let stackPhotos: [(name: String, rotation: Double, offset: CGSize)] = [
+        ("ob_p3", -12.0, CGSize(width: -30, height: 8)),
+        ("ob_bg",  4.0,  CGSize(width: 14,  height: -4)),
+        ("ob_p4",  0.0,  CGSize(width: 0,   height: 0)),
+    ]
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ZStack {
+            Color.black.ignoresSafeArea()
 
-            // Header
-            Text("Everyone reveals\ntogether")
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .opacity(appeared ? 1 : 0)
-
-            Spacer().frame(height: 20)
-
-            // Sub-lines
-            VStack(spacing: 6) {
-                Text("The blurry ones.")
-                Text("The funny ones.")
-                Text("The ones you forgot you took.")
+            // Glow orb — only screen it earns its place
+            if photosFanned {
+                RadialGradient(
+                    colors: [
+                        Color(red: 0.5, green: 0.0, blue: 0.8).opacity(0.18),
+                        Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.06),
+                        .clear
+                    ],
+                    center: .center,
+                    startRadius: 20,
+                    endRadius: 280
+                )
+                .ignoresSafeArea()
+                .offset(y: -60)
+                .opacity(photosFanned ? 1 : 0)
+                .animation(.easeIn(duration: 1.0), value: photosFanned)
             }
-            .font(.system(size: 15, weight: .regular))
-            .foregroundColor(.white.opacity(0.4))
-            .multilineTextAlignment(.center)
-            .opacity(appeared ? 1 : 0)
 
-            Spacer()
-            Spacer().frame(height: 80)
+            VStack(spacing: 0) {
+                Spacer()
+
+                // Title
+                Text("Everyone reveals\ntogether")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .opacity(titleVisible ? 1 : 0)
+                    .animation(.easeIn(duration: 0.5), value: titleVisible)
+
+                Spacer().frame(height: 36)
+
+                // Fanning photo stack
+                ZStack {
+                    ForEach(0..<3, id: \.self) { i in
+                        Image(stackPhotos[i].name)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 140, height: 188)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .padding(8)
+                            .padding(.bottom, 28)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .shadow(color: .black.opacity(0.45), radius: 16, x: 0, y: 8)
+                            .rotationEffect(.degrees(photosFanned ? stackPhotos[i].rotation : 0))
+                            .offset(photosFanned ? stackPhotos[i].offset : .zero)
+                            .animation(
+                                .spring(response: 0.6, dampingFraction: 0.7)
+                                .delay(Double(i) * 0.08),
+                                value: photosFanned
+                            )
+                    }
+                }
+                .frame(height: 240)
+
+                Spacer().frame(height: 36)
+
+                // Sub-lines animate in one by one
+                VStack(spacing: 6) {
+                    Text("The blurry ones.")
+                        .opacity(line1Visible ? 1 : 0)
+                        .offset(y: line1Visible ? 0 : 8)
+                        .animation(.easeOut(duration: 0.35), value: line1Visible)
+
+                    Text("The funny ones.")
+                        .opacity(line2Visible ? 1 : 0)
+                        .offset(y: line2Visible ? 0 : 8)
+                        .animation(.easeOut(duration: 0.35), value: line2Visible)
+
+                    Text("The ones you forgot you took.")
+                        .opacity(line3Visible ? 1 : 0)
+                        .offset(y: line3Visible ? 0 : 8)
+                        .animation(.easeOut(duration: 0.35), value: line3Visible)
+                }
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(.white.opacity(0.4))
+                .multilineTextAlignment(.center)
+
+                Spacer()
+                Spacer().frame(height: 80)
+            }
         }
-        .animation(.easeInOut(duration: 0.5), value: appeared)
-        .onAppear {
-            appeared = true
+        .onAppear { startAnimation() }
+    }
+
+    private func startAnimation() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            titleVisible = true
+            HapticsManager.shared.medium()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            photosFanned = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { line1Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { line2Visible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            line3Visible = true
+            HapticsManager.shared.light()
         }
     }
 }
 
 // MARK: - Previews
 
-#Preview("Full Flow") {
-    OnboardingView(onComplete: {})
-}
-
-#Preview("Screen 1 — The Hook") {
-    ZStack {
-        Color.black.ignoresSafeArea()
-        OnboardingScreen1()
-    }
-}
-
-#Preview("Screen 2 — The Rules") {
-    ZStack {
-        Color.black.ignoresSafeArea()
-        OnboardingScreen2()
-    }
-}
-
-#Preview("Screen 3 — The Payoff") {
-    ZStack {
-        Color.black.ignoresSafeArea()
-        OnboardingScreen3()
-    }
-}
+#Preview("Full Flow") { OnboardingView(onComplete: {}) }
+#Preview("Screen 1") { OnboardingScreen1() }
+#Preview("Screen 2") { OnboardingScreen2() }
+#Preview("Screen 3") { OnboardingScreen3() }
