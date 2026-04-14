@@ -436,4 +436,4 @@ private struct OnboardingPhotoCard: View {
 #Preview("Full Flow") { OnboardingView(onComplete: {}) }
 #Preview("Screen 1") { OnboardingScreen1() }
 #Preview("Screen 2") { OnboardingScreen2() }
-#Preview("Screen 3") { OnboardingScreen3() }
+#Preview("Screen 3") { OnboardingScreen3(isActive: true) }
