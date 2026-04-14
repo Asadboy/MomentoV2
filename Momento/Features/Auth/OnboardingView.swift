@@ -380,7 +380,7 @@ struct OnboardingScreen3: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8)  { photoVisible[2] = true }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-            withAnimation(.easeOut(duration: 1.2)) { blurOpacity0 = 0 }
+            withAnimation(.easeOut(duration: 2.2)) { blurOpacity0 = 0 }
             HapticsManager.shared.light()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
