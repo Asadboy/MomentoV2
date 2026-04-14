@@ -295,11 +295,11 @@ struct OnboardingScreen3: View {
     @State private var line2Visible = false
     @State private var line3Visible = false
 
-    // ob_p3 is center/front — user wants the left card (ob_p3) in the middle
+    // ob_p4 left, ob_p5 right, ob_p6 center/front (ob_p3 removed — same event as ob_p2/DJ)
     private let stackPhotos: [(name: String, rotation: Double, offset: CGSize)] = [
         ("ob_p4",  10.0, CGSize(width: -120, height: 12)),
         ("ob_p5",  14.0, CGSize(width:  120, height: -8)),
-        ("ob_p3", -10.0, CGSize(width:    0, height:  0)),
+        ("ob_p6", -10.0, CGSize(width:    0, height:  0)),
     ]
 
     var body: some View {
@@ -335,11 +335,14 @@ struct OnboardingScreen3: View {
 
                 Spacer().frame(height: 36)
 
-                // Photos fanned out, each starts blurred and unveils in sequence
+                // Photos fanned out — blurred overlay fades out via withAnimation+transition
                 ZStack {
-                    photoCard(index: 0, isBlurred: photo0Blurred)
-                    photoCard(index: 1, isBlurred: photo1Blurred)
-                    photoCard(index: 2, isBlurred: photo2Blurred)
+                    fanCard(name: stackPhotos[0].name, rotation: stackPhotos[0].rotation,
+                            offset: stackPhotos[0].offset, visible: photoVisible[0], blurred: photo0Blurred)
+                    fanCard(name: stackPhotos[1].name, rotation: stackPhotos[1].rotation,
+                            offset: stackPhotos[1].offset, visible: photoVisible[1], blurred: photo1Blurred)
+                    fanCard(name: stackPhotos[2].name, rotation: stackPhotos[2].rotation,
+                            offset: stackPhotos[2].offset, visible: photoVisible[2], blurred: photo2Blurred)
                 }
                 .frame(height: 260)
 
@@ -372,35 +375,23 @@ struct OnboardingScreen3: View {
         .onAppear { startAnimation() }
     }
 
-    @ViewBuilder
-    private func photoCard(index: Int, isBlurred: Bool) -> some View {
-        // Two-layer reveal: clear image underneath, blurred copy fades out on top.
-        // Opacity animation is guaranteed animatable — .blur(radius:) is not.
+    private func fanCard(name: String, rotation: Double, offset: CGSize, visible: Bool, blurred: Bool) -> some View {
         ZStack {
-            Image(stackPhotos[index].name)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 150, height: 200)
-
-            Image(stackPhotos[index].name)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 150, height: 200)
-                .blur(radius: 20)
-                .opacity(isBlurred ? 1 : 0)
-                .animation(.easeOut(duration: 1.2), value: isBlurred)
+            Image(name).resizable().scaledToFill().frame(width: 150, height: 200)
+            // Blurred overlay — removed via withAnimation+transition so opacity definitely animates
+            if blurred {
+                Image(name).resizable().scaledToFill().frame(width: 150, height: 200)
+                    .blur(radius: 20)
+                    .transition(.opacity)
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.5), radius: 18, x: 0, y: 8)
-        .rotationEffect(.degrees(stackPhotos[index].rotation))
-        .offset(stackPhotos[index].offset)
-        .opacity(photoVisible[index] ? 1 : 0)
-        .scaleEffect(photoVisible[index] ? 1 : 0.9)
-        .animation(
-            .spring(response: 0.55, dampingFraction: 0.75)
-            .delay(Double(index) * 0.1),
-            value: photoVisible[index]
-        )
+        .rotationEffect(.degrees(rotation))
+        .offset(offset)
+        .opacity(visible ? 1 : 0)
+        .scaleEffect(visible ? 1 : 0.9)
+        .animation(.spring(response: 0.55, dampingFraction: 0.75), value: visible)
     }
 
     private func startAnimation() {
@@ -416,15 +407,15 @@ struct OnboardingScreen3: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { photoVisible[2] = true }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-            photo0Blurred = false
+            withAnimation(.easeOut(duration: 1.2)) { photo0Blurred = false }
             HapticsManager.shared.light()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
-            photo1Blurred = false
+            withAnimation(.easeOut(duration: 1.2)) { photo1Blurred = false }
             HapticsManager.shared.light()
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
-            photo2Blurred = false
+            withAnimation(.easeOut(duration: 1.2)) { photo2Blurred = false }
             HapticsManager.shared.light()
         }
 
