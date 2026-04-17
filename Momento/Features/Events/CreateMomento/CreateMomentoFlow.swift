@@ -25,6 +25,7 @@ struct CreateMomentoFlow: View {
     @State private var isCreating = false
     @State private var createdEvent: Event?
     @State private var errorMessage: String?
+    @State private var showError = false
     @State private var hostName: String = ""
     
     /// Callback when evento is created
@@ -33,70 +34,49 @@ struct CreateMomentoFlow: View {
     var body: some View {
         ZStack {
             // Steps
-            Group {
-                switch currentStep {
-                case 1:
-                    CreateStep1NameView(
-                        momentoName: $momentoName,
-                        onNext: { goToStep(2) },
-                        onCancel: { dismiss() }
-                    )
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-                    
-                case 2:
-                    CreateStep2ConfigureView(
-                        eventName: momentoName,
-                        startsAt: $startsAt,
-                        endsAt: $endsAt,
-                        releaseAt: $releaseAt,
-                        onNext: { createMomento() },
-                        onBack: { goToStep(1) }
-                    )
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-                    
-                case 3:
-                    CreateStep3ShareView(
-                        momentoName: momentoName,
-                        joinCode: joinCode,
-                        startsAt: startsAt,
-                        hostName: hostName,
-                        onDone: { finishFlow() }
-                    )
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-                    
-                default:
-                    EmptyView()
-                }
+            if currentStep == 1 {
+                CreateStep1NameView(
+                    momentoName: $momentoName,
+                    onNext: { goToStep(2) },
+                    onCancel: { dismiss() }
+                )
+            } else if currentStep == 2 {
+                CreateStep2ConfigureView(
+                    eventName: momentoName,
+                    startsAt: $startsAt,
+                    endsAt: $endsAt,
+                    releaseAt: $releaseAt,
+                    onNext: { createMomento() },
+                    onBack: { goToStep(1) }
+                )
+            } else if currentStep == 3 {
+                CreateStep3ShareView(
+                    momentoName: momentoName,
+                    joinCode: joinCode,
+                    startsAt: startsAt,
+                    hostName: hostName,
+                    onDone: { finishFlow() }
+                )
             }
-            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: currentStep)
-            
+
             // Loading overlay
             if isCreating {
                 Color.black.opacity(0.7)
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 16) {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.2)
-                    
+
                     Text("Creating your momento...")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
             }
         }
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
+        .alert("Error", isPresented: $showError) {
+            Button("OK") { showError = false }
         } message: {
             Text(errorMessage ?? "")
         }
@@ -135,43 +115,42 @@ struct CreateMomentoFlow: View {
     
     private func createMomento() {
         isCreating = true
-        
+
         // Generate join code
         joinCode = generateJoinCode()
-        
+
         debugLog("[CreateMomento] Creating: \(momentoName)")
         debugLog("[CreateMomento] Code: \(joinCode)")
-        
+
         Task {
             do {
+                debugLog("[CreateMomento] 1/4 — calling createEvent...")
                 let eventModel = try await supabaseManager.createEvent(
                     name: momentoName.trimmingCharacters(in: .whitespacesAndNewlines),
                     startsAt: startsAt,
                     joinCode: joinCode
                 )
-                
+                debugLog("[CreateMomento] 2/4 — createEvent returned, building Event...")
+
                 let event = Event(fromSupabase: eventModel)
 
-                // Track momento creation
                 AnalyticsManager.shared.track(.momentoCreated, properties: [
                     "event_id": event.id,
                     "event_name": event.name
                 ])
 
-                await MainActor.run {
-                    createdEvent = event
-                    isCreating = false
-                    goToStep(3)
-                }
-                
-                debugLog("[CreateMomento] Success!")
-                
+                debugLog("[CreateMomento] 3/4 — on main thread: \(Thread.isMainThread)")
+                createdEvent = event
+                isCreating = false
+                currentStep = 3
+                debugLog("[CreateMomento] 4/4 — isCreating=\(isCreating), step=\(currentStep)")
+
             } catch {
-                debugLog("[CreateMomento] Error: \(error)")
-                await MainActor.run {
-                    isCreating = false
-                    errorMessage = "Failed to create momento: \(error.localizedDescription)"
-                }
+                debugLog("[CreateMomento] ❌ CAUGHT ERROR: \(error)")
+                debugLog("[CreateMomento] ❌ Error type: \(type(of: error))")
+                isCreating = false
+                errorMessage = "Failed to create momento: \(error.localizedDescription)"
+                showError = true
             }
         }
     }

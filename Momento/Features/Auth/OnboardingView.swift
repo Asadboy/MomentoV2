@@ -367,8 +367,8 @@ struct OnboardingScreen3: View {
                 Spacer().frame(height: 80)
             }
         }
-        .onChange(of: isActive) { active in
-            if active { startAnimation() }
+        .onChange(of: isActive) {
+            if isActive { startAnimation() }
         }
     }
 

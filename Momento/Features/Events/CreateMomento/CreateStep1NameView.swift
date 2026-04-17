@@ -182,7 +182,7 @@ private struct FlowLayout: Layout {
         let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
 
         // Calculate total width of all items + spacing to center rows
-        for (index, size) in sizes.enumerated() {
+        for (_, size) in sizes.enumerated() {
             if x + size.width > width && x > 0 {
                 x = 0
                 y += rowHeight + spacing

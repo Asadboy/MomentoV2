@@ -119,6 +119,8 @@ struct AuthenticationRootView: View {
                 await MainActor.run {
                     if needsUsername {
                         appState = .needsUsername
+                    } else if hasSeenOnboarding {
+                        appState = .authenticated
                     } else {
                         appState = .needsOnboarding
                     }

@@ -347,17 +347,21 @@ class SupabaseManager: ObservableObject {
         
         debugLog("[createEvent] Event saved, adding creator as member...")
         
-        // Auto-join the creator
+        // Auto-join the creator (non-fatal — a DB trigger may have already added them)
         let member = EventMember(
             eventId: event.id,
             userId: userId,
             joinedAt: Date()
         )
-        
-        try await client
-            .from("event_members")
-            .insert(member)
-            .execute()
+
+        do {
+            try await client
+                .from("event_members")
+                .insert(member)
+                .execute()
+        } catch {
+            debugLog("[createEvent] Member insert failed (likely already exists): \(error)")
+        }
         
         debugLog("[createEvent] Success: \(name) with code \(joinCode)")
         return event
