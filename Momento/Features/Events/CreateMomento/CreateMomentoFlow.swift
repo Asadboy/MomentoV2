@@ -139,7 +139,7 @@ struct CreateMomentoFlow: View {
                     "event_name": event.name
                 ])
 
-                debugLog("[CreateMomento] 3/4 — on main thread: \(Thread.isMainThread)")
+                debugLog("[CreateMomento] 3/4 — updating UI state")
                 createdEvent = event
                 isCreating = false
                 currentStep = 3
