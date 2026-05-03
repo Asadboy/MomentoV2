@@ -78,6 +78,9 @@ struct ContentView: View {
     /// Liked photos per revealed event (event ID -> photos) for album cards
     @State private var pastEventPhotos: [String: [PhotoData]] = [:]
 
+    /// Tracks per-user photo count for each event (for shot counter)
+    @State private var userPhotoCounts: [String: Int] = [:]
+
 
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
@@ -275,7 +278,7 @@ struct ContentView: View {
                                                 userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
                                                 likedCount: likedCounts[event.id] ?? 0,
                                                 memberCount: event.memberCount,
-                                                photoCount: event.photoCount,
+                                                photoCount: userPhotoCounts[event.id] ?? 0,
                                                 onTap: {
                                                     handleEventTap(event)
                                                 },
@@ -594,6 +597,28 @@ struct ContentView: View {
             revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
             isLoadingEvents = false
 
+            // Fetch per-user photo counts for live events (shot counter)
+            if let currentUserId = supabaseManager.currentUser?.id {
+                let liveEvents = loadedEvents.filter { $0.currentState() == .live }
+                let userCounts = await withTaskGroup(of: (String, Int).self) { group in
+                    for event in liveEvents {
+                        guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                        group.addTask {
+                            let count = (try? await self.supabaseManager.getPhotoCount(eventId: eventUUID, userId: currentUserId)) ?? 0
+                            return (event.id, count)
+                        }
+                    }
+                    var results: [(String, Int)] = []
+                    for await result in group {
+                        results.append(result)
+                    }
+                    return results
+                }
+                for (eventId, count) in userCounts {
+                    userPhotoCounts[eventId] = count
+                }
+            }
+
             // Fetch liked counts + photos for revealed events IN PARALLEL
             let revealedEvents = loadedEvents.filter { $0.currentState() == .revealed }
 
@@ -656,6 +681,16 @@ struct ContentView: View {
                 if let idx = events.firstIndex(where: { $0.id == updatedEvent.id }) {
                     events[idx].memberCount = updatedEvent.memberCount
                     events[idx].photoCount = updatedEvent.photoCount
+                }
+            }
+
+            // Refresh per-user photo counts for live events
+            if let currentUserId = supabaseManager.currentUser?.id {
+                let liveEvents = updated.filter { $0.currentState() == .live }
+                for event in liveEvents {
+                    guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                    let count = (try? await supabaseManager.getPhotoCount(eventId: eventUUID, userId: currentUserId)) ?? 0
+                    userPhotoCounts[event.id] = count
                 }
             }
         } catch {
@@ -723,7 +758,8 @@ struct ContentView: View {
             // Queue for upload to Supabase (with offline support)
             let queuedPhoto = try syncManager.queuePhoto(image: image, eventId: eventUUID)
             
-            // Photo count is now computed server-side, no local increment needed
+            // Optimistically increment the user's shot counter
+            userPhotoCounts[event.id, default: 0] += 1
             
             debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             debugLog("   Pending uploads: \(syncManager.pendingCount)")
