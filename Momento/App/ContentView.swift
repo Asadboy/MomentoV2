@@ -598,25 +598,35 @@ struct ContentView: View {
             revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
             isLoadingEvents = false
 
-            // Fetch per-user photo counts for live events (shot counter)
-            if let currentUserId = supabaseManager.currentUser?.id {
-                let liveEvents = loadedEvents.filter { $0.currentState() == .live }
-                let userCounts = await withTaskGroup(of: (String, Int).self) { group in
-                    for event in liveEvents {
-                        guard let eventUUID = UUID(uuidString: event.id) else { continue }
-                        group.addTask {
-                            let count = (try? await self.supabaseManager.getPhotoCount(eventId: eventUUID, userId: currentUserId)) ?? 0
-                            return (event.id, count)
+            // Compute real counts from event_members/photos tables for active events
+            let currentUserId = supabaseManager.currentUser?.id
+            let activeEvents = loadedEvents.filter { $0.currentState() == .live || $0.currentState() == .upcoming }
+            let countResults = await withTaskGroup(of: (String, Int, Int, Int?).self) { group in
+                for event in activeEvents {
+                    guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                    group.addTask {
+                        let memberCount = (try? await self.supabaseManager.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                        let photoCount = (try? await self.supabaseManager.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                        var userCount: Int? = nil
+                        if let userId = currentUserId, event.currentState() == .live {
+                            userCount = (try? await self.supabaseManager.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
                         }
+                        return (event.id, memberCount, photoCount, userCount)
                     }
-                    var results: [(String, Int)] = []
-                    for await result in group {
-                        results.append(result)
-                    }
-                    return results
                 }
-                for (eventId, count) in userCounts {
-                    userPhotoCounts[eventId] = count
+                var results: [(String, Int, Int, Int?)] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results
+            }
+            for (eventId, memberCount, photoCount, userCount) in countResults {
+                if let idx = events.firstIndex(where: { $0.id == eventId }) {
+                    events[idx].memberCount = memberCount
+                    events[idx].photoCount = photoCount
+                }
+                if let userCount {
+                    userPhotoCounts[eventId] = userCount
                 }
             }
 
@@ -674,28 +684,37 @@ struct ContentView: View {
     @MainActor private func refreshEventCounts() async {
         guard !events.isEmpty else { return }
 
-        do {
-            let eventModels = try await supabaseManager.getMyEvents()
-            let updated = eventModels.map { Event(fromSupabase: $0) }
+        let currentUserId = supabaseManager.currentUser?.id
 
-            for updatedEvent in updated {
-                if let idx = events.firstIndex(where: { $0.id == updatedEvent.id }) {
-                    events[idx].memberCount = updatedEvent.memberCount
-                    events[idx].photoCount = updatedEvent.photoCount
+        // Compute real counts from event_members and photos tables in parallel
+        let results = await withTaskGroup(of: (String, Int, Int, Int?).self) { group in
+            for event in events {
+                guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                group.addTask {
+                    let memberCount = (try? await self.supabaseManager.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                    let photoCount = (try? await self.supabaseManager.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                    var userCount: Int? = nil
+                    if let userId = currentUserId, event.currentState() == .live {
+                        userCount = (try? await self.supabaseManager.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
+                    }
+                    return (event.id, memberCount, photoCount, userCount)
                 }
             }
-
-            // Refresh per-user photo counts for live events
-            if let currentUserId = supabaseManager.currentUser?.id {
-                let liveEvents = updated.filter { $0.currentState() == .live }
-                for event in liveEvents {
-                    guard let eventUUID = UUID(uuidString: event.id) else { continue }
-                    let count = (try? await supabaseManager.getPhotoCount(eventId: eventUUID, userId: currentUserId)) ?? 0
-                    userPhotoCounts[event.id] = count
-                }
+            var results: [(String, Int, Int, Int?)] = []
+            for await result in group {
+                results.append(result)
             }
-        } catch {
-            debugLog("⚠️ Silent count refresh failed: \(error)")
+            return results
+        }
+
+        for (eventId, memberCount, photoCount, userCount) in results {
+            if let idx = events.firstIndex(where: { $0.id == eventId }) {
+                events[idx].memberCount = memberCount
+                events[idx].photoCount = photoCount
+            }
+            if let userCount {
+                userPhotoCounts[eventId] = userCount
+            }
         }
     }
 
