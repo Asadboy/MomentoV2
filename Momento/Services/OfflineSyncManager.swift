@@ -183,7 +183,8 @@ class OfflineSyncManager: ObservableObject {
                     debugLog("📷 Photo limit reached for event \(photo.eventId.uuidString.prefix(8)), dropping queued photo")
                     await MainActor.run {
                         if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
-                            queue[idx].status = .completed
+                            queue[idx].status = .failed
+                            queue[idx].errorMessage = "Photo limit reached — this photo was not uploaded"
                             saveQueue()
                         }
                     }

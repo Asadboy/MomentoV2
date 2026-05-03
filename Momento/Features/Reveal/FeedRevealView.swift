@@ -98,6 +98,8 @@ class FeedRevealViewModel: ObservableObject {
         guard remainingPhotos <= prefetchThreshold else { return }
         guard hasMorePhotos && !isLoadingMore else { return }
 
+        // Set flag synchronously to prevent duplicate calls from rapid scrolling
+        isLoadingMore = true
         Task {
             await loadMorePhotos()
         }
@@ -105,7 +107,6 @@ class FeedRevealViewModel: ObservableObject {
 
     /// Load next batch of photos
     private func loadMorePhotos() async {
-        isLoadingMore = true
         defer { isLoadingMore = false }
 
         let supabaseManager = SupabaseManager.shared

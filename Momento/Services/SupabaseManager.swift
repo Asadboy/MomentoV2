@@ -674,7 +674,7 @@ class SupabaseManager: ObservableObject {
                 group.addTask {
                     let signedURL = try? await self.client.storage
                         .from(self.storageBucket)
-                        .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+                        .createSignedURL(path: photo.storagePath, expiresIn: 2592000)
 
                     let photoData = PhotoData(
                         id: photo.id.uuidString,
@@ -733,7 +733,7 @@ class SupabaseManager: ObservableObject {
                 group.addTask {
                     let signedURL = try? await self.client.storage
                         .from(self.storageBucket)
-                        .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+                        .createSignedURL(path: photo.storagePath, expiresIn: 2592000)
 
                     let photoData = PhotoData(
                         id: photo.id.uuidString,
@@ -857,7 +857,7 @@ class SupabaseManager: ObservableObject {
                 group.addTask {
                     let signedURL = try? await self.client.storage
                         .from(self.storageBucket)
-                        .createSignedURL(path: photo.storagePath, expiresIn: 604800)
+                        .createSignedURL(path: photo.storagePath, expiresIn: 2592000)
 
                     let photoData = PhotoData(
                         id: photo.id.uuidString,

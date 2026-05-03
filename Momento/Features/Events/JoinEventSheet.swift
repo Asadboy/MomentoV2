@@ -553,7 +553,7 @@ struct JoinEventSheet: View {
                 .uppercased() ?? input.uppercased()
         }
         // Handle https://momento.app/join/CODE format
-        if input.contains("/join/") {
+        if input.lowercased().contains("/join/") {
             if let code = input.components(separatedBy: "/join/").last?
                 .components(separatedBy: CharacterSet(charactersIn: "?/#"))
                 .first {
