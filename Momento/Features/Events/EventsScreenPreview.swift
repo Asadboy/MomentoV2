@@ -134,7 +134,8 @@ private struct EventsScreenPreviewContent: View {
                                 event: liveEvent,
                                 now: now,
                                 memberCount: 12,
-                                photoCount: 3,
+                                userPhotoCount: 3,
+                                totalPhotoCount: 8,
                                 onTap: {},
                                 onLongPress: {}
                             )
@@ -148,7 +149,6 @@ private struct EventsScreenPreviewContent: View {
                             event: upcomingEvent,
                             now: now,
                             memberCount: 8,
-                            photoCount: 0,
                             onTap: {},
                             onLongPress: {}
                         )
@@ -227,7 +227,8 @@ private struct EventsScreenPreviewContent: View {
                 ),
                 now: now,
                 memberCount: 12,
-                photoCount: 3,
+                userPhotoCount: 3,
+                totalPhotoCount: 8,
                 onTap: {},
                 onLongPress: {}
             )

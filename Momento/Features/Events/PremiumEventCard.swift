@@ -15,7 +15,8 @@ struct PremiumEventCard: View {
     var userHasCompletedReveal: Bool = false
     var likedCount: Int = 0
     var memberCount: Int = 0
-    var photoCount: Int = 0
+    var userPhotoCount: Int = 0
+    var totalPhotoCount: Int = 0
     let onTap: () -> Void
     let onLongPress: () -> Void
 
@@ -48,7 +49,7 @@ struct PremiumEventCard: View {
     }
 
     private var shotsLeft: Int {
-        max(0, totalShots - photoCount)
+        max(0, totalShots - userPhotoCount)
     }
 
     private var shotsUsed: Int {
@@ -306,7 +307,7 @@ struct PremiumEventCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "photo.stack")
                         .font(.system(size: 13, weight: .medium))
-                    Text("\(photoCount) photos")
+                    Text("\(totalPhotoCount) photos")
                         .font(.system(size: 14, weight: .medium))
                 }
                 .foregroundColor(.white.opacity(0.5))
@@ -393,7 +394,8 @@ struct PremiumEventCard: View {
                 ),
                 now: now,
                 memberCount: 12,
-                photoCount: 3,
+                userPhotoCount: 3,
+                totalPhotoCount: 8,
                 onTap: {},
                 onLongPress: {}
             )
@@ -423,7 +425,7 @@ struct PremiumEventCard: View {
                 ),
                 now: now,
                 memberCount: 5,
-                photoCount: 143,
+                totalPhotoCount: 143,
                 onTap: {},
                 onLongPress: {}
             )

@@ -278,7 +278,8 @@ struct ContentView: View {
                                                 userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
                                                 likedCount: likedCounts[event.id] ?? 0,
                                                 memberCount: event.memberCount,
-                                                photoCount: userPhotoCounts[event.id] ?? 0,
+                                                userPhotoCount: userPhotoCounts[event.id] ?? 0,
+                                                totalPhotoCount: event.photoCount,
                                                 onTap: {
                                                     handleEventTap(event)
                                                 },
