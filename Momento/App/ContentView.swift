@@ -656,9 +656,9 @@ struct ContentView: View {
             for (eventId, count, photos) in fetchResults {
                 likeCounts[eventId] = count
                 pastPhotos[eventId] = photos
-                if count > 0 {
+                // Restore reveal status from liked count OR persistent local state
+                if count > 0 || RevealStateManager.shared.hasCompletedReveal(for: eventId) {
                     restoredRevealStatus[eventId] = true
-                    RevealStateManager.shared.markRevealCompleted(for: eventId)
                 }
             }
 
@@ -779,15 +779,22 @@ struct ContentView: View {
             let queuedPhoto = try syncManager.queuePhoto(image: image, eventId: eventUUID)
             
             // Optimistically increment the user's shot counter
-            userPhotoCounts[event.id, default: 0] += 1
-            
+            let eventId = event.id
+            userPhotoCounts[eventId, default: 0] += 1
+
             debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             debugLog("   Pending uploads: \(syncManager.pendingCount)")
 
-            // Refresh counts after upload settles
+            // Refresh real count from server after upload settles
+            // This corrects the optimistic count if the upload failed
             Task {
-                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2s for upload to complete
-                await refreshEventCounts()
+                try? await Task.sleep(nanoseconds: 3_000_000_000) // 3s for upload to complete
+                if let userId = supabaseManager.currentUser?.id {
+                    let realCount = (try? await supabaseManager.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
+                    await MainActor.run {
+                        userPhotoCounts[eventId] = realCount
+                    }
+                }
             }
         } catch {
             debugLog("❌ Failed to save photo: \(error)")
