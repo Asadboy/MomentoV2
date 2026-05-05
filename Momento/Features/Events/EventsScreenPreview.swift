@@ -10,6 +10,13 @@ import SwiftUI
 
 #if DEBUG
 
+private let previewMembers = [
+    MemberWithShots(userId: "1", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
+    MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 4),
+    MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
+    MemberWithShots(userId: "4", username: "mike", displayName: "Mike", avatarUrl: nil, shotsTaken: 0),
+]
+
 private struct EventsScreenPreviewContent: View {
     private let now = Date()
 
@@ -19,8 +26,8 @@ private struct EventsScreenPreviewContent: View {
             startsAt: now.addingTimeInterval(-3600),
             endsAt: now.addingTimeInterval(3600 * 5),
             releaseAt: now.addingTimeInterval(3600 * 29),
-            memberCount: 12,
-            photoCount: 3,
+            memberCount: 4,
+            photoCount: 13,
             joinCode: "JOE26"
         )
     }
@@ -92,28 +99,23 @@ private struct EventsScreenPreviewContent: View {
                         }
 
                         // Live
-                        VStack(spacing: 6) {
-                            PremiumEventCard(
-                                event: liveEvent,
-                                now: now,
-                                memberCount: 12,
-                                userPhotoCount: 3,
-                                totalPhotoCount: 8,
-                                onTap: {},
-                                onLongPress: {}
-                            )
-                            Text("Tap card to open camera")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.35))
-                        }
+                        EventCard(
+                            event: liveEvent,
+                            now: now,
+                            members: previewMembers,
+                            onTap: {},
+                            onLongPress: {},
+                            onInvite: {}
+                        )
 
                         // Upcoming
-                        PremiumEventCard(
+                        EventCard(
                             event: upcomingEvent,
                             now: now,
-                            memberCount: 8,
+                            members: [previewMembers[0], previewMembers[1]],
                             onTap: {},
-                            onLongPress: {}
+                            onLongPress: {},
+                            onInvite: {}
                         )
 
                         // Done pile
@@ -157,27 +159,21 @@ private struct EventsScreenPreviewContent: View {
     let now = Date()
     ZStack {
         Color.black.ignoresSafeArea()
-        VStack(spacing: 6) {
-            PremiumEventCard(
-                event: Event(
-                    name: "Joe's 26th Birthday",
-                    startsAt: now.addingTimeInterval(-3600),
-                    endsAt: now.addingTimeInterval(3600 * 5),
-                    releaseAt: now.addingTimeInterval(3600 * 29),
-                    memberCount: 12,
-                    photoCount: 3
-                ),
-                now: now,
-                memberCount: 12,
-                userPhotoCount: 3,
-                totalPhotoCount: 8,
-                onTap: {},
-                onLongPress: {}
-            )
-            Text("Tap card to open camera")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
-        }
+        EventCard(
+            event: Event(
+                name: "Joe's 26th Birthday",
+                startsAt: now.addingTimeInterval(-3600),
+                endsAt: now.addingTimeInterval(3600 * 5),
+                releaseAt: now.addingTimeInterval(3600 * 29),
+                memberCount: 4,
+                photoCount: 13
+            ),
+            now: now,
+            members: previewMembers,
+            onTap: {},
+            onLongPress: {},
+            onInvite: {}
+        )
         .padding(16)
     }
 }

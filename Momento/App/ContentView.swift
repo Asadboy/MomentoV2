@@ -81,6 +81,9 @@ struct ContentView: View {
     /// Tracks per-user photo count for each event (for shot counter)
     @State private var userPhotoCounts: [String: Int] = [:]
 
+    /// Members with shot counts per event (for people-dots card)
+    @State private var eventMembers: [String: [MemberWithShots]] = [:]
+
 
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
@@ -107,9 +110,9 @@ struct ContentView: View {
         in: .common
     ).autoconnect()
 
-    /// Timer that refreshes event data (counts) every 15 seconds
+    /// Timer that refreshes event data (counts) every 10 seconds
     private let refreshTimer = Timer.publish(
-        every: 15.0,
+        every: 10.0,
         on: .main,
         in: .common
     ).autoconnect()
@@ -255,18 +258,19 @@ struct ContentView: View {
 
                                     ForEach(activeEvents) { event in
                                         VStack(spacing: 6) {
-                                            PremiumEventCard(
+                                            EventCard(
                                                 event: event,
                                                 now: now,
+                                                members: eventMembers[event.id] ?? [],
                                                 userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
                                                 likedCount: likedCounts[event.id] ?? 0,
-                                                memberCount: event.memberCount,
-                                                userPhotoCount: userPhotoCounts[event.id] ?? 0,
-                                                totalPhotoCount: event.photoCount,
                                                 onTap: {
                                                     handleEventTap(event)
                                                 },
                                                 onLongPress: {
+                                                    showInviteSheet(for: event)
+                                                },
+                                                onInvite: {
                                                     showInviteSheet(for: event)
                                                 }
                                             )
@@ -286,11 +290,6 @@ struct ContentView: View {
                                                 }
                                             }
 
-                                            if event.currentState(at: now) == .live {
-                                                Text("Tap card to open camera")
-                                                    .font(.system(size: 12, weight: .medium))
-                                                    .foregroundColor(.white.opacity(0.35))
-                                            }
                                         }
                                     }
                                 } else {
@@ -390,7 +389,7 @@ struct ContentView: View {
                 }
             }
             .onReceive(refreshTimer) { _ in
-                // Silently refresh event data (counts) every 15s — no loading spinner
+                // Silently refresh event data (counts) every 10s — no loading spinner
                 Task { await refreshEventCounts() }
             }
             .fullScreenCover(isPresented: $showAddSheet) {
@@ -649,6 +648,26 @@ struct ContentView: View {
                 }
             }
             revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
+
+            // Fetch members with shots for active events (people-dots card)
+            let membersResults = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
+                for event in loadedEvents where event.currentState() != .revealed || !(restoredRevealStatus[event.id] ?? false) {
+                    guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                    group.addTask {
+                        let members = (try? await self.supabaseManager.getEventMembersWithShots(eventId: eventUUID)) ?? []
+                        return (event.id, members)
+                    }
+                }
+                var results: [(String, [MemberWithShots])] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results
+            }
+            for (eventId, members) in membersResults {
+                eventMembers[eventId] = members
+            }
+
             isRefreshing = false
             debugLog("✅ Loaded \(eventModels.count) events")
         } catch {
@@ -694,6 +713,25 @@ struct ContentView: View {
             if let userCount {
                 userPhotoCounts[eventId] = userCount
             }
+        }
+
+        // Refresh members with shots for active events
+        let membersResults = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
+            for event in events where event.currentState() == .live || event.currentState() == .upcoming {
+                guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                group.addTask {
+                    let members = (try? await self.supabaseManager.getEventMembersWithShots(eventId: eventUUID)) ?? []
+                    return (event.id, members)
+                }
+            }
+            var results: [(String, [MemberWithShots])] = []
+            for await result in group {
+                results.append(result)
+            }
+            return results
+        }
+        for (eventId, members) in membersResults {
+            eventMembers[eventId] = members
         }
     }
 
@@ -761,6 +799,19 @@ struct ContentView: View {
             let eventId = event.id
             userPhotoCounts[eventId, default: 0] += 1
 
+            // Also update the eventMembers for the people-dots card
+            if let userId = supabaseManager.currentUser?.id.uuidString,
+               let memberIdx = eventMembers[eventId]?.firstIndex(where: { $0.userId == userId }) {
+                let current = eventMembers[eventId]![memberIdx]
+                eventMembers[eventId]![memberIdx] = MemberWithShots(
+                    userId: current.userId,
+                    username: current.username,
+                    displayName: current.displayName,
+                    avatarUrl: current.avatarUrl,
+                    shotsTaken: current.shotsTaken + 1
+                )
+            }
+
             debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             debugLog("   Pending uploads: \(syncManager.pendingCount)")
 
@@ -772,6 +823,17 @@ struct ContentView: View {
                     let realCount = (try? await supabaseManager.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
                     await MainActor.run {
                         userPhotoCounts[eventId] = realCount
+                        // Also correct the eventMembers
+                        if let memberIdx = eventMembers[eventId]?.firstIndex(where: { $0.userId == userId.uuidString }) {
+                            let current = eventMembers[eventId]![memberIdx]
+                            eventMembers[eventId]![memberIdx] = MemberWithShots(
+                                userId: current.userId,
+                                username: current.username,
+                                displayName: current.displayName,
+                                avatarUrl: current.avatarUrl,
+                                shotsTaken: realCount
+                            )
+                        }
                     }
                 }
             }
