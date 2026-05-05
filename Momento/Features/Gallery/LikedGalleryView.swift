@@ -645,7 +645,6 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
 #Preview {
     let event = Event(
         name: "Sopranos Party",
-        coverEmoji: "🎉",
         startsAt: Date().addingTimeInterval(-86400),
         endsAt: Date().addingTimeInterval(-43200),
         releaseAt: Date().addingTimeInterval(-3600),

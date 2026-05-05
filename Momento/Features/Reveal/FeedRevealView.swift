@@ -630,7 +630,6 @@ struct FeedRevealView: View {
 #Preview {
     let event = Event(
         name: "London Trip",
-        coverEmoji: "🇬🇧",
         startsAt: Date().addingTimeInterval(-86400),
         endsAt: Date().addingTimeInterval(-43200),
         releaseAt: Date().addingTimeInterval(-3600),

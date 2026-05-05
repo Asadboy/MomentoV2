@@ -171,7 +171,6 @@ struct PhotoCaptureSheet: View {
         isPresented: .constant(true),
         event: Event(
             name: "Test Event",
-            coverEmoji: "\u{1F4F8}",
             startsAt: now,
             endsAt: now.addingTimeInterval(6 * 3600),
             releaseAt: now.addingTimeInterval(24 * 3600),

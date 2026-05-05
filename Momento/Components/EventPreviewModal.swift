@@ -39,10 +39,8 @@ struct EventPreviewModal: View {
             }
         case .live:
             return "Live now"
-        case .processing:
-            return "Photos developing"
         case .revealed:
-            return "Photos ready"
+            return event.isRevealReady() ? "Shots ready" : "Event ended"
         }
     }
 
@@ -143,7 +141,6 @@ struct EventPreviewModal: View {
         EventPreviewModal(
             event: Event(
                 name: "Joe's 26th Birthday",
-                coverEmoji: "",
                 startsAt: Date().addingTimeInterval(3600 * 8),
                 endsAt: Date().addingTimeInterval(3600 * 20),
                 releaseAt: Date().addingTimeInterval(3600 * 44)

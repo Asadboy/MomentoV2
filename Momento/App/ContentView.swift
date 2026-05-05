@@ -116,60 +116,43 @@ struct ContentView: View {
 
     // MARK: - Sorted Events
 
-    /// Active events (live/upcoming/ready-to-reveal) — shown as large featured cards
+    /// Active events (live/upcoming/unrevealed) — shown as large featured cards
     private var activeEvents: [Event] {
         events
             .filter {
                 let state = $0.currentState(at: now)
                 if state == .live || state == .upcoming { return true }
-                // Ready-to-reveal events get the big card treatment
+                // Revealed but not yet completed reveal — still active
                 if state == .revealed && !(revealCompletionStatus[$0.id] ?? false) { return true }
                 return false
             }
             .sorted { e1, e2 in
                 let s1 = e1.currentState(at: now)
                 let s2 = e2.currentState(at: now)
-                // Priority: live > ready-to-reveal > upcoming
-                func priority(_ event: Event, _ state: Event.State) -> Int {
-                    switch state {
-                    case .live: return 0
-                    case .revealed: return 1 // ready-to-reveal
-                    case .upcoming: return 2
-                    default: return 3
-                    }
-                }
-                let p1 = priority(e1, s1)
-                let p2 = priority(e2, s2)
-                if p1 != p2 { return p1 < p2 }
-                return e1.startsAt < e2.startsAt
-            }
-    }
-
-    /// Past events (processing/revealed-and-completed) — shown as compact rows
-    private var pastEvents: [Event] {
-        events
-            .filter {
-                let state = $0.currentState(at: now)
-                if state == .processing { return true }
-                // Only completed reveals go in past
-                if state == .revealed && (revealCompletionStatus[$0.id] ?? false) { return true }
-                return false
-            }
-            .sorted { e1, e2 in
-                let s1 = e1.currentState(at: now)
-                let s2 = e2.currentState(at: now)
-                // Processing first, then revealed
+                // Priority: live > revealed (waiting for reveal) > upcoming
                 func priority(_ state: Event.State) -> Int {
                     switch state {
-                    case .processing: return 0
+                    case .live: return 0
                     case .revealed: return 1
-                    default: return 2
+                    case .upcoming: return 2
                     }
                 }
                 let p1 = priority(s1)
                 let p2 = priority(s2)
                 if p1 != p2 { return p1 < p2 }
-                return e1.releaseAt > e2.releaseAt
+                return e1.startsAt < e2.startsAt
+            }
+    }
+
+    /// Past events (completed reveals) — shown as compact rows
+    private var pastEvents: [Event] {
+        events
+            .filter {
+                let state = $0.currentState(at: now)
+                return state == .revealed && (revealCompletionStatus[$0.id] ?? false)
+            }
+            .sorted { e1, e2 in
+                e1.releaseAt > e2.releaseAt
             }
     }
 
@@ -508,26 +491,22 @@ struct ContentView: View {
 
     // MARK: - Actions
     
-    /// Handle event card tap - routes to camera, processing info, or reveal based on state
+    /// Handle event card tap - routes to camera or reveal based on state
     private func handleEventTap(_ event: Event) {
         switch event.currentState(at: now) {
         case .upcoming:
-            // Event hasn't started yet — nothing to do
             break
 
         case .live:
-            // Event is live - open camera for photo capture
             selectedEventForPhoto = event
             showPhotoCapture = true
 
-        case .processing:
-            // Photos are developing — nothing to do, card already shows countdown
-            break
-            
         case .revealed:
-            // Check if user has already completed the reveal swipe
-            selectedEventForReveal = event
-            showReveal(for: event)
+            if event.isRevealReady(at: now) {
+                selectedEventForReveal = event
+                showReveal(for: event)
+            }
+            // If reveal isn't ready yet (between endsAt and releaseAt), do nothing
         }
     }
     

@@ -2,13 +2,13 @@
 //  PremiumEventCard.swift
 //  Momento
 //
-//  Redesigned event card with LIVE badge, guest count, shot dots.
-//  States: Live, Upcoming, Processing, Ready to Reveal, Revealed
+//  Event card with LIVE badge, guest count, shot dots.
+//  States: Upcoming, Live, Revealed
 //
 
 import SwiftUI
 
-/// Premium event card component with state-aware UI
+/// Event card component with state-aware UI
 struct PremiumEventCard: View {
     let event: Event
     let now: Date
@@ -22,30 +22,18 @@ struct PremiumEventCard: View {
 
     private let totalShots = 10
 
-    // Pulsing glow for ready-to-reveal
+    // Pulsing glow for reveal-ready
     @State private var glowPulsing = false
 
-    // MARK: - Event State
+    // MARK: - Derived State
 
-    private enum EventState {
-        case upcoming
-        case live
-        case processing
-        case readyToReveal
-        case revealed
+    /// Whether the reveal is available (releaseAt has passed)
+    private var isRevealReady: Bool {
+        event.isRevealReady(at: now)
     }
 
-    private var eventState: EventState {
-        switch event.currentState(at: now) {
-        case .upcoming:
-            return .upcoming
-        case .live:
-            return .live
-        case .processing:
-            return .processing
-        case .revealed:
-            return userHasCompletedReveal ? .revealed : .readyToReveal
-        }
+    private var eventState: Event.State {
+        event.currentState(at: now)
     }
 
     private var shotsLeft: Int {
@@ -58,74 +46,53 @@ struct PremiumEventCard: View {
 
     // MARK: - Time Helpers
 
-    private func secondsUntil(_ date: Date, from reference: Date) -> Int {
-        max(0, Int(date.timeIntervalSince(reference)))
-    }
-
-    private var secondsUntilStart: Int {
-        secondsUntil(event.startsAt, from: now)
-    }
-
-    private var secondsUntilEnd: Int {
-        secondsUntil(event.endsAt, from: now)
-    }
-
-    private var secondsUntilReveal: Int {
-        secondsUntil(event.releaseAt, from: now)
+    private func secondsUntil(_ date: Date) -> Int {
+        max(0, Int(date.timeIntervalSince(now)))
     }
 
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Top row: badge + guest count
             topRow
-
-            // Event name
             Text(event.name)
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(.white)
                 .lineLimit(2)
-
-            // Time subtitle
             timeSubtitle
-
-            // Bottom: shots or state info
             bottomSection
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(eventState == .readyToReveal
+                .fill(isRevealReady && !userHasCompletedReveal
                     ? Color(red: 0.06, green: 0.08, blue: 0.14)
                     : AppTheme.Colors.darkCardFill)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
-                    eventState == .readyToReveal
+                    isRevealReady && !userHasCompletedReveal
                         ? Color.cyan.opacity(glowPulsing ? 0.8 : 0.3)
                         : AppTheme.Colors.darkCardBorder,
-                    lineWidth: eventState == .readyToReveal ? 1.5 : 1
+                    lineWidth: isRevealReady && !userHasCompletedReveal ? 1.5 : 1
                 )
         )
         .shadow(
-            color: eventState == .readyToReveal
+            color: isRevealReady && !userHasCompletedReveal
                 ? Color.cyan.opacity(glowPulsing ? 0.3 : 0.1)
                 : .clear,
             radius: glowPulsing ? 16 : 8
         )
         .contentShape(Rectangle())
-        .onTapGesture {
-            onTap()
-        }
+        .onTapGesture { onTap() }
         .onLongPressGesture(minimumDuration: 0.5) {
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
             onLongPress()
         }
         .onAppear {
-            if eventState == .readyToReveal {
+            if isRevealReady && !userHasCompletedReveal {
                 withAnimation(
                     .easeInOut(duration: 2.0)
                     .repeatForever(autoreverses: true)
@@ -143,7 +110,6 @@ struct PremiumEventCard: View {
         HStack {
             stateBadge
             Spacer()
-            // Guest count
             HStack(spacing: 4) {
                 Image(systemName: "person.2.fill")
                     .font(.system(size: 12, weight: .medium))
@@ -170,10 +136,7 @@ struct PremiumEventCard: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.green.opacity(0.2))
-            )
+            .background(Capsule().fill(Color.green.opacity(0.2)))
 
         case .upcoming:
             HStack(spacing: 6) {
@@ -185,55 +148,43 @@ struct PremiumEventCard: View {
             .foregroundColor(.white.opacity(0.7))
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.white.opacity(0.1))
-            )
-
-        case .processing:
-            HStack(spacing: 6) {
-                Image(systemName: "film.stack")
-                    .font(.system(size: 11, weight: .medium))
-                Text("DEVELOPING")
-                    .font(.system(size: 13, weight: .bold))
-            }
-            .foregroundColor(.orange)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.orange.opacity(0.15))
-            )
-
-        case .readyToReveal:
-            HStack(spacing: 6) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 11, weight: .medium))
-                Text("READY")
-                    .font(.system(size: 13, weight: .bold))
-            }
-            .foregroundColor(.cyan)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.cyan.opacity(0.15))
-            )
+            .background(Capsule().fill(Color.white.opacity(0.1)))
 
         case .revealed:
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 11, weight: .medium))
-                Text("REVEALED")
-                    .font(.system(size: 13, weight: .bold))
+            if userHasCompletedReveal {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 11, weight: .medium))
+                    Text("DONE")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundColor(Color(white: 0.6))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.white.opacity(0.08)))
+            } else if isRevealReady {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 11, weight: .medium))
+                    Text("READY")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundColor(.cyan)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.cyan.opacity(0.15)))
+            } else {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 11, weight: .medium))
+                    Text("ENDED")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundColor(.orange)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.orange.opacity(0.15)))
             }
-            .foregroundColor(Color(white: 0.6))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.white.opacity(0.08))
-            )
         }
     }
 
@@ -243,37 +194,37 @@ struct PremiumEventCard: View {
     private var timeSubtitle: some View {
         switch eventState {
         case .live:
-            Text("Ends \(formatHumanizedTime(secondsUntilEnd))")
+            Text("Ends \(formatHumanizedTime(secondsUntil(event.endsAt)))")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
 
         case .upcoming:
-            Text("Starts \(formatHumanizedTime(secondsUntilStart))")
+            Text("Starts \(formatHumanizedTime(secondsUntil(event.startsAt)))")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
-
-        case .processing:
-            Text("Reveals \(formatHumanizedTime(secondsUntilReveal))")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.orange.opacity(0.7))
-
-        case .readyToReveal:
-            HStack(spacing: 6) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12))
-                Text("Your photos are ready")
-                    .font(.system(size: 15, weight: .medium))
-            }
-            .foregroundColor(.cyan.opacity(0.8))
 
         case .revealed:
-            Text(likedCount > 0 ? "\(likedCount) liked" : "Tap to relive")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
+            if userHasCompletedReveal {
+                Text(likedCount > 0 ? "\(likedCount) liked" : "Tap to relive")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+            } else if isRevealReady {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12))
+                    Text("Your shots are ready")
+                        .font(.system(size: 15, weight: .medium))
+                }
+                .foregroundColor(.cyan.opacity(0.8))
+            } else {
+                Text("Reveals \(formatHumanizedTime(secondsUntil(event.releaseAt)))")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.orange.opacity(0.7))
+            }
         }
     }
 
-    // MARK: - Bottom Section (shots)
+    // MARK: - Bottom Section
 
     @ViewBuilder
     private var bottomSection: some View {
@@ -284,7 +235,6 @@ struct PremiumEventCard: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(shotsLeft > 0 ? .green : .red.opacity(0.8))
 
-                // Shot dots
                 HStack(spacing: 6) {
                     ForEach(0..<totalShots, id: \.self) { index in
                         Circle()
@@ -295,56 +245,57 @@ struct PremiumEventCard: View {
             }
 
         case .upcoming:
-            // No shots for upcoming
             EmptyView()
 
-        case .processing:
-            EmptyView()
+        case .revealed:
+            if userHasCompletedReveal {
+                if let code = event.joinCode {
+                    Button {
+                        let albumURL = "https://yourmomento.app/album/\(code)"
+                        UIPasteboard.general.string = albumURL
+                        HapticsManager.shared.success()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "link")
+                                .font(.system(size: 11, weight: .medium))
+                            Text("Share album link")
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundColor(.cyan.opacity(0.8))
+                    }
+                }
+            } else if isRevealReady {
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "photo.stack")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("\(totalPhotoCount) shots")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundColor(.white.opacity(0.5))
 
-        case .readyToReveal:
-            HStack {
-                // Photo count
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "hand.tap.fill")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("Tap to reveal")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.cyan)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(Color.cyan.opacity(0.15)))
+                }
+            } else {
+                // Between endsAt and releaseAt — just show shot count
                 HStack(spacing: 6) {
                     Image(systemName: "photo.stack")
                         .font(.system(size: 13, weight: .medium))
-                    Text("\(totalPhotoCount) photos")
+                    Text("\(totalPhotoCount) shots taken")
                         .font(.system(size: 14, weight: .medium))
                 }
                 .foregroundColor(.white.opacity(0.5))
-
-                Spacer()
-
-                // Reveal CTA
-                HStack(spacing: 6) {
-                    Image(systemName: "hand.tap.fill")
-                        .font(.system(size: 13, weight: .medium))
-                    Text("Tap to reveal")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.cyan)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(Color.cyan.opacity(0.15))
-                )
-            }
-
-        case .revealed:
-            if let code = event.joinCode {
-                Button {
-                    let albumURL = "https://yourmomento.app/album/\(code)"
-                    UIPasteboard.general.string = albumURL
-                    HapticsManager.shared.success()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "link")
-                            .font(.system(size: 11, weight: .medium))
-                        Text("Share album link")
-                            .font(.system(size: 13, weight: .medium))
-                    }
-                    .foregroundColor(.cyan.opacity(0.8))
-                }
             }
         }
     }
@@ -356,8 +307,7 @@ struct PremiumEventCard: View {
         let minutes = (seconds % 3600) / 60
 
         if hours >= 48 {
-            let days = hours / 24
-            return "in \(days) days"
+            return "in \(hours / 24) days"
         } else if hours >= 24 {
             return "tomorrow"
         } else if hours >= 12 {
@@ -384,10 +334,10 @@ struct PremiumEventCard: View {
     let now = Date()
     return ScrollView {
         VStack(spacing: 20) {
+            // Live event
             PremiumEventCard(
                 event: Event(
                     name: "Joe's 26th Birthday",
-                    coverEmoji: "\u{1F382}",
                     startsAt: now.addingTimeInterval(-3600),
                     endsAt: now.addingTimeInterval(3600 * 5),
                     releaseAt: now.addingTimeInterval(3600 * 29)
@@ -400,10 +350,10 @@ struct PremiumEventCard: View {
                 onLongPress: {}
             )
 
+            // Upcoming event
             PremiumEventCard(
                 event: Event(
                     name: "NYE House Party",
-                    coverEmoji: "\u{1F389}",
                     startsAt: now.addingTimeInterval(3600 * 12),
                     endsAt: now.addingTimeInterval(3600 * 20),
                     releaseAt: now.addingTimeInterval(3600 * 44)
@@ -414,11 +364,10 @@ struct PremiumEventCard: View {
                 onLongPress: {}
             )
 
-            // Ready to reveal state
+            // Reveal ready
             PremiumEventCard(
                 event: Event(
                     name: "Hijack x DoubleDip",
-                    coverEmoji: "\u{1F3B6}",
                     startsAt: now.addingTimeInterval(-3600 * 48),
                     endsAt: now.addingTimeInterval(-3600 * 24),
                     releaseAt: now.addingTimeInterval(-3600)

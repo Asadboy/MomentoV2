@@ -4,9 +4,7 @@
 //
 //  Created by Asad on 02/11/2025.
 //
-//  MODULAR ARCHITECTURE: Data model
-//  This file defines the Event data structure and sample data generation.
-//  Keeping data models separate ensures clear separation of concerns.
+//  Data models for events and photos.
 
 import Foundation
 import UIKit
@@ -45,12 +43,10 @@ struct EventPhoto: Identifiable {
     }
 }
 
-/// Represents an event in the app (acts like a disposable camera)
-/// Conforms to Identifiable for SwiftUI list usage and Hashable for comparison
+/// Represents an event (a time-bound gathering where people take shots)
 struct Event: Identifiable, Hashable {
     let id: String
     var name: String
-    var coverEmoji: String
     var startsAt: Date
     var endsAt: Date
     var releaseAt: Date
@@ -64,7 +60,6 @@ struct Event: Identifiable, Hashable {
     init(
         id: String = UUID().uuidString,
         name: String,
-        coverEmoji: String,
         startsAt: Date,
         endsAt: Date,
         releaseAt: Date,
@@ -77,7 +72,6 @@ struct Event: Identifiable, Hashable {
     ) {
         self.id = id
         self.name = name
-        self.coverEmoji = coverEmoji
         self.startsAt = startsAt
         self.endsAt = endsAt
         self.releaseAt = releaseAt
@@ -89,23 +83,31 @@ struct Event: Identifiable, Hashable {
         self.expiresAt = expiresAt
     }
 
+    // MARK: - State Machine (3 states)
+
     enum State {
-        case upcoming
-        case live
-        case processing
-        case revealed
+        case upcoming   // Event hasn't started yet
+        case live       // Event is happening — people can take shots
+        case revealed   // Event has ended — covers both "waiting for reveal" and "revealed"
     }
 
+    /// Returns the current state based on time.
+    /// - upcoming: now < startsAt
+    /// - live: startsAt <= now < endsAt
+    /// - revealed: now >= endsAt (includes the gap before releaseAt)
     func currentState(at now: Date = .now) -> State {
-        if now >= releaseAt {
+        if now >= endsAt {
             return .revealed
-        } else if now >= endsAt {
-            return .processing
         } else if now >= startsAt {
             return .live
         } else {
             return .upcoming
         }
+    }
+
+    /// Whether the reveal is actually available (releaseAt has passed)
+    func isRevealReady(at now: Date = .now) -> Bool {
+        now >= releaseAt
     }
 }
 
@@ -117,7 +119,6 @@ extension Event {
         self.init(
             id: eventModel.id.uuidString,
             name: eventModel.name,
-            coverEmoji: "\u{1F4F8}",
             startsAt: eventModel.startsAt,
             endsAt: eventModel.endsAt,
             releaseAt: eventModel.releaseAt,
@@ -131,37 +132,32 @@ extension Event {
     }
 }
 
-/// Generates sample events for preview/testing purposes
-/// - Parameter now: Current date to base sample events on
-/// - Returns: Array of sample Event objects
+/// Generates sample events for preview/testing
 func makeFakeEvents(now: Date = .now) -> [Event] {
     let calendar = Calendar.current
 
     return [
-        // Upcoming state - starts in 12 hours
+        // Upcoming — starts in 12 hours
         Event(
             name: "Joe's 26th",
-            coverEmoji: "\u{1F382}", // cake
             startsAt: calendar.date(byAdding: .hour, value: 12, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: 20, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: 44, to: now)!,
             joinCode: "JOE26"
         ),
 
-        // Live state - started 30 minutes ago, ends in 6 hours
+        // Live — started 30 mins ago
         Event(
             name: "NYE House Party",
-            coverEmoji: "\u{1F389}", // party popper
             startsAt: calendar.date(byAdding: .minute, value: -30, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: 6, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: 30, to: now)!,
             joinCode: "NYE2025"
         ),
 
-        // Revealed state - event ended, photos revealed
+        // Revealed — event ended, photos revealed
         Event(
             name: "Sopranos Party",
-            coverEmoji: "\u{1F37B}", // beers
             startsAt: calendar.date(byAdding: .hour, value: -30, to: now)!,
             endsAt: calendar.date(byAdding: .hour, value: -20, to: now)!,
             releaseAt: calendar.date(byAdding: .hour, value: -2, to: now)!,

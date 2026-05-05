@@ -2,7 +2,7 @@
 //  EventsScreenPreview.swift
 //  Momento
 //
-//  Full-screen preview of the Featured + List events screen.
+//  Full-screen preview of the events screen.
 //  Active events (live/upcoming) as large cards, past events as compact rows.
 //
 
@@ -10,17 +10,12 @@ import SwiftUI
 
 #if DEBUG
 
-// MARK: - Full Events Screen Preview
-
-/// Mock of the full events screen layout for Xcode preview
 private struct EventsScreenPreviewContent: View {
     private let now = Date()
 
-    // Sample events covering every state
     private var liveEvent: Event {
         Event(
             name: "Joe's 26th Birthday",
-            coverEmoji: "\u{1F382}",
             startsAt: now.addingTimeInterval(-3600),
             endsAt: now.addingTimeInterval(3600 * 5),
             releaseAt: now.addingTimeInterval(3600 * 29),
@@ -33,46 +28,17 @@ private struct EventsScreenPreviewContent: View {
     private var upcomingEvent: Event {
         Event(
             name: "NYE House Party",
-            coverEmoji: "\u{1F389}",
             startsAt: now.addingTimeInterval(3600 * 8),
             endsAt: now.addingTimeInterval(3600 * 16),
             releaseAt: now.addingTimeInterval(3600 * 40),
             memberCount: 8,
-            photoCount: 0,
             joinCode: "NYE24"
-        )
-    }
-
-    private var processingEvent: Event {
-        Event(
-            name: "Weekend Getaway",
-            coverEmoji: "\u{1F3D6}",
-            startsAt: now.addingTimeInterval(-3600 * 26),
-            endsAt: now.addingTimeInterval(-3600 * 2),
-            releaseAt: now.addingTimeInterval(3600 * 22),
-            memberCount: 6,
-            photoCount: 18,
-            joinCode: "WKND"
-        )
-    }
-
-    private var readyToRevealEvent: Event {
-        Event(
-            name: "Sarah's Graduation",
-            coverEmoji: "\u{1F393}",
-            startsAt: now.addingTimeInterval(-3600 * 72),
-            endsAt: now.addingTimeInterval(-3600 * 48),
-            releaseAt: now.addingTimeInterval(-3600 * 1),
-            memberCount: 15,
-            photoCount: 42,
-            joinCode: "GRAD"
         )
     }
 
     private var revealedEvent: Event {
         Event(
             name: "Summer BBQ",
-            coverEmoji: "\u{1F356}",
             startsAt: now.addingTimeInterval(-3600 * 168),
             endsAt: now.addingTimeInterval(-3600 * 144),
             releaseAt: now.addingTimeInterval(-3600 * 120),
@@ -87,10 +53,10 @@ private struct EventsScreenPreviewContent: View {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header (pinned)
+                // Header
                 HStack {
-                    Text("Momento")
-                        .font(.custom("RalewayDots-Regular", size: 32))
+                    Text("10shots")
+                        .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
 
                     Spacer()
@@ -107,18 +73,15 @@ private struct EventsScreenPreviewContent: View {
                 .padding(.top, 8)
                 .padding(.bottom, 4)
 
-                // Scrollable content
                 ScrollView {
                     LazyVStack(spacing: 16) {
-                        // MARK: Active Events — Featured Cards
+                        // Active events
                         HStack {
                             Text("CURRENT EVENTS")
                                 .font(.system(size: 13, weight: .semibold))
                                 .tracking(1.5)
                                 .foregroundColor(.white.opacity(0.4))
-
                             Spacer()
-
                             HStack(spacing: 4) {
                                 Image(systemName: "plus")
                                     .font(.system(size: 13, weight: .semibold))
@@ -128,7 +91,7 @@ private struct EventsScreenPreviewContent: View {
                             .foregroundColor(.white.opacity(0.7))
                         }
 
-                        // Live event with camera hint
+                        // Live
                         VStack(spacing: 6) {
                             PremiumEventCard(
                                 event: liveEvent,
@@ -144,7 +107,7 @@ private struct EventsScreenPreviewContent: View {
                                 .foregroundColor(.white.opacity(0.35))
                         }
 
-                        // Upcoming event
+                        // Upcoming
                         PremiumEventCard(
                             event: upcomingEvent,
                             now: now,
@@ -153,34 +116,16 @@ private struct EventsScreenPreviewContent: View {
                             onLongPress: {}
                         )
 
-                        // MARK: Past Events — Compact Rows
+                        // Done pile
                         HStack {
-                            Text("PAST MOMENTOS")
+                            Text("PAST EVENTS")
                                 .font(.system(size: 13, weight: .semibold))
                                 .tracking(1.5)
                                 .foregroundColor(.white.opacity(0.4))
-
                             Spacer()
                         }
                         .padding(.top, 8)
 
-                        // Processing (shimmer placeholders)
-                        PastEventCard(
-                            event: processingEvent,
-                            now: now,
-                            onTap: {},
-                            onLongPress: {}
-                        )
-
-                        // Ready to reveal (no photos yet)
-                        PastEventCard(
-                            event: readyToRevealEvent,
-                            now: now,
-                            onTap: {},
-                            onLongPress: {}
-                        )
-
-                        // Revealed with mock photos
                         PastEventCard(
                             event: revealedEvent,
                             now: now,
@@ -204,9 +149,7 @@ private struct EventsScreenPreviewContent: View {
     }
 }
 
-// MARK: - Previews
-
-#Preview("Events Screen — Featured + List") {
+#Preview("Events Screen") {
     EventsScreenPreviewContent()
 }
 
@@ -218,7 +161,6 @@ private struct EventsScreenPreviewContent: View {
             PremiumEventCard(
                 event: Event(
                     name: "Joe's 26th Birthday",
-                    coverEmoji: "\u{1F382}",
                     startsAt: now.addingTimeInterval(-3600),
                     endsAt: now.addingTimeInterval(3600 * 5),
                     releaseAt: now.addingTimeInterval(3600 * 29),
@@ -240,27 +182,14 @@ private struct EventsScreenPreviewContent: View {
     }
 }
 
-#Preview("Past Event Cards Only") {
+#Preview("Past Event Cards") {
     let now = Date()
     ZStack {
         Color.black.ignoresSafeArea()
         VStack(spacing: 8) {
             PastEventCard(
                 event: Event(
-                    name: "Weekend Getaway",
-                    coverEmoji: "\u{1F3D6}",
-                    startsAt: now.addingTimeInterval(-3600 * 26),
-                    endsAt: now.addingTimeInterval(-3600 * 2),
-                    releaseAt: now.addingTimeInterval(3600 * 22)
-                ),
-                now: now,
-                onTap: {},
-                onLongPress: {}
-            )
-            PastEventCard(
-                event: Event(
                     name: "Sarah's Graduation",
-                    coverEmoji: "\u{1F393}",
                     startsAt: now.addingTimeInterval(-3600 * 72),
                     endsAt: now.addingTimeInterval(-3600 * 48),
                     releaseAt: now.addingTimeInterval(-3600 * 1)
@@ -272,7 +201,6 @@ private struct EventsScreenPreviewContent: View {
             PastEventCard(
                 event: Event(
                     name: "Summer BBQ",
-                    coverEmoji: "\u{1F356}",
                     startsAt: now.addingTimeInterval(-3600 * 168),
                     endsAt: now.addingTimeInterval(-3600 * 144),
                     releaseAt: now.addingTimeInterval(-3600 * 120)
