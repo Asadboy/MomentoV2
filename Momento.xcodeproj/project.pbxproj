@@ -38,7 +38,6 @@
 		C372E3BC2F26C55A00F905AE /* StatCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B62F26C55A00F905AE /* StatCardView.swift */; };
 		C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B72F26C55A00F905AE /* StatsGridView.swift */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
-		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
 		A7C581CF2F29000000000001 /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C581CF2F29000000000000 /* EventCard.swift */; };
 		C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */; };
 		C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7682EC0E45B004B23B1 /* Auth */; };
@@ -120,7 +119,6 @@
 		C372E3B62F26C55A00F905AE /* StatCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCardView.swift; sourceTree = "<group>"; };
 		C372E3B72F26C55A00F905AE /* StatsGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsGridView.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
-		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
 		A7C581CF2F29000000000000 /* EventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventCard.swift; sourceTree = "<group>"; };
 		C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteSheet.swift; sourceTree = "<group>"; };
 		C3ACE7722EC0F096004B23B1 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -310,7 +308,6 @@
 			children = (
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
-				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
 				A7C581CF2F29000000000000 /* EventCard.swift */,
 				C3CMPR002F6C000000000001 /* PastEventCard.swift */,
 				C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */,
@@ -544,7 +541,6 @@
 			files = (
 				C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */,
 					C3C570A12F26579F00A8024C /* EventPreviewModal.swift in Sources */,
-				C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */,
 				A7C581CF2F29000000000001 /* EventCard.swift in Sources */,
 				C3CMPR002F6C000000000002 /* PastEventCard.swift in Sources */,
 				C3EVPR002F6B000000000002 /* EventsScreenPreview.swift in Sources */,

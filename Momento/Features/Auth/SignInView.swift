@@ -26,7 +26,7 @@ struct SignInView: View {
 
                 // Logo + tagline
                 VStack(spacing: 12) {
-                    Text("Momento")
+                    Text("10shots")
                         .font(.custom("RalewayDots-Regular", size: 72))
                         .foregroundColor(.white)
 

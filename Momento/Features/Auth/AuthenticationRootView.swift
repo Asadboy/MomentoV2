@@ -31,7 +31,7 @@ struct AuthenticationRootView: View {
                         Color.black.ignoresSafeArea()
 
                         VStack(spacing: 24) {
-                            Text("Momento")
+                            Text("10shots")
                                 .font(.custom("RalewayDots-Regular", size: 48))
                                 .foregroundColor(.white)
 

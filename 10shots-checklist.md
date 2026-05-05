@@ -17,7 +17,7 @@
 - [ ] Test create flow end-to-end
 
 ## Dead Code Cleanup (partially done)
-- [ ] Remove `PremiumEventCard.swift` (replaced by new EventCard — do this AFTER testing new card)
+- [x] Remove `PremiumEventCard.swift` (replaced by EventCard)
 - [x] Remove `processing` case from all switch statements
 - [x] Remove `readyToReveal` UI code
 - [x] Remove emoji-related helpers and assets (coverEmoji references)
@@ -47,12 +47,12 @@
 - [ ] Test: take a shot on one device, see dot fill on another within 10s
 
 ## Terminology Pass
-- [ ] UI strings: "momento" → "event" everywhere
-- [ ] UI strings: "photo" / "photos" → "shot" / "shots" everywhere
-- [ ] File/class rename: `CreateMomentoFlow` → `CreateEventFlow`
-- [ ] Update debug logs and analytics event names
-- [ ] Update any user-facing error messages
-- [ ] Don't rename internal code variables unless it's in UI-facing strings (save time)
+- [x] UI strings: "momento" → "event" everywhere
+- [x] UI strings: "photo" / "photos" → "shot" / "shots" everywhere
+- [ ] File/class rename: `CreateMomentoFlow` → `CreateEventFlow` (deferred — low priority, internal only)
+- [x] Update debug logs and analytics event names
+- [x] Update any user-facing error messages
+- [x] Don't rename internal code variables unless it's in UI-facing strings (save time)
 
 ## Aggregate Like Counts
 - [ ] Add query: total likes across all members for an event's shots

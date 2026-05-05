@@ -227,7 +227,7 @@ struct FeedRevealView: View {
             ProgressView()
                 .scaleEffect(1.5)
                 .tint(.white)
-            Text("Loading photos...")
+            Text("Loading shots...")
                 .foregroundColor(.white.opacity(0.7))
         }
     }
@@ -237,7 +237,7 @@ struct FeedRevealView: View {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 48))
                 .foregroundColor(.white.opacity(0.5))
-            Text("No photos to reveal")
+            Text("No shots to reveal")
                 .font(.title2)
                 .foregroundColor(.white)
         }
@@ -271,7 +271,7 @@ struct FeedRevealView: View {
                         .font(.system(size: 64, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("photos waiting")
+                    Text("shots waiting")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.4))
                 }
@@ -336,7 +336,7 @@ struct FeedRevealView: View {
                         Text("\(viewModel.photos.count)")
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
-                        Text("Photos")
+                        Text("Shots")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white.opacity(0.35))
                     }
@@ -379,7 +379,7 @@ struct FeedRevealView: View {
                             onComplete()
                         }
                     } label: {
-                        Text("View Liked Photos")
+                        Text("View Liked Shots")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -392,7 +392,7 @@ struct FeedRevealView: View {
                         ShareLink(
                             item: URL(string: "https://yourmomento.app/album/\(code)")!,
                             subject: Text(event.name),
-                            message: Text("Check out the photos from \(event.name)!")
+                            message: Text("Check out the shots from \(event.name)!")
                         ) {
                             Text("Share album")
                                 .font(.system(size: 15, weight: .medium))
@@ -458,7 +458,7 @@ struct FeedRevealView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your liked photos will be saved, but you'll need to reveal again to continue.")
+            Text("Your liked shots will be saved, but you'll need to reveal again to continue.")
         }
     }
 
@@ -527,7 +527,7 @@ struct FeedRevealView: View {
                         Text("\(viewModel.photos.count)")
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.white)
-                        Text("Photos")
+                        Text("Shots")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white.opacity(0.35))
                     }
@@ -570,7 +570,7 @@ struct FeedRevealView: View {
                             onComplete()
                         }
                     } label: {
-                        Text("View Liked Photos")
+                        Text("View Liked Shots")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -583,7 +583,7 @@ struct FeedRevealView: View {
                         ShareLink(
                             item: URL(string: "https://yourmomento.app/album/\(code)")!,
                             subject: Text(event.name),
-                            message: Text("Check out the photos from \(event.name)!")
+                            message: Text("Check out the shots from \(event.name)!")
                         ) {
                             Text("Share album")
                                 .font(.system(size: 15, weight: .medium))
@@ -600,11 +600,11 @@ struct FeedRevealView: View {
 
     private var completionSection: some View {
         VStack(spacing: 20) {
-            Text("End of photos")
+            Text("End of shots")
                 .font(.headline)
                 .foregroundColor(.white.opacity(0.5))
 
-            Text("\(viewModel.likedCount) photos liked")
+            Text("\(viewModel.likedCount) shots liked")
                 .foregroundColor(.white.opacity(0.7))
 
             Button {

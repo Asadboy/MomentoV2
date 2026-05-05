@@ -403,7 +403,7 @@ class SupabaseManager: ObservableObject {
             .execute()
 
         // Track successful join
-        AnalyticsManager.shared.track(.momentoJoined, properties: [
+        AnalyticsManager.shared.track(.eventJoined, properties: [
             "event_id": event.id.uuidString,
             "join_method": "code"
         ])
@@ -553,29 +553,6 @@ class SupabaseManager: ObservableObject {
 
     // MARK: - Members With Shots (People-Dots Card)
 
-    /// Response struct for event_members joined with profiles
-    private struct MemberWithProfile: Codable {
-        let userId: UUID
-        let profiles: EmbeddedProfile
-
-        enum CodingKeys: String, CodingKey {
-            case userId = "user_id"
-            case profiles
-        }
-
-        struct EmbeddedProfile: Codable {
-            let username: String
-            let displayName: String?
-            let avatarUrl: String?
-
-            enum CodingKeys: String, CodingKey {
-                case username
-                case displayName = "display_name"
-                case avatarUrl = "avatar_url"
-            }
-        }
-    }
-
     /// Fetch all members of an event with their profile info and shot counts.
     /// Returns members sorted: current user first, then by shots taken descending.
     func getEventMembersWithShots(eventId: UUID) async throws -> [MemberWithShots] {
@@ -583,40 +560,44 @@ class SupabaseManager: ObservableObject {
             throw SupabaseError.userNotAuthenticated
         }
 
-        // 1. Get members with profile info (single query via foreign key join)
-        let members: [MemberWithProfile] = try await client
+        // 1. Get member user IDs for this event
+        let members: [EventMember] = try await client
             .from("event_members")
-            .select("user_id, profiles(username, display_name, avatar_url)")
+            .select()
             .eq("event_id", value: eventId.uuidString)
             .execute()
             .value
 
-        // 2. Get photo counts per member in parallel
-        let results = try await withThrowingTaskGroup(of: (UUID, Int).self) { group in
+        if members.isEmpty { return [] }
+
+        // 2. Fetch profiles and photo counts per member in parallel
+        let results = try await withThrowingTaskGroup(of: MemberWithShots?.self) { group in
             for member in members {
                 group.addTask {
-                    let count = try await self.getPhotoCount(eventId: eventId, userId: member.userId)
-                    return (member.userId, count)
+                    let profile = try? await self.getUserProfile(userId: member.userId)
+                    let count = (try? await self.getPhotoCount(eventId: eventId, userId: member.userId)) ?? 0
+                    guard let profile else { return nil }
+                    return MemberWithShots(
+                        userId: member.userId.uuidString,
+                        username: profile.username,
+                        displayName: profile.displayName,
+                        avatarUrl: profile.avatarUrl,
+                        shotsTaken: count
+                    )
                 }
             }
 
-            var counts: [UUID: Int] = [:]
-            for try await (userId, count) in group {
-                counts[userId] = count
+            var memberShots: [MemberWithShots] = []
+            for try await result in group {
+                if let member = result {
+                    memberShots.append(member)
+                }
             }
-            return counts
+            return memberShots
         }
 
-        // 3. Build MemberWithShots array
-        var memberShots = members.map { member in
-            MemberWithShots(
-                userId: member.userId.uuidString,
-                username: member.profiles.username,
-                displayName: member.profiles.displayName,
-                avatarUrl: member.profiles.avatarUrl,
-                shotsTaken: results[member.userId] ?? 0
-            )
-        }
+        var memberShots = results
+        debugLog("[MembersWithShots] Event \(eventId.uuidString.prefix(8)): \(members.count) members, \(memberShots.count) with profiles")
 
         // 4. Sort: current user first, then by shots descending
         memberShots.sort { a, b in

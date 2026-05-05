@@ -46,7 +46,7 @@ struct CreateStep1NameView: View {
             VStack(spacing: 40) {
                 // Title
                 VStack(spacing: 8) {
-                    Text("Name your\nMomento")
+                    Text("Name your\nevent")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)

@@ -80,7 +80,7 @@ struct CreateStep2ConfigureView: View {
                 // Next button
                 Button(action: onNext) {
                     HStack(spacing: 8) {
-                        Text("Create Momento")
+                        Text("Create event")
                             .font(.system(size: 17, weight: .semibold))
 
                         Image(systemName: "arrow.right")

@@ -174,7 +174,7 @@ struct ContentView: View {
                     // Content
                     if isLoadingEvents {
                         Spacer()
-                        ProgressView("Loading your momentos...")
+                        ProgressView("Loading your events...")
                             .tint(.white)
                             .foregroundColor(.white)
                         Spacer()
@@ -185,7 +185,7 @@ struct ContentView: View {
                                 Text("📷")
                                     .font(.system(size: 56))
 
-                                Text("Start your first\nMomento")
+                                Text("Start your first\nevent")
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
@@ -201,7 +201,7 @@ struct ContentView: View {
                                 Button {
                                     showAddSheet = true
                                 } label: {
-                                    Text("Create a Momento")
+                                    Text("Create an event")
                                         .font(.system(size: 17, weight: .semibold))
                                         .foregroundColor(.black)
                                         .frame(maxWidth: .infinity)
@@ -319,7 +319,7 @@ struct ContentView: View {
                                 // MARK: Past Events Section (compact rows)
                                 if !pastEvents.isEmpty {
                                     HStack {
-                                        Text("PAST MOMENTOS")
+                                        Text("PAST EVENTS")
                                             .font(.system(size: 13, weight: .semibold))
                                             .tracking(1.5)
                                             .foregroundColor(.white.opacity(0.4))
@@ -461,7 +461,7 @@ struct ContentView: View {
 
     private var headerView: some View {
         HStack {
-            Text("Momento")
+            Text("10shots")
                 .font(.custom("RalewayDots-Regular", size: 32))
                 .foregroundColor(.white)
 

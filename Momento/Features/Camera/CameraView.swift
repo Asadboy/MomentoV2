@@ -208,7 +208,7 @@ struct CameraView: View {
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
 
-                    Text("You'll see everyone's photos tomorrow.")
+                    Text("You'll see everyone's shots tomorrow.")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
 
