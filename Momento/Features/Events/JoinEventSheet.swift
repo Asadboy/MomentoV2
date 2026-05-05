@@ -70,7 +70,7 @@ struct JoinEventSheet: View {
                     }
                 }
             }
-            .navigationTitle("Join Momento")
+            .navigationTitle("Join event")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {

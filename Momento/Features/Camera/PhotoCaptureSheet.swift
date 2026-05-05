@@ -61,7 +61,7 @@ struct PhotoCaptureSheet: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                     
-                    Text("Please allow camera access to take photos for \(event.name)")
+                    Text("Please allow camera access to take shots for \(event.name)")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
@@ -135,7 +135,7 @@ struct PhotoCaptureSheet: View {
             }
 
             if remaining <= 0 {
-                AnalyticsManager.shared.track(.photoLimitReached, properties: [
+                AnalyticsManager.shared.track(.shotLimitReached, properties: [
                     "event_id": event.id
                 ])
             }
@@ -158,7 +158,7 @@ struct PhotoCaptureSheet: View {
         photosRemaining = remaining - 1
 
         if remaining - 1 <= 0 {
-            AnalyticsManager.shared.track(.photoLimitReached, properties: [
+            AnalyticsManager.shared.track(.shotLimitReached, properties: [
                 "event_id": event.id
             ])
         }
@@ -171,7 +171,6 @@ struct PhotoCaptureSheet: View {
         isPresented: .constant(true),
         event: Event(
             name: "Test Event",
-            coverEmoji: "\u{1F4F8}",
             startsAt: now,
             endsAt: now.addingTimeInterval(6 * 3600),
             releaseAt: now.addingTimeInterval(24 * 3600),

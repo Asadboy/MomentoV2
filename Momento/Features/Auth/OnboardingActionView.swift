@@ -39,7 +39,7 @@ struct OnboardingActionView: View {
                 Spacer()
 
                 VStack(spacing: 8) {
-                    Text("Momento")
+                    Text("10shots")
                         .font(.custom("RalewayDots-Regular", size: 36))
                         .foregroundColor(.white)
                         .opacity(appeared ? 1 : 0)
@@ -59,7 +59,7 @@ struct OnboardingActionView: View {
                         HapticsManager.shared.medium()
                         onAction(.create)
                     } label: {
-                        Text("Create a Momento")
+                        Text("Create an event")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)

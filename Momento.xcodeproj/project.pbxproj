@@ -38,7 +38,7 @@
 		C372E3BC2F26C55A00F905AE /* StatCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B62F26C55A00F905AE /* StatCardView.swift */; };
 		C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B72F26C55A00F905AE /* StatsGridView.swift */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
-		C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */; };
+		A7C581CF2F29000000000001 /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C581CF2F29000000000000 /* EventCard.swift */; };
 		C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */; };
 		C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE7682EC0E45B004B23B1 /* Auth */; };
 		C3ACE76B2EC0E45B004B23B1 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C3ACE76A2EC0E45B004B23B1 /* Functions */; };
@@ -119,7 +119,7 @@
 		C372E3B62F26C55A00F905AE /* StatCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCardView.swift; sourceTree = "<group>"; };
 		C372E3B72F26C55A00F905AE /* StatsGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsGridView.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
-		C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumEventCard.swift; sourceTree = "<group>"; };
+		A7C581CF2F29000000000000 /* EventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventCard.swift; sourceTree = "<group>"; };
 		C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteSheet.swift; sourceTree = "<group>"; };
 		C3ACE7722EC0F096004B23B1 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		C3ACE7732EC0F096004B23B1 /* AuthenticationRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationRootView.swift; sourceTree = "<group>"; };
@@ -308,7 +308,7 @@
 			children = (
 				C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */,
 				C3ACE7652EC0B413004B23B1 /* InviteSheet.swift */,
-				C3ACE7632EC0B243004B23B1 /* PremiumEventCard.swift */,
+				A7C581CF2F29000000000000 /* EventCard.swift */,
 				C3CMPR002F6C000000000001 /* PastEventCard.swift */,
 				C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */,
 				C36446BE2EF8200000000005 /* CreateMomento */,
@@ -541,7 +541,7 @@
 			files = (
 				C34889102EB7C5F4003094CB /* MomentoApp.swift in Sources */,
 					C3C570A12F26579F00A8024C /* EventPreviewModal.swift in Sources */,
-				C3ACE7642EC0B243004B23B1 /* PremiumEventCard.swift in Sources */,
+				A7C581CF2F29000000000001 /* EventCard.swift in Sources */,
 				C3CMPR002F6C000000000002 /* PastEventCard.swift in Sources */,
 				C3EVPR002F6B000000000002 /* EventsScreenPreview.swift in Sources */,
 				C3BB00012F300000000A0001 /* InviteContentView.swift in Sources */,
@@ -751,12 +751,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Momento/Momento.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_ASSET_PATHS = "\"Momento/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Momento/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Momento;
+				INFOPLIST_KEY_CFBundleDisplayName = 10shots;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -785,12 +785,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Momento/Momento.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_ASSET_PATHS = "\"Momento/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Momento/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Momento;
+				INFOPLIST_KEY_CFBundleDisplayName = 10shots;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -816,7 +816,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 49;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
 				MARKETING_VERSION = 1.0;
@@ -834,7 +834,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 49;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
 				MARKETING_VERSION = 1.0;
@@ -851,7 +851,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 49;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asad.MomentoUITests;
@@ -867,7 +867,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 49;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.asad.MomentoUITests;

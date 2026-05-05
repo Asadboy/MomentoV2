@@ -26,9 +26,8 @@ class EventManager: ObservableObject {
     /// Creates a new event and adds it to the events array
     /// - Parameters:
     ///   - name: Event name (will be trimmed)
-    ///   - emoji: Cover emoji for the event
     ///   - startsAt: When the event starts
-    func addEvent(name: String, emoji: String, startsAt: Date) {
+    func addEvent(name: String, startsAt: Date) {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
 
@@ -38,7 +37,6 @@ class EventManager: ObservableObject {
 
         let event = Event(
             name: trimmedName,
-            coverEmoji: emoji,
             startsAt: startsAt,
             endsAt: endsAt,
             releaseAt: releaseAt

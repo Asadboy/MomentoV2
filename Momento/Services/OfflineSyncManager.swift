@@ -90,7 +90,7 @@ class OfflineSyncManager: ObservableObject {
         saveQueue()
 
         // Track photo captured event
-        AnalyticsManager.shared.track(.photoCaptured, properties: [
+        AnalyticsManager.shared.track(.shotCaptured, properties: [
             "event_id": eventId.uuidString,
             "user_photo_count": queue.filter { $0.eventId == eventId }.count
         ])

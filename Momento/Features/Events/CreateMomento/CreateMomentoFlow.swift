@@ -69,7 +69,7 @@ struct CreateMomentoFlow: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.2)
 
-                    Text("Creating your momento...")
+                    Text("Creating your event...")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
@@ -134,7 +134,7 @@ struct CreateMomentoFlow: View {
 
                 let event = Event(fromSupabase: eventModel)
 
-                AnalyticsManager.shared.track(.momentoCreated, properties: [
+                AnalyticsManager.shared.track(.eventCreated, properties: [
                     "event_id": event.id,
                     "event_name": event.name
                 ])
@@ -149,7 +149,7 @@ struct CreateMomentoFlow: View {
                 debugLog("[CreateMomento] ❌ CAUGHT ERROR: \(error)")
                 debugLog("[CreateMomento] ❌ Error type: \(type(of: error))")
                 isCreating = false
-                errorMessage = "Failed to create momento: \(error.localizedDescription)"
+                errorMessage = "Failed to create event: \(error.localizedDescription)"
                 showError = true
             }
         }

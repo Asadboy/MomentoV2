@@ -66,7 +66,6 @@ struct InviteSheet: View {
     return InviteSheet(
         event: Event(
             name: "NYE House Party",
-            coverEmoji: "\u{1F389}",
             startsAt: now,
             endsAt: now.addingTimeInterval(6 * 3600),
             releaseAt: now.addingTimeInterval(24 * 3600),

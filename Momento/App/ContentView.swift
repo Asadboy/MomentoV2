@@ -81,6 +81,12 @@ struct ContentView: View {
     /// Tracks per-user photo count for each event (for shot counter)
     @State private var userPhotoCounts: [String: Int] = [:]
 
+    /// Members with shot counts per event (for people-dots card)
+    @State private var eventMembers: [String: [MemberWithShots]] = [:]
+
+    /// Total likes across all users for an event's shots (for done pile stats)
+    @State private var totalLikeCounts: [String: Int] = [:]
+
 
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
@@ -107,69 +113,52 @@ struct ContentView: View {
         in: .common
     ).autoconnect()
 
-    /// Timer that refreshes event data (counts) every 15 seconds
+    /// Timer that refreshes event data (counts) every 10 seconds
     private let refreshTimer = Timer.publish(
-        every: 15.0,
+        every: 10.0,
         on: .main,
         in: .common
     ).autoconnect()
 
     // MARK: - Sorted Events
 
-    /// Active events (live/upcoming/ready-to-reveal) — shown as large featured cards
+    /// Active events (live/upcoming/unrevealed) — shown as large featured cards
     private var activeEvents: [Event] {
         events
             .filter {
                 let state = $0.currentState(at: now)
                 if state == .live || state == .upcoming { return true }
-                // Ready-to-reveal events get the big card treatment
+                // Revealed but not yet completed reveal — still active
                 if state == .revealed && !(revealCompletionStatus[$0.id] ?? false) { return true }
                 return false
             }
             .sorted { e1, e2 in
                 let s1 = e1.currentState(at: now)
                 let s2 = e2.currentState(at: now)
-                // Priority: live > ready-to-reveal > upcoming
-                func priority(_ event: Event, _ state: Event.State) -> Int {
-                    switch state {
-                    case .live: return 0
-                    case .revealed: return 1 // ready-to-reveal
-                    case .upcoming: return 2
-                    default: return 3
-                    }
-                }
-                let p1 = priority(e1, s1)
-                let p2 = priority(e2, s2)
-                if p1 != p2 { return p1 < p2 }
-                return e1.startsAt < e2.startsAt
-            }
-    }
-
-    /// Past events (processing/revealed-and-completed) — shown as compact rows
-    private var pastEvents: [Event] {
-        events
-            .filter {
-                let state = $0.currentState(at: now)
-                if state == .processing { return true }
-                // Only completed reveals go in past
-                if state == .revealed && (revealCompletionStatus[$0.id] ?? false) { return true }
-                return false
-            }
-            .sorted { e1, e2 in
-                let s1 = e1.currentState(at: now)
-                let s2 = e2.currentState(at: now)
-                // Processing first, then revealed
+                // Priority: live > revealed (waiting for reveal) > upcoming
                 func priority(_ state: Event.State) -> Int {
                     switch state {
-                    case .processing: return 0
+                    case .live: return 0
                     case .revealed: return 1
-                    default: return 2
+                    case .upcoming: return 2
                     }
                 }
                 let p1 = priority(s1)
                 let p2 = priority(s2)
                 if p1 != p2 { return p1 < p2 }
-                return e1.releaseAt > e2.releaseAt
+                return e1.startsAt < e2.startsAt
+            }
+    }
+
+    /// Past events (completed reveals) — shown as compact rows
+    private var pastEvents: [Event] {
+        events
+            .filter {
+                let state = $0.currentState(at: now)
+                return state == .revealed && (revealCompletionStatus[$0.id] ?? false)
+            }
+            .sorted { e1, e2 in
+                e1.releaseAt > e2.releaseAt
             }
     }
 
@@ -188,7 +177,7 @@ struct ContentView: View {
                     // Content
                     if isLoadingEvents {
                         Spacer()
-                        ProgressView("Loading your momentos...")
+                        ProgressView("Loading your events...")
                             .tint(.white)
                             .foregroundColor(.white)
                         Spacer()
@@ -199,7 +188,7 @@ struct ContentView: View {
                                 Text("📷")
                                     .font(.system(size: 56))
 
-                                Text("Start your first\nMomento")
+                                Text("Start your first\nevent")
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
@@ -215,7 +204,7 @@ struct ContentView: View {
                                 Button {
                                     showAddSheet = true
                                 } label: {
-                                    Text("Create a Momento")
+                                    Text("Create an event")
                                         .font(.system(size: 17, weight: .semibold))
                                         .foregroundColor(.black)
                                         .frame(maxWidth: .infinity)
@@ -272,18 +261,19 @@ struct ContentView: View {
 
                                     ForEach(activeEvents) { event in
                                         VStack(spacing: 6) {
-                                            PremiumEventCard(
+                                            EventCard(
                                                 event: event,
                                                 now: now,
+                                                members: eventMembers[event.id] ?? [],
                                                 userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
                                                 likedCount: likedCounts[event.id] ?? 0,
-                                                memberCount: event.memberCount,
-                                                userPhotoCount: userPhotoCounts[event.id] ?? 0,
-                                                totalPhotoCount: event.photoCount,
                                                 onTap: {
                                                     handleEventTap(event)
                                                 },
                                                 onLongPress: {
+                                                    showInviteSheet(for: event)
+                                                },
+                                                onInvite: {
                                                     showInviteSheet(for: event)
                                                 }
                                             )
@@ -303,11 +293,6 @@ struct ContentView: View {
                                                 }
                                             }
 
-                                            if event.currentState(at: now) == .live {
-                                                Text("Tap card to open camera")
-                                                    .font(.system(size: 12, weight: .medium))
-                                                    .foregroundColor(.white.opacity(0.35))
-                                            }
                                         }
                                     }
                                 } else {
@@ -337,7 +322,7 @@ struct ContentView: View {
                                 // MARK: Past Events Section (compact rows)
                                 if !pastEvents.isEmpty {
                                     HStack {
-                                        Text("PAST MOMENTOS")
+                                        Text("PAST EVENTS")
                                             .font(.system(size: 13, weight: .semibold))
                                             .tracking(1.5)
                                             .foregroundColor(.white.opacity(0.4))
@@ -352,6 +337,8 @@ struct ContentView: View {
                                             now: now,
                                             photos: pastEventPhotos[event.id] ?? [],
                                             totalPhotoCount: event.photoCount,
+                                            totalLikeCount: totalLikeCounts[event.id] ?? 0,
+                                            memberCount: event.memberCount,
                                             onTap: {
                                                 handleEventTap(event)
                                             },
@@ -407,7 +394,7 @@ struct ContentView: View {
                 }
             }
             .onReceive(refreshTimer) { _ in
-                // Silently refresh event data (counts) every 15s — no loading spinner
+                // Silently refresh event data (counts) every 10s — no loading spinner
                 Task { await refreshEventCounts() }
             }
             .fullScreenCover(isPresented: $showAddSheet) {
@@ -479,7 +466,7 @@ struct ContentView: View {
 
     private var headerView: some View {
         HStack {
-            Text("Momento")
+            Text("10shots")
                 .font(.custom("RalewayDots-Regular", size: 32))
                 .foregroundColor(.white)
 
@@ -508,26 +495,22 @@ struct ContentView: View {
 
     // MARK: - Actions
     
-    /// Handle event card tap - routes to camera, processing info, or reveal based on state
+    /// Handle event card tap - routes to camera or reveal based on state
     private func handleEventTap(_ event: Event) {
         switch event.currentState(at: now) {
         case .upcoming:
-            // Event hasn't started yet — nothing to do
             break
 
         case .live:
-            // Event is live - open camera for photo capture
             selectedEventForPhoto = event
             showPhotoCapture = true
 
-        case .processing:
-            // Photos are developing — nothing to do, card already shows countdown
-            break
-            
         case .revealed:
-            // Check if user has already completed the reveal swipe
-            selectedEventForReveal = event
-            showReveal(for: event)
+            if event.isRevealReady(at: now) {
+                selectedEventForReveal = event
+                showReveal(for: event)
+            }
+            // If reveal isn't ready yet (between endsAt and releaseAt), do nothing
         }
     }
     
@@ -633,17 +616,20 @@ struct ContentView: View {
             // Fetch liked counts + photos for revealed events IN PARALLEL
             let revealedEvents = loadedEvents.filter { $0.currentState() == .revealed }
 
-            let fetchResults = await withTaskGroup(of: (String, Int, [PhotoData]).self) { group in
+            let fetchResults = await withTaskGroup(of: (String, Int, [PhotoData], Int, Int, Int).self) { group in
                 for event in revealedEvents {
                     guard let eventUUID = UUID(uuidString: event.id) else { continue }
                     group.addTask {
                         let count = (try? await self.supabaseManager.getLikedPhotoCount(eventId: eventUUID)) ?? 0
                         let photos = (try? await self.supabaseManager.getLikedPhotos(eventId: eventUUID)) ?? []
-                        return (event.id, count, photos)
+                        let totalLikes = (try? await self.supabaseManager.getTotalLikeCount(eventId: eventUUID)) ?? 0
+                        let memberCount = (try? await self.supabaseManager.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                        let photoCount = (try? await self.supabaseManager.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                        return (event.id, count, photos, totalLikes, memberCount, photoCount)
                     }
                 }
 
-                var results: [(String, Int, [PhotoData])] = []
+                var results: [(String, Int, [PhotoData], Int, Int, Int)] = []
                 for await result in group {
                     results.append(result)
                 }
@@ -653,9 +639,15 @@ struct ContentView: View {
             // Apply results
             var likeCounts: [String: Int] = [:]
             var pastPhotos: [String: [PhotoData]] = [:]
-            for (eventId, count, photos) in fetchResults {
+            for (eventId, count, photos, totalLikes, memberCount, photoCount) in fetchResults {
                 likeCounts[eventId] = count
                 pastPhotos[eventId] = photos
+                totalLikeCounts[eventId] = totalLikes
+                // Update real counts on the event
+                if let idx = events.firstIndex(where: { $0.id == eventId }) {
+                    events[idx].memberCount = memberCount
+                    events[idx].photoCount = photoCount
+                }
                 // Restore reveal status from liked count OR persistent local state
                 if count > 0 || RevealStateManager.shared.hasCompletedReveal(for: eventId) {
                     restoredRevealStatus[eventId] = true
@@ -670,6 +662,26 @@ struct ContentView: View {
                 }
             }
             revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
+
+            // Fetch members with shots for active events (people-dots card)
+            let membersResults = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
+                for event in loadedEvents where event.currentState() != .revealed || !(restoredRevealStatus[event.id] ?? false) {
+                    guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                    group.addTask {
+                        let members = (try? await self.supabaseManager.getEventMembersWithShots(eventId: eventUUID)) ?? []
+                        return (event.id, members)
+                    }
+                }
+                var results: [(String, [MemberWithShots])] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results
+            }
+            for (eventId, members) in membersResults {
+                eventMembers[eventId] = members
+            }
+
             isRefreshing = false
             debugLog("✅ Loaded \(eventModels.count) events")
         } catch {
@@ -715,6 +727,25 @@ struct ContentView: View {
             if let userCount {
                 userPhotoCounts[eventId] = userCount
             }
+        }
+
+        // Refresh members with shots for active events
+        let membersResults = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
+            for event in events where event.currentState() == .live || event.currentState() == .upcoming {
+                guard let eventUUID = UUID(uuidString: event.id) else { continue }
+                group.addTask {
+                    let members = (try? await self.supabaseManager.getEventMembersWithShots(eventId: eventUUID)) ?? []
+                    return (event.id, members)
+                }
+            }
+            var results: [(String, [MemberWithShots])] = []
+            for await result in group {
+                results.append(result)
+            }
+            return results
+        }
+        for (eventId, members) in membersResults {
+            eventMembers[eventId] = members
         }
     }
 
@@ -782,6 +813,19 @@ struct ContentView: View {
             let eventId = event.id
             userPhotoCounts[eventId, default: 0] += 1
 
+            // Also update the eventMembers for the people-dots card
+            if let userId = supabaseManager.currentUser?.id.uuidString,
+               let memberIdx = eventMembers[eventId]?.firstIndex(where: { $0.userId == userId }) {
+                let current = eventMembers[eventId]![memberIdx]
+                eventMembers[eventId]![memberIdx] = MemberWithShots(
+                    userId: current.userId,
+                    username: current.username,
+                    displayName: current.displayName,
+                    avatarUrl: current.avatarUrl,
+                    shotsTaken: current.shotsTaken + 1
+                )
+            }
+
             debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             debugLog("   Pending uploads: \(syncManager.pendingCount)")
 
@@ -793,6 +837,17 @@ struct ContentView: View {
                     let realCount = (try? await supabaseManager.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
                     await MainActor.run {
                         userPhotoCounts[eventId] = realCount
+                        // Also correct the eventMembers
+                        if let memberIdx = eventMembers[eventId]?.firstIndex(where: { $0.userId == userId.uuidString }) {
+                            let current = eventMembers[eventId]![memberIdx]
+                            eventMembers[eventId]![memberIdx] = MemberWithShots(
+                                userId: current.userId,
+                                username: current.username,
+                                displayName: current.displayName,
+                                avatarUrl: current.avatarUrl,
+                                shotsTaken: realCount
+                            )
+                        }
                     }
                 }
             }

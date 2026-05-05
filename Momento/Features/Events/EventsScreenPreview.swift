@@ -2,7 +2,7 @@
 //  EventsScreenPreview.swift
 //  Momento
 //
-//  Full-screen preview of the Featured + List events screen.
+//  Full-screen preview of the events screen.
 //  Active events (live/upcoming) as large cards, past events as compact rows.
 //
 
@@ -10,22 +10,24 @@ import SwiftUI
 
 #if DEBUG
 
-// MARK: - Full Events Screen Preview
+private let previewMembers = [
+    MemberWithShots(userId: "1", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
+    MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 4),
+    MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
+    MemberWithShots(userId: "4", username: "mike", displayName: "Mike", avatarUrl: nil, shotsTaken: 0),
+]
 
-/// Mock of the full events screen layout for Xcode preview
 private struct EventsScreenPreviewContent: View {
     private let now = Date()
 
-    // Sample events covering every state
     private var liveEvent: Event {
         Event(
             name: "Joe's 26th Birthday",
-            coverEmoji: "\u{1F382}",
             startsAt: now.addingTimeInterval(-3600),
             endsAt: now.addingTimeInterval(3600 * 5),
             releaseAt: now.addingTimeInterval(3600 * 29),
-            memberCount: 12,
-            photoCount: 3,
+            memberCount: 4,
+            photoCount: 13,
             joinCode: "JOE26"
         )
     }
@@ -33,46 +35,17 @@ private struct EventsScreenPreviewContent: View {
     private var upcomingEvent: Event {
         Event(
             name: "NYE House Party",
-            coverEmoji: "\u{1F389}",
             startsAt: now.addingTimeInterval(3600 * 8),
             endsAt: now.addingTimeInterval(3600 * 16),
             releaseAt: now.addingTimeInterval(3600 * 40),
             memberCount: 8,
-            photoCount: 0,
             joinCode: "NYE24"
-        )
-    }
-
-    private var processingEvent: Event {
-        Event(
-            name: "Weekend Getaway",
-            coverEmoji: "\u{1F3D6}",
-            startsAt: now.addingTimeInterval(-3600 * 26),
-            endsAt: now.addingTimeInterval(-3600 * 2),
-            releaseAt: now.addingTimeInterval(3600 * 22),
-            memberCount: 6,
-            photoCount: 18,
-            joinCode: "WKND"
-        )
-    }
-
-    private var readyToRevealEvent: Event {
-        Event(
-            name: "Sarah's Graduation",
-            coverEmoji: "\u{1F393}",
-            startsAt: now.addingTimeInterval(-3600 * 72),
-            endsAt: now.addingTimeInterval(-3600 * 48),
-            releaseAt: now.addingTimeInterval(-3600 * 1),
-            memberCount: 15,
-            photoCount: 42,
-            joinCode: "GRAD"
         )
     }
 
     private var revealedEvent: Event {
         Event(
             name: "Summer BBQ",
-            coverEmoji: "\u{1F356}",
             startsAt: now.addingTimeInterval(-3600 * 168),
             endsAt: now.addingTimeInterval(-3600 * 144),
             releaseAt: now.addingTimeInterval(-3600 * 120),
@@ -87,10 +60,10 @@ private struct EventsScreenPreviewContent: View {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header (pinned)
+                // Header
                 HStack {
-                    Text("Momento")
-                        .font(.custom("RalewayDots-Regular", size: 32))
+                    Text("10shots")
+                        .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
 
                     Spacer()
@@ -107,18 +80,15 @@ private struct EventsScreenPreviewContent: View {
                 .padding(.top, 8)
                 .padding(.bottom, 4)
 
-                // Scrollable content
                 ScrollView {
                     LazyVStack(spacing: 16) {
-                        // MARK: Active Events — Featured Cards
+                        // Active events
                         HStack {
                             Text("CURRENT EVENTS")
                                 .font(.system(size: 13, weight: .semibold))
                                 .tracking(1.5)
                                 .foregroundColor(.white.opacity(0.4))
-
                             Spacer()
-
                             HStack(spacing: 4) {
                                 Image(systemName: "plus")
                                     .font(.system(size: 13, weight: .semibold))
@@ -128,59 +98,36 @@ private struct EventsScreenPreviewContent: View {
                             .foregroundColor(.white.opacity(0.7))
                         }
 
-                        // Live event with camera hint
-                        VStack(spacing: 6) {
-                            PremiumEventCard(
-                                event: liveEvent,
-                                now: now,
-                                memberCount: 12,
-                                userPhotoCount: 3,
-                                totalPhotoCount: 8,
-                                onTap: {},
-                                onLongPress: {}
-                            )
-                            Text("Tap card to open camera")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.35))
-                        }
-
-                        // Upcoming event
-                        PremiumEventCard(
-                            event: upcomingEvent,
+                        // Live
+                        EventCard(
+                            event: liveEvent,
                             now: now,
-                            memberCount: 8,
+                            members: previewMembers,
                             onTap: {},
-                            onLongPress: {}
+                            onLongPress: {},
+                            onInvite: {}
                         )
 
-                        // MARK: Past Events — Compact Rows
+                        // Upcoming
+                        EventCard(
+                            event: upcomingEvent,
+                            now: now,
+                            members: [previewMembers[0], previewMembers[1]],
+                            onTap: {},
+                            onLongPress: {},
+                            onInvite: {}
+                        )
+
+                        // Done pile
                         HStack {
-                            Text("PAST MOMENTOS")
+                            Text("PAST EVENTS")
                                 .font(.system(size: 13, weight: .semibold))
                                 .tracking(1.5)
                                 .foregroundColor(.white.opacity(0.4))
-
                             Spacer()
                         }
                         .padding(.top, 8)
 
-                        // Processing (shimmer placeholders)
-                        PastEventCard(
-                            event: processingEvent,
-                            now: now,
-                            onTap: {},
-                            onLongPress: {}
-                        )
-
-                        // Ready to reveal (no photos yet)
-                        PastEventCard(
-                            event: readyToRevealEvent,
-                            now: now,
-                            onTap: {},
-                            onLongPress: {}
-                        )
-
-                        // Revealed with mock photos
                         PastEventCard(
                             event: revealedEvent,
                             now: now,
@@ -191,6 +138,8 @@ private struct EventsScreenPreviewContent: View {
                                 PhotoData(id: "4", url: nil, capturedAt: now, photographerName: nil),
                             ],
                             totalPhotoCount: 67,
+                            totalLikeCount: 34,
+                            memberCount: 5,
                             onTap: {},
                             onLongPress: {}
                         )
@@ -204,9 +153,7 @@ private struct EventsScreenPreviewContent: View {
     }
 }
 
-// MARK: - Previews
-
-#Preview("Events Screen — Featured + List") {
+#Preview("Events Screen") {
     EventsScreenPreviewContent()
 }
 
@@ -214,53 +161,33 @@ private struct EventsScreenPreviewContent: View {
     let now = Date()
     ZStack {
         Color.black.ignoresSafeArea()
-        VStack(spacing: 6) {
-            PremiumEventCard(
-                event: Event(
-                    name: "Joe's 26th Birthday",
-                    coverEmoji: "\u{1F382}",
-                    startsAt: now.addingTimeInterval(-3600),
-                    endsAt: now.addingTimeInterval(3600 * 5),
-                    releaseAt: now.addingTimeInterval(3600 * 29),
-                    memberCount: 12,
-                    photoCount: 3
-                ),
-                now: now,
-                memberCount: 12,
-                userPhotoCount: 3,
-                totalPhotoCount: 8,
-                onTap: {},
-                onLongPress: {}
-            )
-            Text("Tap card to open camera")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
-        }
+        EventCard(
+            event: Event(
+                name: "Joe's 26th Birthday",
+                startsAt: now.addingTimeInterval(-3600),
+                endsAt: now.addingTimeInterval(3600 * 5),
+                releaseAt: now.addingTimeInterval(3600 * 29),
+                memberCount: 4,
+                photoCount: 13
+            ),
+            now: now,
+            members: previewMembers,
+            onTap: {},
+            onLongPress: {},
+            onInvite: {}
+        )
         .padding(16)
     }
 }
 
-#Preview("Past Event Cards Only") {
+#Preview("Past Event Cards") {
     let now = Date()
     ZStack {
         Color.black.ignoresSafeArea()
         VStack(spacing: 8) {
             PastEventCard(
                 event: Event(
-                    name: "Weekend Getaway",
-                    coverEmoji: "\u{1F3D6}",
-                    startsAt: now.addingTimeInterval(-3600 * 26),
-                    endsAt: now.addingTimeInterval(-3600 * 2),
-                    releaseAt: now.addingTimeInterval(3600 * 22)
-                ),
-                now: now,
-                onTap: {},
-                onLongPress: {}
-            )
-            PastEventCard(
-                event: Event(
                     name: "Sarah's Graduation",
-                    coverEmoji: "\u{1F393}",
                     startsAt: now.addingTimeInterval(-3600 * 72),
                     endsAt: now.addingTimeInterval(-3600 * 48),
                     releaseAt: now.addingTimeInterval(-3600 * 1)
@@ -272,7 +199,6 @@ private struct EventsScreenPreviewContent: View {
             PastEventCard(
                 event: Event(
                     name: "Summer BBQ",
-                    coverEmoji: "\u{1F356}",
                     startsAt: now.addingTimeInterval(-3600 * 168),
                     endsAt: now.addingTimeInterval(-3600 * 144),
                     releaseAt: now.addingTimeInterval(-3600 * 120)

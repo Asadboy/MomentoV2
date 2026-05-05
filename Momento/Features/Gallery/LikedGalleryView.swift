@@ -207,7 +207,7 @@ struct LikedGalleryView: View {
         return ShareLink(
             item: albumURL,
             subject: Text(event.name),
-            message: Text("Check out the photos from \(event.name)!")
+            message: Text("Check out the shots from \(event.name)!")
         ) {
             HStack(spacing: 8) {
                 Image(systemName: "square.and.arrow.up")
@@ -269,7 +269,7 @@ struct LikedGalleryView: View {
                     Image(systemName: "heart.slash")
                         .font(.system(size: 32))
                         .foregroundColor(.white.opacity(0.25))
-                    Text("No liked photos yet")
+                    Text("No liked shots yet")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white.opacity(0.4))
                 }
@@ -313,7 +313,7 @@ struct LikedGalleryView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.white.opacity(0.3))
 
-            Text("No photos yet")
+            Text("No shots yet")
                 .font(.system(size: 17, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
             Spacer()
@@ -406,7 +406,7 @@ struct LikedGalleryView: View {
                     saveAlertMessage = "Saved to camera roll"
                     showingSaveAlert = true
 
-                    AnalyticsManager.shared.track(.photoDownloaded, properties: [
+                    AnalyticsManager.shared.track(.shotDownloaded, properties: [
                         "event_id": event.id,
                         "has_watermark": false
                     ])
@@ -630,7 +630,7 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
         activityVC.completionWithItemsHandler = { activityType, completed, _, _ in
             if completed {
                 let destination = AnalyticsManager.mapActivityToDestination(activityType)
-                AnalyticsManager.shared.track(.photoShared, properties: [
+                AnalyticsManager.shared.track(.shotShared, properties: [
                     "event_id": eventId,
                     "destination": destination
                 ])
@@ -645,7 +645,6 @@ struct PhotoShareSheet: UIViewControllerRepresentable {
 #Preview {
     let event = Event(
         name: "Sopranos Party",
-        coverEmoji: "🎉",
         startsAt: Date().addingTimeInterval(-86400),
         endsAt: Date().addingTimeInterval(-43200),
         releaseAt: Date().addingTimeInterval(-3600),

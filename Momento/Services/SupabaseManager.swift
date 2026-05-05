@@ -403,7 +403,7 @@ class SupabaseManager: ObservableObject {
             .execute()
 
         // Track successful join
-        AnalyticsManager.shared.track(.momentoJoined, properties: [
+        AnalyticsManager.shared.track(.eventJoined, properties: [
             "event_id": event.id.uuidString,
             "join_method": "code"
         ])
@@ -549,6 +549,64 @@ class SupabaseManager: ObservableObject {
             .eq("event_id", value: eventId.uuidString)
             .execute()
             .count ?? 0
+    }
+
+    // MARK: - Members With Shots (People-Dots Card)
+
+    /// Fetch all members of an event with their profile info and shot counts.
+    /// Returns members sorted: current user first, then by shots taken descending.
+    func getEventMembersWithShots(eventId: UUID) async throws -> [MemberWithShots] {
+        guard let currentUserId = currentUser?.id else {
+            throw SupabaseError.userNotAuthenticated
+        }
+
+        // 1. Get member user IDs for this event
+        let members: [EventMember] = try await client
+            .from("event_members")
+            .select()
+            .eq("event_id", value: eventId.uuidString)
+            .execute()
+            .value
+
+        if members.isEmpty { return [] }
+
+        // 2. Fetch profiles and photo counts per member in parallel
+        let results = try await withThrowingTaskGroup(of: MemberWithShots?.self) { group in
+            for member in members {
+                group.addTask {
+                    let profile = try? await self.getUserProfile(userId: member.userId)
+                    let count = (try? await self.getPhotoCount(eventId: eventId, userId: member.userId)) ?? 0
+                    guard let profile else { return nil }
+                    return MemberWithShots(
+                        userId: member.userId.uuidString,
+                        username: profile.username,
+                        displayName: profile.displayName,
+                        avatarUrl: profile.avatarUrl,
+                        shotsTaken: count
+                    )
+                }
+            }
+
+            var memberShots: [MemberWithShots] = []
+            for try await result in group {
+                if let member = result {
+                    memberShots.append(member)
+                }
+            }
+            return memberShots
+        }
+
+        var memberShots = results
+        debugLog("[MembersWithShots] Event \(eventId.uuidString.prefix(8)): \(members.count) members, \(memberShots.count) with profiles")
+
+        // 4. Sort: current user first, then by shots descending
+        memberShots.sort { a, b in
+            if a.userId == currentUserId.uuidString { return true }
+            if b.userId == currentUserId.uuidString { return false }
+            return a.shotsTaken > b.shotsTaken
+        }
+
+        return memberShots
     }
 
     // MARK: - Photo Management
@@ -1117,6 +1175,22 @@ struct PhotoLike: Codable {
         case photoId = "photo_id"
         case userId = "user_id"
         case createdAt = "created_at"
+    }
+}
+
+/// A member of an event with their shot count (for people-dots card)
+struct MemberWithShots: Identifiable {
+    let userId: String
+    let username: String
+    let displayName: String?
+    let avatarUrl: String?
+    let shotsTaken: Int
+
+    var id: String { userId }
+
+    /// Display name with fallback to username
+    var name: String {
+        displayName ?? username
     }
 }
 

@@ -4,21 +4,21 @@ import UIKit
 
 enum AnalyticsEvent: String {
     // Virality & organic spread (6 events)
-    case momentoCreated = "momento_created"
+    case eventCreated = "event_created"
     case inviteShared = "invite_shared"
     case inviteCardDownloaded = "invite_card_downloaded"
-    case momentoJoined = "momento_joined"
-    case photoShared = "photo_shared"
-    case photoDownloaded = "photo_downloaded"
+    case eventJoined = "event_joined"
+    case shotShared = "shot_shared"
+    case shotDownloaded = "shot_downloaded"
 
     // Core loop health (4 events)
     case appOpened = "app_opened"
-    case photoCaptured = "photo_captured"
+    case shotCaptured = "shot_captured"
     case revealStarted = "reveal_started"
     case revealCompleted = "reveal_completed"
 
     // Capture limit experiment
-    case photoLimitReached = "photo_limit_reached"
+    case shotLimitReached = "shot_limit_reached"
 }
 
 final class AnalyticsManager {
