@@ -84,6 +84,9 @@ struct ContentView: View {
     /// Members with shot counts per event (for people-dots card)
     @State private var eventMembers: [String: [MemberWithShots]] = [:]
 
+    /// Total likes across all users for an event's shots (for done pile stats)
+    @State private var totalLikeCounts: [String: Int] = [:]
+
 
     /// Event whose invite sheet is currently presented
     @State private var eventForInvite: Event?
@@ -334,6 +337,8 @@ struct ContentView: View {
                                             now: now,
                                             photos: pastEventPhotos[event.id] ?? [],
                                             totalPhotoCount: event.photoCount,
+                                            totalLikeCount: totalLikeCounts[event.id] ?? 0,
+                                            memberCount: event.memberCount,
                                             onTap: {
                                                 handleEventTap(event)
                                             },
@@ -611,17 +616,20 @@ struct ContentView: View {
             // Fetch liked counts + photos for revealed events IN PARALLEL
             let revealedEvents = loadedEvents.filter { $0.currentState() == .revealed }
 
-            let fetchResults = await withTaskGroup(of: (String, Int, [PhotoData]).self) { group in
+            let fetchResults = await withTaskGroup(of: (String, Int, [PhotoData], Int, Int, Int).self) { group in
                 for event in revealedEvents {
                     guard let eventUUID = UUID(uuidString: event.id) else { continue }
                     group.addTask {
                         let count = (try? await self.supabaseManager.getLikedPhotoCount(eventId: eventUUID)) ?? 0
                         let photos = (try? await self.supabaseManager.getLikedPhotos(eventId: eventUUID)) ?? []
-                        return (event.id, count, photos)
+                        let totalLikes = (try? await self.supabaseManager.getTotalLikeCount(eventId: eventUUID)) ?? 0
+                        let memberCount = (try? await self.supabaseManager.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                        let photoCount = (try? await self.supabaseManager.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                        return (event.id, count, photos, totalLikes, memberCount, photoCount)
                     }
                 }
 
-                var results: [(String, Int, [PhotoData])] = []
+                var results: [(String, Int, [PhotoData], Int, Int, Int)] = []
                 for await result in group {
                     results.append(result)
                 }
@@ -631,9 +639,15 @@ struct ContentView: View {
             // Apply results
             var likeCounts: [String: Int] = [:]
             var pastPhotos: [String: [PhotoData]] = [:]
-            for (eventId, count, photos) in fetchResults {
+            for (eventId, count, photos, totalLikes, memberCount, photoCount) in fetchResults {
                 likeCounts[eventId] = count
                 pastPhotos[eventId] = photos
+                totalLikeCounts[eventId] = totalLikes
+                // Update real counts on the event
+                if let idx = events.firstIndex(where: { $0.id == eventId }) {
+                    events[idx].memberCount = memberCount
+                    events[idx].photoCount = photoCount
+                }
                 // Restore reveal status from liked count OR persistent local state
                 if count > 0 || RevealStateManager.shared.hasCompletedReveal(for: eventId) {
                     restoredRevealStatus[eventId] = true

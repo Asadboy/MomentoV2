@@ -14,10 +14,12 @@
 	<array>
 		<string>RalewayDots-Regular.ttf</string>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>10shots</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Momento needs camera access to capture photos at events</string>
+	<string>10shots needs camera access to capture shots at events</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Momento needs access to save photos to your camera roll</string>
+	<string>10shots needs access to save shots to your camera roll</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

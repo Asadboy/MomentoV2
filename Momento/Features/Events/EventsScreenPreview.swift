@@ -138,6 +138,8 @@ private struct EventsScreenPreviewContent: View {
                                 PhotoData(id: "4", url: nil, capturedAt: now, photographerName: nil),
                             ],
                             totalPhotoCount: 67,
+                            totalLikeCount: 34,
+                            memberCount: 5,
                             onTap: {},
                             onLongPress: {}
                         )

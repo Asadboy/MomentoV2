@@ -13,6 +13,8 @@ struct PastEventCard: View {
     let now: Date
     var photos: [PhotoData] = []
     var totalPhotoCount: Int = 0
+    var totalLikeCount: Int = 0
+    var memberCount: Int = 0
     let onTap: () -> Void
     let onLongPress: () -> Void
 
@@ -40,6 +42,11 @@ struct PastEventCard: View {
                     .foregroundColor(.white.opacity(0.4))
             }
 
+            // Stats line
+            if totalPhotoCount > 0 || totalLikeCount > 0 {
+                statsLine
+            }
+
             // Photo strip
             revealedStrip
         }
@@ -54,6 +61,42 @@ struct PastEventCard: View {
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
             onLongPress()
+        }
+    }
+
+    // MARK: - Stats Line
+
+    private var statsLine: some View {
+        HStack(spacing: 12) {
+            if totalPhotoCount > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 10))
+                    Text("\(totalPhotoCount) shots")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.4))
+            }
+
+            if totalLikeCount > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 10))
+                    Text("\(totalLikeCount) likes")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.4))
+            }
+
+            if memberCount > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 10))
+                    Text("\(memberCount) people")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.4))
+            }
         }
     }
 

@@ -756,7 +756,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Momento/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Momento;
+				INFOPLIST_KEY_CFBundleDisplayName = 10shots;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -790,7 +790,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Momento/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Momento;
+				INFOPLIST_KEY_CFBundleDisplayName = 10shots;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Momento needs camera access to scan QR codes and take photos at events.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

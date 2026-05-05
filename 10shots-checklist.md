@@ -55,17 +55,17 @@
 - [x] Don't rename internal code variables unless it's in UI-facing strings (save time)
 
 ## Aggregate Like Counts
-- [ ] Add query: total likes across all members for an event's shots
-- [ ] Add query: total shots count for event
-- [ ] Display on done pile cards: "34 shots, 72 likes from 5 people"
-- [ ] Ensure each member's likes count toward event total independently
+- [x] Add query: total likes across all members for an event's shots (getTotalLikeCount already existed)
+- [x] Add query: total shots count for event (getEventPhotoCount already existed)
+- [x] Display on done pile cards: "X shots, Y likes, Z people"
+- [x] Ensure each member's likes count toward event total independently (getTotalLikeCount counts all users)
 - [ ] Test: 2 users like same shot = 2 likes on event total
 
 ## Done Pile
-- [ ] Keep existing done pile layout (list of past events)
-- [ ] Add event stats to each done card (shots, likes, people count)
-- [ ] Tap → opens liked gallery (existing behaviour)
-- [ ] No re-reveal — once done, gallery only
+- [x] Keep existing done pile layout (list of past events)
+- [x] Add event stats to each done card (shots, likes, people count)
+- [x] Tap → opens liked gallery (existing behaviour)
+- [x] No re-reveal — once done, gallery only (already enforced)
 
 ## Reveal Flow Updates
 - [ ] Ensure reveal shows shots chronologically (already does)
@@ -81,11 +81,11 @@
 - [ ] Test battery/network impact of 10s polling
 
 ## Rebrand to 10shots
-- [ ] App Store display name → "10shots"
-- [ ] Update splash/launch screen
-- [ ] Update app icon (if text on icon)
-- [ ] Update any in-app references to "Momento" in user-facing copy
-- [ ] Update Info.plist display name
+- [x] App Store display name → "10shots" (CFBundleDisplayName + Xcode build settings)
+- [x] Update splash/launch screen (logo text changed to "10shots" in OnboardingView)
+- [ ] Update app icon (if text on icon — manual design task)
+- [x] Update any in-app references to "Momento" in user-facing copy (done in terminology pass)
+- [x] Update Info.plist display name + camera/photo usage descriptions
 
 ## Schema / Backend
 - [ ] Add `member_limit` column to events table (default 5, for future use)
