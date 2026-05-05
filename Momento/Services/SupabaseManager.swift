@@ -330,13 +330,7 @@ class SupabaseManager: ObservableObject {
             startsAt: startsAt,
             endsAt: endsAt,
             releaseAt: releaseAt,
-            isPremium: false,
             isDeleted: false,
-            memberCount: 0,
-            photoCount: 0,
-            expiresAt: nil,
-            premiumPurchasedAt: nil,
-            premiumTransactionId: nil,
             createdAt: Date()
         )
         
@@ -1091,13 +1085,7 @@ struct EventModel: Codable, Identifiable {
     let startsAt: Date
     let endsAt: Date
     let releaseAt: Date
-    var isPremium: Bool
     var isDeleted: Bool
-    var memberCount: Int
-    var photoCount: Int
-    var expiresAt: Date?
-    var premiumPurchasedAt: Date?
-    var premiumTransactionId: String?
     let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
@@ -1108,13 +1096,7 @@ struct EventModel: Codable, Identifiable {
         case startsAt = "starts_at"
         case endsAt = "ends_at"
         case releaseAt = "release_at"
-        case isPremium = "is_premium"
         case isDeleted = "is_deleted"
-        case memberCount = "member_count"
-        case photoCount = "photo_count"
-        case expiresAt = "expires_at"
-        case premiumPurchasedAt = "premium_purchased_at"
-        case premiumTransactionId = "premium_transaction_id"
         case createdAt = "created_at"
     }
 }

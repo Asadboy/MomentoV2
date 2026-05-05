@@ -50,12 +50,10 @@ struct Event: Identifiable, Hashable {
     var startsAt: Date
     var endsAt: Date
     var releaseAt: Date
-    var isPremium: Bool
     var memberCount: Int
     var photoCount: Int
     var joinCode: String?
     var creatorId: String?
-    var expiresAt: Date?
 
     init(
         id: String = UUID().uuidString,
@@ -63,24 +61,20 @@ struct Event: Identifiable, Hashable {
         startsAt: Date,
         endsAt: Date,
         releaseAt: Date,
-        isPremium: Bool = false,
         memberCount: Int = 0,
         photoCount: Int = 0,
         joinCode: String? = nil,
-        creatorId: String? = nil,
-        expiresAt: Date? = nil
+        creatorId: String? = nil
     ) {
         self.id = id
         self.name = name
         self.startsAt = startsAt
         self.endsAt = endsAt
         self.releaseAt = releaseAt
-        self.isPremium = isPremium
         self.memberCount = memberCount
         self.photoCount = photoCount
         self.joinCode = joinCode
         self.creatorId = creatorId
-        self.expiresAt = expiresAt
     }
 
     // MARK: - State Machine (3 states)
@@ -122,12 +116,8 @@ extension Event {
             startsAt: eventModel.startsAt,
             endsAt: eventModel.endsAt,
             releaseAt: eventModel.releaseAt,
-            isPremium: eventModel.isPremium,
-            memberCount: eventModel.memberCount,
-            photoCount: eventModel.photoCount,
             joinCode: eventModel.joinCode,
-            creatorId: eventModel.creatorId.uuidString,
-            expiresAt: eventModel.expiresAt
+            creatorId: eventModel.creatorId.uuidString
         )
     }
 }
