@@ -24,7 +24,7 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 - [ ] **Enable leaked-password protection** (Supabase dashboard → Auth → Password security toggle)
 - [x] **Wire `member_limit` in app** — default 10, NOT NULL, RLS-enforced cap on join; client surfaces "This event is full" error. Future monetisation tiers will write a different value per event.
-- [ ] **Audit unused indexes** — `idx_events_creator/join_code/release_at/starts_at/ends_at`, `idx_photos_pending` flagged as unused. The `join_code` one is suspicious since lookups go through a SECURITY DEFINER function; verify before dropping.
+- [x] **Audit unused indexes** — dropped `idx_photos_pending` (genuinely dead; nothing queries by `upload_status = 'pending'`). Kept the 5 `events` indexes: they're flagged "unused" only because the table has ~7 rows, but each covers a real query path that will activate as the table grows.
 
 ## On-device verification (developer-side QA)
 
