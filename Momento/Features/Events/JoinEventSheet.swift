@@ -608,6 +608,12 @@ struct JoinEventSheet: View {
                     qrScanner.stopScanning()
                     isPresented = false
                 }
+            } catch SupabaseError.eventFull {
+                await MainActor.run {
+                    showPreview = false
+                    previewEvent = nil
+                    errorMessage = "This event is full"
+                }
             } catch {
                 await MainActor.run {
                     showPreview = false

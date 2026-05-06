@@ -52,6 +52,7 @@ struct Event: Identifiable, Hashable {
     var releaseAt: Date
     var memberCount: Int
     var photoCount: Int
+    var memberLimit: Int
     var joinCode: String?
     var creatorId: String?
 
@@ -63,6 +64,7 @@ struct Event: Identifiable, Hashable {
         releaseAt: Date,
         memberCount: Int = 0,
         photoCount: Int = 0,
+        memberLimit: Int = 10,
         joinCode: String? = nil,
         creatorId: String? = nil
     ) {
@@ -73,6 +75,7 @@ struct Event: Identifiable, Hashable {
         self.releaseAt = releaseAt
         self.memberCount = memberCount
         self.photoCount = photoCount
+        self.memberLimit = memberLimit
         self.joinCode = joinCode
         self.creatorId = creatorId
     }
@@ -116,6 +119,7 @@ extension Event {
             startsAt: eventModel.startsAt,
             endsAt: eventModel.endsAt,
             releaseAt: eventModel.releaseAt,
+            memberLimit: eventModel.memberLimit,
             joinCode: eventModel.joinCode,
             creatorId: eventModel.creatorId.uuidString
         )

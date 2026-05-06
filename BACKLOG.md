@@ -23,7 +23,7 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 ## Supabase / backend
 
 - [ ] **Enable leaked-password protection** (Supabase dashboard → Auth → Password security toggle)
-- [ ] **Wire `member_limit` in app** — column exists on `events` table (default null) but not yet enforced or displayed; decide UX before launch or defer
+- [x] **Wire `member_limit` in app** — default 10, NOT NULL, RLS-enforced cap on join; client surfaces "This event is full" error. Future monetisation tiers will write a different value per event.
 - [ ] **Audit unused indexes** — `idx_events_creator/join_code/release_at/starts_at/ends_at`, `idx_photos_pending` flagged as unused. The `join_code` one is suspicious since lookups go through a SECURITY DEFINER function; verify before dropping.
 
 ## On-device verification (developer-side QA)
