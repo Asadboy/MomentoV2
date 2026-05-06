@@ -1,6 +1,6 @@
 # Coding Standards
 
-This document outlines the coding standards and best practices for the Momento project.
+This document outlines the coding standards and best practices for the 10shots project (internal codebase name: Momento).
 
 ## Language & Framework
 

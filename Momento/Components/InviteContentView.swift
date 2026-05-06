@@ -22,17 +22,17 @@ struct InviteContentView: View {
     @State private var appeared = false
 
     private var inviteURL: String {
-        "https://momento.app/join/\(joinCode)"
+        "https://10shots.app/join/\(joinCode)"
     }
 
     private var shareMessage: String {
         """
-        Join my Momento: \(eventName)!
+        Join my 10shots event: \(eventName)!
 
-        Take photos \u{2192} Wait for reveal \u{2192} See the magic
+        10 shots each \u{2192} Wait for reveal \u{2192} See the roll together
 
         Code: \(joinCode)
-        Get the app: momento.app
+        Get the app: 10shots.app
         """
     }
 
