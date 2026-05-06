@@ -174,6 +174,8 @@ struct FeedRevealView: View {
     @State private var currentPhotoIndex = 0
     @State private var isScrollLocked = false
     @State private var showExitConfirmation = false
+    @State private var stackVisible = false
+    @State private var statsVisible = false
 
     private var uniqueContributorCount: Int {
         Set(viewModel.photos.compactMap { $0.photographerName }).count
@@ -313,58 +315,37 @@ struct FeedRevealView: View {
 
     private var completeScreen: some View {
         ZStack {
-            Color.black
-                .ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
-            VStack(spacing: 32) {
-                Spacer()
+            VStack(spacing: 28) {
+                Spacer(minLength: 32)
 
-                // Title
-                VStack(spacing: 12) {
-                    Text("That was the night.")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
+                // Polaroid stack hero — souvenirs from the night
+                PolaroidStack(urls: stackUrls)
+                    .frame(height: 200)
+                    .scaleEffect(stackVisible ? 1.0 : 0.7)
+                    .opacity(stackVisible ? 1.0 : 0.0)
+                    .offset(y: stackVisible ? 0 : -50)
 
-                    Text(event.name)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.4))
-                }
+                // Event name caption
+                Text(event.name)
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(2.5)
+                    .foregroundColor(.white.opacity(0.55))
+                    .textCase(.uppercase)
+                    .opacity(statsVisible ? 1.0 : 0.0)
 
-                // Stats
+                // Big stats — end-of-round results
                 HStack(spacing: 0) {
-                    VStack(spacing: 4) {
-                        Text("\(viewModel.photos.count)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("Shots")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 4) {
-                        Text("\(viewModel.likedCount)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("Liked")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 4) {
-                        Text("\(uniqueContributorCount)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("People")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .frame(maxWidth: .infinity)
+                    bigStat(value: viewModel.photos.count, label: "Shots")
+                    bigStat(value: viewModel.likedCount, label: "Liked")
+                    bigStat(value: uniqueContributorCount, label: "People")
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 24)
+                .opacity(statsVisible ? 1.0 : 0.0)
+                .offset(y: statsVisible ? 0 : 24)
 
-                Spacer()
+                Spacer(minLength: 16)
 
                 // Buttons
                 VStack(spacing: 14) {
@@ -402,9 +383,47 @@ struct FeedRevealView: View {
                 }
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
+                .opacity(statsVisible ? 1.0 : 0.0)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            stackVisible = false
+            statsVisible = false
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.72).delay(0.1)) {
+                stackVisible = true
+            }
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.85).delay(0.45)) {
+                statsVisible = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                HapticsManager.shared.celebration()
+            }
+        }
+    }
+
+    /// Pick three photos from across the event for the polaroid stack —
+    /// first, middle, last so the stack feels like the arc of the night.
+    private var stackUrls: [URL] {
+        let urls = viewModel.photos.compactMap { $0.url }
+        guard urls.count >= 3 else { return urls }
+        return [urls[0], urls[urls.count / 2], urls[urls.count - 1]]
+    }
+
+    private func bigStat(value: Int, label: String) -> some View {
+        VStack(spacing: 6) {
+            Text("\(value)")
+                .font(.system(size: 52, weight: .black, design: .rounded))
+                .foregroundColor(.white)
+                .monospacedDigit()
+                .kerning(-1)
+
+            Text(label.uppercased())
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white.opacity(0.45))
+                .tracking(1.8)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private func formatRevealTime(_ date: Date) -> String {
@@ -503,99 +522,7 @@ struct FeedRevealView: View {
     }
 
     private var completionCard: some View {
-        ZStack {
-            Color.black
-                .ignoresSafeArea()
-
-            VStack(spacing: 32) {
-                Spacer()
-
-                // Title
-                VStack(spacing: 12) {
-                    Text("That was the night.")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
-
-                    Text(event.name)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.4))
-                }
-
-                // Stats
-                HStack(spacing: 0) {
-                    VStack(spacing: 4) {
-                        Text("\(viewModel.photos.count)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("Shots")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 4) {
-                        Text("\(viewModel.likedCount)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("Liked")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 4) {
-                        Text("\(uniqueContributorCount)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("People")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .padding(.horizontal, 40)
-
-                Spacer()
-
-                // Buttons
-                VStack(spacing: 14) {
-                    Button {
-                        Task {
-                            await viewModel.saveLikedPhotos()
-                            AnalyticsManager.shared.track(.revealCompleted, properties: [
-                                "event_id": event.id,
-                                "photos_revealed": viewModel.photos.count,
-                                "photos_liked": viewModel.likedCount
-                            ])
-                            onComplete()
-                        }
-                    } label: {
-                        Text("View Liked Shots")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.white)
-                            .cornerRadius(28)
-                    }
-
-                    if let code = event.joinCode {
-                        ShareLink(
-                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
-                            subject: Text(event.name),
-                            message: Text("Check out the shots from \(event.name)!")
-                        ) {
-                            Text("Share album")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.4))
-                        }
-                    }
-                }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 40)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        completeScreen
     }
 
     private var completionSection: some View {
@@ -625,6 +552,74 @@ struct FeedRevealView: View {
         .padding(.vertical, 32)
     }
 
+}
+
+// MARK: - Polaroid Stack
+
+/// A loose stack of polaroid souvenirs — the photographic prize at the end
+/// of a 10shots party. Three photos fanned with chaotic rotations.
+private struct PolaroidStack: View {
+    let urls: [URL]
+
+    var body: some View {
+        ZStack {
+            // Back-most card
+            if urls.count >= 3 {
+                PolaroidCard(url: urls[2])
+                    .rotationEffect(.degrees(13))
+                    .offset(x: 52, y: 14)
+                    .zIndex(0)
+            }
+            // Middle card
+            if urls.count >= 2 {
+                PolaroidCard(url: urls[1])
+                    .rotationEffect(.degrees(-15))
+                    .offset(x: -54, y: 6)
+                    .zIndex(1)
+            }
+            // Front card
+            if !urls.isEmpty {
+                PolaroidCard(url: urls[0])
+                    .rotationEffect(.degrees(-3))
+                    .zIndex(2)
+            }
+        }
+    }
+}
+
+private struct PolaroidCard: View {
+    let url: URL
+
+    @State private var image: UIImage?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Group {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.25))
+                }
+            }
+            .frame(width: 124, height: 124)
+            .clipped()
+            .padding(.top, 9)
+            .padding(.horizontal, 9)
+
+            Spacer(minLength: 0)
+        }
+        .frame(width: 142, height: 178)
+        .background(Color.white)
+        .shadow(color: .black.opacity(0.55), radius: 14, x: 0, y: 9)
+        .task {
+            if image == nil {
+                image = await ImageCacheManager.shared.image(for: url)
+            }
+        }
+    }
 }
 
 #Preview {
