@@ -23,10 +23,13 @@ struct CameraView: View {
 
     @State private var showShutterFlash = false
     @State private var photosRemaining: Int = 0
-    @State private var showSavedIndicator = false
     @State private var shutterShakeOffset: CGFloat = 0
+    @State private var shutterButtonScale: CGFloat = 1.0
     @State private var isLocked: Bool = false
     @State private var showThatsAWrap: Bool = false
+    @State private var flyingThumbnail: UIImage? = nil
+    @State private var thumbnailFlying: Bool = false
+    @State private var nextDotTargetIndex: Int = 0
 
     var body: some View {
         ZStack {
@@ -60,23 +63,6 @@ struct CameraView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
-
-                        Spacer()
-
-                        // "Saved" indicator
-                        if showSavedIndicator {
-                            HStack(spacing: 8) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                Text("Saved!")
-                                    .fontWeight(.semibold)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Capsule().fill(Color.black.opacity(0.7)))
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                        }
 
                         Spacer()
 
@@ -177,6 +163,7 @@ struct CameraView: View {
                             }
                         }
                     }
+                    .scaleEffect(shutterButtonScale)
                     .offset(x: shutterShakeOffset)
                     .disabled(!cameraController.isSessionRunning)
 
@@ -192,6 +179,36 @@ struct CameraView: View {
                 .background(Color.black)
             }
             .background(Color.black)
+
+            // Flying thumbnail — captured photo flies into the next dot slot.
+            // Replaces the old "Saved!" toast: the photo *becoming* a counter
+            // tick is the confirmation. Y target is tuned for the bottom bar
+            // layout (capture button + dot row + safe area) — adjust if that
+            // layout changes.
+            if let thumb = flyingThumbnail {
+                let total = photoLimit
+                let targetX: CGFloat = (CGFloat(nextDotTargetIndex) - CGFloat(total - 1) / 2.0) * 18.0
+
+                GeometryReader { geo in
+                    Image(uiImage: thumb)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 140, height: 140)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
+                        .scaleEffect(thumbnailFlying ? 0.07 : 1.0)
+                        .rotationEffect(.degrees(thumbnailFlying ? -8 : 4))
+                        .opacity(thumbnailFlying ? 0.0 : 1.0)
+                        .position(
+                            x: geo.size.width / 2 + (thumbnailFlying ? targetX : 0),
+                            y: thumbnailFlying
+                                ? geo.size.height - geo.safeAreaInsets.bottom - 50
+                                : geo.size.height / 2 - 80
+                        )
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+            }
 
             // "That's a wrap" overlay
             if showThatsAWrap {
@@ -247,31 +264,41 @@ struct CameraView: View {
 
                 let wasLastShot = photosRemaining == 1
 
-                // Haptic tick for the counter rolling
-                let tick = UIImpactFeedbackGenerator(style: .light)
-                tick.impactOccurred()
+                // Stage the flying thumbnail at its start position
+                nextDotTargetIndex = photoLimit - photosRemaining
+                thumbnailFlying = false
+                flyingThumbnail = image
 
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                    photosRemaining -= 1
-                }
-
-                if photosRemaining <= 0 {
-                    isLocked = true
-                }
-
-                // Show saved indicator briefly
-                withAnimation(.easeOut(duration: 0.2)) {
-                    showSavedIndicator = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.easeIn(duration: 0.3)) {
-                        showSavedIndicator = false
+                // Kick off the flight on the next runloop so the start state renders first
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+                    withAnimation(.spring(response: 0.55, dampingFraction: 0.85)) {
+                        thumbnailFlying = true
                     }
                 }
 
-                // Show "That's a wrap" overlay after last shot
+                // Mid-flight: dot fills + tick haptic, synced to the thumbnail "landing"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) {
+                    let tick = UIImpactFeedbackGenerator(style: .light)
+                    tick.impactOccurred()
+
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                        photosRemaining -= 1
+                    }
+
+                    if photosRemaining <= 0 {
+                        isLocked = true
+                    }
+                }
+
+                // Clear the flying thumbnail after the flight completes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+                    flyingThumbnail = nil
+                    thumbnailFlying = false
+                }
+
+                // "That's a wrap" overlay — wait for the final dot to land first
                 if wasLastShot {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         let celebration = UINotificationFeedbackGenerator()
                         celebration.notificationOccurred(.success)
 
@@ -286,28 +313,43 @@ struct CameraView: View {
 
     private func captureWithFeedback() {
         let isLastShot = photosRemaining == 1
-        
-        // Haptic feedback - celebration for last shot, otherwise medium
+
+        // Two-stage haptic: rigid "click" + soft "clunk" 60ms later — feels mechanical
         if isLastShot {
             let celebration = UINotificationFeedbackGenerator()
             celebration.prepare()
             celebration.notificationOccurred(.success)
         } else {
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.prepare()
-            generator.impactOccurred()
+            let click = UIImpactFeedbackGenerator(style: .rigid)
+            click.prepare()
+            click.impactOccurred()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+                let clunk = UIImpactFeedbackGenerator(style: .soft)
+                clunk.impactOccurred()
+            }
         }
 
-        // Shutter click sound (system camera shutter sound)
+        // Shutter click sound
         AudioServicesPlaySystemSound(1108)
 
-        // Flash animation - longer for last shot
-        let flashDuration = isLastShot ? 0.1 : 0.05
-        withAnimation(.easeOut(duration: flashDuration)) {
+        // Shutter button press — physical click feel
+        withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
+            shutterButtonScale = 0.88
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.09) {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.55)) {
+                shutterButtonScale = 1.0
+            }
+        }
+
+        // Flash — extended from the previous near-subliminal 50ms to ~200ms total
+        let flashIn = isLastShot ? 0.14 : 0.08
+        let flashHold = isLastShot ? 0.22 : 0.12
+        withAnimation(.easeOut(duration: flashIn)) {
             showShutterFlash = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + (isLastShot ? 0.2 : 0.1)) {
-            withAnimation(.easeIn(duration: 0.15)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + flashHold) {
+            withAnimation(.easeIn(duration: 0.18)) {
                 showShutterFlash = false
             }
         }
