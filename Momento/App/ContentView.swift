@@ -101,9 +101,9 @@ struct ContentView: View {
     /// Controls whether the settings sheet is presented
     @State private var showSettings = false
 
-    
-    
-    
+    /// Tick counter for the 10s refresh timer; used to skip 2/3 ticks when nothing is live.
+    @State private var refreshTickCount = 0
+
     // MARK: - Timer
     
     /// Timer that updates every second to refresh countdowns
@@ -113,7 +113,8 @@ struct ContentView: View {
         in: .common
     ).autoconnect()
 
-    /// Timer that refreshes event data (counts) every 10 seconds
+    /// Refresh tick — fires every 10s. Handler decides whether to actually fetch
+    /// based on whether anything is live (see onReceive below).
     private let refreshTimer = Timer.publish(
         every: 10.0,
         on: .main,
@@ -394,8 +395,13 @@ struct ContentView: View {
                 }
             }
             .onReceive(refreshTimer) { _ in
-                // Silently refresh event data (counts) every 10s — no loading spinner
-                Task { await refreshEventCounts() }
+                // 10s tick. If something is live we refresh every tick to keep dots fresh;
+                // otherwise we refresh every 3rd tick (~30s) to spare battery.
+                refreshTickCount += 1
+                let hasLive = events.contains { $0.currentState(at: now) == .live }
+                if hasLive || refreshTickCount % 3 == 0 {
+                    Task { await refreshEventCounts() }
+                }
             }
             .fullScreenCover(isPresented: $showAddSheet) {
                 CreateMomentoFlow { createdEvent in

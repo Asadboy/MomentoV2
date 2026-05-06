@@ -39,7 +39,7 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 ## Nice to have (not blocking)
 
-- [ ] Drop polling to 30s for non-live events (currently 10s for all)
+- [x] Drop polling to 30s for non-live events (10s when something is live, 30s otherwise)
 - [ ] Internal rename `CreateMomentoFlow` → `CreateEventFlow` (deferred per CLAUDE.md — internal-only churn)
 
 ---
