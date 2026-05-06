@@ -12,6 +12,7 @@ import Supabase
 enum SupabaseError: LocalizedError {
     case userNotAuthenticated
     case eventNotFound
+    case eventFull
     case invalidEventID
     case configurationError(String)
 
@@ -19,6 +20,7 @@ enum SupabaseError: LocalizedError {
         switch self {
         case .userNotAuthenticated: return "User not authenticated"
         case .eventNotFound: return "Event not found"
+        case .eventFull: return "This event is full"
         case .invalidEventID: return "Invalid event ID"
         case .configurationError(let msg): return msg
         }
@@ -331,7 +333,8 @@ class SupabaseManager: ObservableObject {
             endsAt: endsAt,
             releaseAt: releaseAt,
             isDeleted: false,
-            createdAt: Date()
+            createdAt: Date(),
+            memberLimit: 10
         )
         
         try await client
@@ -382,6 +385,14 @@ class SupabaseManager: ObservableObject {
         if !existingMembers.isEmpty {
             debugLog("ℹ️ Already a member of this event")
             return event
+        }
+
+        // Pre-check capacity. The RLS policy enforces this server-side too,
+        // but checking here lets us return a typed error with a friendly message.
+        let currentCount = try await getEventMemberCount(eventId: event.id)
+        if currentCount >= event.memberLimit {
+            debugLog("ℹ️ Event is full (\(currentCount)/\(event.memberLimit))")
+            throw SupabaseError.eventFull
         }
 
         // Join the event
@@ -1087,6 +1098,7 @@ struct EventModel: Codable, Identifiable {
     let releaseAt: Date
     var isDeleted: Bool
     let createdAt: Date
+    let memberLimit: Int
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -1098,6 +1110,7 @@ struct EventModel: Codable, Identifiable {
         case releaseAt = "release_at"
         case isDeleted = "is_deleted"
         case createdAt = "created_at"
+        case memberLimit = "member_limit"
     }
 }
 
