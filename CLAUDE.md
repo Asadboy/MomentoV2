@@ -39,8 +39,8 @@ Member shot counts are fetched via `SupabaseManager.getEventMembersWithShots()` 
 
 ## Build & Testing
 
-- **Never run xcodebuild, simulators, or automated builds.** The developer builds locally on a physical iPhone. Do not suggest or attempt simulator-based verification.
-- For UI changes, describe what to test on device rather than claiming it works.
+- **Compile verification via `xcodebuild` against the iOS simulator is allowed and encouraged** after non-trivial Swift changes — catch errors before the developer's next device build. Filter output aggressively (errors/warnings only) to avoid burning context on noise.
+- **Do not run the app in the simulator unless explicitly asked.** Don't use it as a substitute for device testing. The developer builds and runs on a physical iPhone for actual feature verification (multi-device flows, camera, auth, push, performance). For UI changes, describe what to test on device rather than claiming it works.
 
 ## File Organization
 
