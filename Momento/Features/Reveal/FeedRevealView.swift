@@ -388,17 +388,6 @@ struct FeedRevealView: View {
                             .cornerRadius(28)
                     }
 
-                    if let code = event.joinCode {
-                        ShareLink(
-                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
-                            subject: Text(event.name),
-                            message: Text("Check out the shots from \(event.name)!")
-                        ) {
-                            Text("Share album")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.4))
-                        }
-                    }
                 }
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
@@ -579,17 +568,6 @@ struct FeedRevealView: View {
                             .cornerRadius(28)
                     }
 
-                    if let code = event.joinCode {
-                        ShareLink(
-                            item: URL(string: "https://yourmomento.app/album/\(code)")!,
-                            subject: Text(event.name),
-                            message: Text("Check out the shots from \(event.name)!")
-                        ) {
-                            Text("Share album")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.4))
-                        }
-                    }
                 }
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)

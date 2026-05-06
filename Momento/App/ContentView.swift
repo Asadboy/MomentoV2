@@ -75,7 +75,7 @@ struct ContentView: View {
     /// Tracks liked photo count per revealed event (event ID -> count)
     @State private var likedCounts: [String: Int] = [:]
 
-    /// Liked photos per revealed event (event ID -> photos) for album cards
+    /// Liked photos per revealed event (event ID -> photos)
     @State private var pastEventPhotos: [String: [PhotoData]] = [:]
 
     /// Tracks per-user photo count for each event (for shot counter)

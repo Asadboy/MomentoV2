@@ -3,7 +3,7 @@
 //  Momento
 //
 //  Unified gallery view for an event's photos.
-//  Shows event info header, stats, share button, and 2-column photo grid.
+//  Shows event info header, stats, and 2-column photo grid.
 //
 
 import SwiftUI
@@ -64,11 +64,6 @@ struct LikedGalleryView: View {
                         VStack(spacing: 20) {
                             // Stats row
                             statsRow
-
-                            // Share button
-                            if let code = event.joinCode {
-                                shareButton(code: code)
-                            }
 
                             // Divider
                             Rectangle()
@@ -197,36 +192,6 @@ struct LikedGalleryView: View {
                 .foregroundColor(.white.opacity(0.35))
         }
         .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Share Button
-
-    private func shareButton(code: String) -> some View {
-        let albumURL = URL(string: "https://yourmomento.app/album/\(code)")!
-
-        return ShareLink(
-            item: albumURL,
-            subject: Text(event.name),
-            message: Text("Check out the shots from \(event.name)!")
-        ) {
-            HStack(spacing: 8) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 14, weight: .medium))
-                Text("Share album")
-                    .font(.system(size: 15, weight: .medium))
-            }
-            .foregroundColor(.white.opacity(0.7))
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-            )
-        }
     }
 
     // MARK: - Photo Grid
