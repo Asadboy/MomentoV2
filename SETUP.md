@@ -1,4 +1,4 @@
-# Momento — Setup Guide
+# 10shots — Setup Guide
 
 ## Secrets / API Keys (Required)
 
