@@ -31,13 +31,13 @@ struct StatsGridView: View {
 
             StatCardView(
                 value: "\(stats.photosTaken)",
-                label: "Photos taken",
+                label: "Shots taken",
                 icon: "camera.fill"
             )
 
             StatCardView(
                 value: "\(stats.photosLiked)",
-                label: "Photos liked",
+                label: "Shots liked",
                 icon: "heart.fill"
             )
         }

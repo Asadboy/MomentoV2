@@ -27,7 +27,6 @@
 		C34889122EB7C6F5003094CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889132EB7C6F5003094CB /* ContentView.swift */; };
 		C34889142EB7C7F6003094CB /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889152EB7C7F6003094CB /* Event.swift */; };
 		C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891B2EB7CAF9003094CB /* TimeFormatter.swift */; };
-		C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891D2EB7CBF0003094CB /* EventManager.swift */; };
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
 		C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34D444F2F0AA5B70019CA2C /* Assets.xcassets */; };
 		C34D44522F0AAA810019CA2C /* UsernameSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34D44512F0AAA810019CA2C /* UsernameSelectionView.swift */; };
@@ -106,7 +105,6 @@
 		C34889132EB7C6F5003094CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C34889152EB7C7F6003094CB /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
 		C348891B2EB7CAF9003094CB /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
-		C348891D2EB7CBF0003094CB /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
 		C34A39632EDC55DB0059FA89 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		C34A39682EDC96D90059FA89 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C34D444C2F0A80760019CA2C /* Momento.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Momento.entitlements; sourceTree = "<group>"; };
@@ -385,7 +383,6 @@
 			isa = PBXGroup;
 			children = (
 				C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */,
-				C348891D2EB7CBF0003094CB /* EventManager.swift */,
 				C34A39632EDC55DB0059FA89 /* HapticsManager.swift */,
 				C3C6D43D2F2029F700847D38 /* ImageCacheManager.swift */,
 				C3ACE7762EC0F101004B23B1 /* OfflineSyncManager.swift */,
@@ -570,7 +567,6 @@
 				C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */,
 				C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */,
 				C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */,
-				C348891C2EB7CBF0003094CB /* EventManager.swift in Sources */,
 				C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */,
 				C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */,
 				C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */,

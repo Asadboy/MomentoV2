@@ -125,37 +125,3 @@ extension Event {
         )
     }
 }
-
-/// Generates sample events for preview/testing
-func makeFakeEvents(now: Date = .now) -> [Event] {
-    let calendar = Calendar.current
-
-    return [
-        // Upcoming — starts in 12 hours
-        Event(
-            name: "Joe's 26th",
-            startsAt: calendar.date(byAdding: .hour, value: 12, to: now)!,
-            endsAt: calendar.date(byAdding: .hour, value: 20, to: now)!,
-            releaseAt: calendar.date(byAdding: .hour, value: 44, to: now)!,
-            joinCode: "JOE26"
-        ),
-
-        // Live — started 30 mins ago
-        Event(
-            name: "NYE House Party",
-            startsAt: calendar.date(byAdding: .minute, value: -30, to: now)!,
-            endsAt: calendar.date(byAdding: .hour, value: 6, to: now)!,
-            releaseAt: calendar.date(byAdding: .hour, value: 30, to: now)!,
-            joinCode: "NYE2025"
-        ),
-
-        // Revealed — event ended, photos revealed
-        Event(
-            name: "Sopranos Party",
-            startsAt: calendar.date(byAdding: .hour, value: -30, to: now)!,
-            endsAt: calendar.date(byAdding: .hour, value: -20, to: now)!,
-            releaseAt: calendar.date(byAdding: .hour, value: -2, to: now)!,
-            joinCode: "SOPRANO"
-        )
-    ]
-}

@@ -44,8 +44,8 @@ struct StatCardView: View {
         Color.black.ignoresSafeArea()
 
         HStack(spacing: 12) {
-            StatCardView(value: "42", label: "Photos taken", icon: "camera.fill")
-            StatCardView(value: "18", label: "Photos liked", icon: "heart.fill")
+            StatCardView(value: "42", label: "Shots taken", icon: "camera.fill")
+            StatCardView(value: "18", label: "Shots liked", icon: "heart.fill")
         }
         .padding()
     }

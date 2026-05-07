@@ -15,6 +15,9 @@ struct JoinEventSheet: View {
     @Binding var isPresented: Bool
     let onJoin: (Event) -> Void
 
+    /// Optional code to look up immediately on appear (e.g. from a Universal Link)
+    var initialCode: String? = nil
+
     // MARK: - State
 
     @StateObject private var supabaseManager = SupabaseManager.shared
@@ -112,6 +115,9 @@ struct JoinEventSheet: View {
         .onAppear {
             qrScanner.startScanning()
             checkClipboard()
+            if let code = initialCode, !code.isEmpty {
+                lookupAndPreviewEvent(code: code.uppercased())
+            }
         }
     }
 
@@ -493,7 +499,8 @@ struct JoinEventSheet: View {
         let trimmed = clipboardString.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Check if it's a momento link
-        if trimmed.lowercased().contains("momento") && trimmed.contains("/join/") {
+        let lower = trimmed.lowercased()
+        if (lower.contains("momento") || lower.contains("10shots")) && trimmed.contains("/join/") {
             let code = extractCodeFromInput(trimmed)
             if code.count == 6 {
                 clipboardCode = code

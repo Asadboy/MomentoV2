@@ -118,9 +118,9 @@ struct CreateStep2ConfigureView: View {
                 .fill(Color.white.opacity(0.15))
                 .frame(height: 1)
 
-            // End (photos close)
+            // End (shots close)
             timelineNode(
-                label: "Photos close",
+                label: "Shots close",
                 time: formatShortTime(endsAt),
                 isActive: false
             )

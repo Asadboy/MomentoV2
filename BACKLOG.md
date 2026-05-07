@@ -17,8 +17,9 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 ## Pending external dependency
 
 - [ ] **Buy `10shots.app` domain**
+- [ ] **Host `apple-app-site-association`** at `https://10shots.app/.well-known/apple-app-site-association` (required for Universal Links to validate)
 - [ ] **Wire `10shots.app/join/<code>`** — once domain is live, point invite QR + share message at it (currently a placeholder in `Momento/Components/InviteContentView.swift`)
-- [ ] **Universal Link / deep link** for `10shots.app/join/<code>` — replaces legacy `momento.app/join/` parsing in `JoinEventSheet.swift`
+- [x] **Universal Link / deep link** for `10shots.app/join/<code>` — entitlement (`applinks:10shots.app`), `onContinueUserActivity` handler in `MomentoApp.swift`, shared `JoinLinkParser`, and `initialCode` plumbing through `JoinEventSheet` are all in place. Will activate once the domain + AASA are live.
 
 ## Supabase / backend
 

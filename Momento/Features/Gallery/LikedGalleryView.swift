@@ -94,7 +94,7 @@ struct LikedGalleryView: View {
                 onSave: { saveToPhotos(photo) }
             )
         }
-        .alert("Photo Saved", isPresented: $showingSaveAlert) {
+        .alert("Shot Saved", isPresented: $showingSaveAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(saveAlertMessage)
@@ -158,7 +158,7 @@ struct LikedGalleryView: View {
         HStack(spacing: 0) {
             statItem(
                 value: "\(event.photoCount)",
-                label: "Photos",
+                label: "Shots",
                 icon: "photo"
             )
 

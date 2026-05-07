@@ -42,16 +42,4 @@ struct TimeFormatter {
         secondsUntil(releaseDate, from: currentDate) == 0
     }
     
-    /// Generates a subtitle string for an event based on its release status
-    /// - Parameters:
-    ///   - releaseDate: When the event releases
-    ///   - currentDate: Current date/time
-    /// - Returns: Formatted subtitle string (either "live" message or countdown)
-    static func eventSubtitle(releaseDate: Date, currentDate: Date) -> String {
-        let remaining = secondsUntil(releaseDate, from: currentDate)
-        if remaining == 0 {
-            return "Photos are live ??"
-        }
-        return "Releases in \(formatRemaining(remaining))"
-    }
 }

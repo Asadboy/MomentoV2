@@ -44,6 +44,9 @@ struct ContentView: View {
     /// Controls whether the join event sheet is presented
     @State private var showJoinSheet = false
 
+    /// Pre-filled code when the join sheet is opened via Universal Link
+    @State private var pendingJoinCode: String?
+
     /// ID of event that was just joined (for glow animation)
     @State private var newlyJoinedEventId: String?
 
@@ -410,10 +413,21 @@ struct ContentView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showJoinSheet) {
-                JoinEventSheet(isPresented: $showJoinSheet) { joinedEvent in
-                    joinEvent(joinedEvent)
-                }
+            .sheet(isPresented: $showJoinSheet, onDismiss: {
+                pendingJoinCode = nil
+            }) {
+                JoinEventSheet(
+                    isPresented: $showJoinSheet,
+                    onJoin: { joinedEvent in
+                        joinEvent(joinedEvent)
+                    },
+                    initialCode: pendingJoinCode
+                )
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .receivedJoinLink)) { note in
+                guard let code = note.userInfo?["code"] as? String else { return }
+                pendingJoinCode = code
+                showJoinSheet = true
             }
             .sheet(isPresented: $showPhotoCapture) {
                 Group {
