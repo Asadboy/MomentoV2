@@ -133,12 +133,6 @@ struct PhotoCaptureSheet: View {
                 photosRemaining = remaining
                 isLoadingCount = false
             }
-
-            if remaining <= 0 {
-                AnalyticsManager.shared.track(.shotLimitReached, properties: [
-                    "event_id": event.id
-                ])
-            }
         } catch {
             debugLog("Failed to fetch photo count: \(error)")
             await MainActor.run {

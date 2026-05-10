@@ -66,6 +66,19 @@ final class AnalyticsManager {
         userId = nil
     }
 
+    /// Records when the current user joined/created an event, so we can later
+    /// compute `seconds_since_join` for the first `shot_captured` of that event.
+    static func stampJoin(eventId: String, at date: Date = .now) {
+        UserDefaults.standard.set(date, forKey: "joined_at_\(eventId)")
+    }
+
+    /// Returns seconds elapsed since the user joined this event, or nil if unknown
+    /// (e.g. they joined on another device, or before this code shipped).
+    static func secondsSinceJoin(eventId: String, now: Date = .now) -> Int? {
+        guard let joined = UserDefaults.standard.object(forKey: "joined_at_\(eventId)") as? Date else { return nil }
+        return Int(now.timeIntervalSince(joined))
+    }
+
     static func mapActivityToDestination(_ activity: UIActivity.ActivityType?) -> String {
         guard let activity = activity else { return "unknown" }
 

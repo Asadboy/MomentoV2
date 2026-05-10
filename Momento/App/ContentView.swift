@@ -832,6 +832,16 @@ struct ContentView: View {
             // Optimistically increment the user's shot counter
             let eventId = event.id
             userPhotoCounts[eventId, default: 0] += 1
+            let shotNumber = userPhotoCounts[eventId] ?? 1
+
+            var props: [String: Any] = [
+                "event_id": eventId,
+                "user_photo_count": shotNumber
+            ]
+            if shotNumber == 1, let secs = AnalyticsManager.secondsSinceJoin(eventId: eventId) {
+                props["seconds_since_join"] = secs
+            }
+            AnalyticsManager.shared.track(.shotCaptured, properties: props)
 
             // Also update the eventMembers for the people-dots card
             if let userId = supabaseManager.currentUser?.id.uuidString,

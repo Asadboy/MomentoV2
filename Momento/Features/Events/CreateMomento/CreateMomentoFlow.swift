@@ -134,9 +134,13 @@ struct CreateMomentoFlow: View {
 
                 let event = Event(fromSupabase: eventModel)
 
+                AnalyticsManager.stampJoin(eventId: event.id)
                 AnalyticsManager.shared.track(.eventCreated, properties: [
                     "event_id": event.id,
-                    "event_name": event.name
+                    "event_name": event.name,
+                    "member_limit": event.memberLimit,
+                    "live_window_minutes": Int(event.endsAt.timeIntervalSince(event.startsAt) / 60),
+                    "reveal_delay_minutes": Int(event.releaseAt.timeIntervalSince(event.endsAt) / 60)
                 ])
 
                 debugLog("[CreateMomento] 3/4 — updating UI state")

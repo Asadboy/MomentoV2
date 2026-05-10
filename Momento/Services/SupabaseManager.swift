@@ -408,6 +408,7 @@ class SupabaseManager: ObservableObject {
             .execute()
 
         // Track successful join
+        AnalyticsManager.stampJoin(eventId: event.id.uuidString)
         AnalyticsManager.shared.track(.eventJoined, properties: [
             "event_id": event.id.uuidString,
             "join_method": "code"

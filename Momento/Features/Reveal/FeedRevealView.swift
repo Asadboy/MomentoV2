@@ -79,11 +79,21 @@ class FeedRevealViewModel: ObservableObject {
 
             isLoading = false
 
-            // Track reveal started
-            AnalyticsManager.shared.track(.revealStarted, properties: [
+            // Track reveal started — snapshot final event scale so PostHog can compute
+            // avg event size and avg shots/person without joining tables.
+            var revealProps: [String: Any] = [
                 "event_id": eventId,
-                "photos_to_reveal": photos.count
-            ])
+                "photos_to_reveal": photos.count,
+                "total_shots": photos.count
+            ]
+            if let eventUUID = UUID(uuidString: eventId),
+               let memberCount = try? await supabaseManager.getEventMemberCount(eventId: eventUUID) {
+                revealProps["member_count"] = memberCount
+                if memberCount > 0 {
+                    revealProps["avg_shots_per_person"] = Double(photos.count) / Double(memberCount)
+                }
+            }
+            AnalyticsManager.shared.track(.revealStarted, properties: revealProps)
         } catch {
             debugLog("❌ Failed to load photos: \(error)")
             isLoading = false
