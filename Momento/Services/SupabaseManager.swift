@@ -1175,7 +1175,7 @@ struct PhotoLike: Codable {
 }
 
 /// A member of an event with their shot count (for people-dots card)
-struct MemberWithShots: Identifiable {
+struct MemberWithShots: Identifiable, Equatable {
     let userId: String
     let username: String
     let displayName: String?

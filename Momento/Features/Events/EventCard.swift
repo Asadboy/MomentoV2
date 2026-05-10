@@ -23,6 +23,11 @@ struct EventCard: View {
     // Pulsing glow for reveal-ready
     @State private var glowPulsing = false
 
+    // Tracks last-seen shot count per user, so we can fire a haptic only when
+    // *someone else's* count increases between polls (not on first load).
+    @State private var previousCounts: [String: Int] = [:]
+    @State private var hasInitializedCounts = false
+
     // MARK: - Derived State
 
     private var eventState: Event.State {
@@ -83,6 +88,32 @@ struct EventCard: View {
                     glowPulsing = true
                 }
             }
+        }
+        .onChange(of: members) { _, newMembers in
+            handleMemberUpdate(newMembers)
+        }
+    }
+
+    /// Diffs incoming members against the last snapshot. Fires one soft haptic
+    /// if any *other* user's shot count increased. Skips the very first update
+    /// so opening the app doesn't buzz once per existing shot.
+    private func handleMemberUpdate(_ newMembers: [MemberWithShots]) {
+        let snapshot = Dictionary(uniqueKeysWithValues: newMembers.map { ($0.userId, $0.shotsTaken) })
+        defer { previousCounts = snapshot }
+
+        guard hasInitializedCounts else {
+            hasInitializedCounts = true
+            return
+        }
+
+        let someoneElseShot = newMembers.contains { member in
+            guard member.userId != currentUserId else { return false }
+            let prev = previousCounts[member.userId] ?? member.shotsTaken
+            return member.shotsTaken > prev
+        }
+
+        if someoneElseShot {
+            HapticsManager.shared.soft()
         }
     }
 
@@ -278,9 +309,7 @@ struct EventCard: View {
     private func shotDots(count: Int) -> some View {
         HStack(spacing: 4) {
             ForEach(0..<totalShots, id: \.self) { index in
-                Circle()
-                    .fill(index < count ? Color.white : Color.white.opacity(0.15))
-                    .frame(width: 8, height: 8)
+                ShotDot(isFilled: index < count)
             }
         }
     }
@@ -361,6 +390,31 @@ struct EventCard: View {
         } else {
             return "any moment now"
         }
+    }
+}
+
+// MARK: - Shot Dot (self-animating)
+
+/// A single dot in a member's 10-shot row. Pops in with a spring scale when
+/// it transitions from empty → filled, but stays static on initial render.
+/// SwiftUI's `.onChange` only fires on changes (not initial set), which is
+/// exactly what we want — no animation cascade when the card first appears.
+private struct ShotDot: View {
+    let isFilled: Bool
+    @State private var scale: CGFloat = 1.0
+
+    var body: some View {
+        Circle()
+            .fill(isFilled ? Color.white : Color.white.opacity(0.15))
+            .frame(width: 8, height: 8)
+            .scaleEffect(scale)
+            .onChange(of: isFilled) { _, newValue in
+                guard newValue else { return }
+                scale = 0.3
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.55)) {
+                    scale = 1.0
+                }
+            }
     }
 }
 
