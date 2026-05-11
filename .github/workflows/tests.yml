@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build & Unit Tests
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: List available simulators
+        run: xcrun simctl list devicetypes available | head -20
+
+      # Tests use MockMomentoAPI and never reach SupabaseManager.shared, so
+      # the secrets don't need to be real. They just have to (a) exist, so
+      # the project's baseConfigurationReference to Secrets.xcconfig
+      # resolves, and (b) not contain the string "YOUR_" so SupabaseConfig
+      # doesn't fatalError if anyone *did* access it.
+      - name: Create stub Secrets.xcconfig
+        run: |
+          cat > Secrets.xcconfig << 'EOF'
+          SUPABASE_URL = https:/$()/ci-stub.supabase.invalid
+          SUPABASE_ANON_KEY = ci-stub-key-not-real
+          POSTHOG_API_KEY = ci-stub-posthog
+          POSTHOG_HOST = https:/$()/eu.i.posthog.com
+          EOF
+          echo "Stub Secrets.xcconfig written."
+
+      - name: Cache Swift Package Manager dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Momento.xcodeproj \
+            -scheme Momento \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -configuration Debug \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xcresult
+          path: TestResults.xcresult
+          retention-days: 7
