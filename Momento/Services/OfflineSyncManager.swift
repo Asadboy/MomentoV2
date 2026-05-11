@@ -176,6 +176,13 @@ class OfflineSyncManager: ObservableObject {
                     saveQueue()
                 }
             }
+            AnalyticsManager.shared.trackError(
+                kind: "upload_failed_max_retries",
+                context: [
+                    "event_id": photo.eventId.uuidString,
+                    "retry_count": photo.retryCount
+                ]
+            )
             return
         }
 

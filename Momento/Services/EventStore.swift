@@ -153,6 +153,11 @@ final class EventStore: ObservableObject {
         } catch {
             debugLog("Failed to load events: \(error)")
             isLoading = false
+            AnalyticsManager.shared.trackError(
+                kind: "load_events_failed",
+                error: error,
+                context: ["had_events_visible": !hydratedEvents.isEmpty]
+            )
             // Only surface to user if they have nothing on screen — a transient
             // refresh failure with existing events visible is better swallowed
             // than turned into a noisy alert.
@@ -352,6 +357,11 @@ final class EventStore: ObservableObject {
             NotificationManager.shared.cancelReveal(for: event.id)
         } catch {
             debugLog("Failed to delete event: \(error)")
+            AnalyticsManager.shared.trackError(
+                kind: "delete_event_failed",
+                error: error,
+                context: ["event_id": event.id]
+            )
             errorMessage = "Couldn't delete that event. Try again."
         }
     }
