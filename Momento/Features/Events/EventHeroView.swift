@@ -1,6 +1,6 @@
 //
 //  EventHeroView.swift
-//  Momento
+//  Moment
 //
 //  The lobby card. Event name + state + timing as the headline; everyone in
 //  the event — current user pinned to the top, otherwise equal-weight — as a
@@ -26,8 +26,9 @@ struct EventHeroView: View {
     let onInvite: () -> Void
 
     private let totalShots = 10
-    private let dotSize: CGFloat = 18
-    private let dotSpacing: CGFloat = 6
+    private let dotSize: CGFloat = 22
+    private let dotSpacing: CGFloat = 8
+    private let avatarSize: CGFloat = 40
     private let cornerRadius: CGFloat = 24
 
     @State private var glowPulsing = false
@@ -237,23 +238,17 @@ struct EventHeroView: View {
     }
 
     private func memberRow(_ member: MemberWithShots) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             Circle()
                 .fill(avatarColor(for: member.username))
-                .frame(width: 32, height: 32)
+                .frame(width: avatarSize, height: avatarSize)
                 .overlay(
                     Text(String(member.name.prefix(1)).uppercased())
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                 )
 
-            Text(member.name)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-                .lineLimit(1)
-                .layoutPriority(0)
-
-            Spacer(minLength: 8)
+            Spacer(minLength: 0)
 
             HStack(spacing: dotSpacing) {
                 ForEach(0..<totalShots, id: \.self) { idx in
@@ -266,21 +261,20 @@ struct EventHeroView: View {
                     )
                 }
             }
-            .layoutPriority(1)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
     }
 
     private var inviteRow: some View {
         Button(action: onInvite) {
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 Circle()
                     .strokeBorder(Color.white.opacity(0.2),
                                   style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
-                    .frame(width: 32, height: 32)
+                    .frame(width: avatarSize, height: avatarSize)
                     .overlay(
                         Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.5))
                     )
 
@@ -290,7 +284,7 @@ struct EventHeroView: View {
 
                 Spacer()
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
         }
     }
 
@@ -299,14 +293,14 @@ struct EventHeroView: View {
     private var timeCopy: String {
         switch eventState {
         case .live:
-            return "ends \(humanized(secondsUntil(event.endsAt)))"
+            return "ends in \(precise(secondsUntil(event.endsAt)))"
         case .upcoming:
-            return "starts \(humanized(secondsUntil(event.startsAt)))"
+            return "starts in \(precise(secondsUntil(event.startsAt)))"
         case .revealed:
             if isRevealReady {
                 return "tap to reveal"
             }
-            return "reveals \(humanized(secondsUntil(event.releaseAt)))"
+            return "reveals in \(precise(secondsUntil(event.releaseAt)))"
         }
     }
 
@@ -320,18 +314,22 @@ struct EventHeroView: View {
         max(0, Int(date.timeIntervalSince(now)))
     }
 
-    private func humanized(_ seconds: Int) -> String {
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
-        if hours >= 48 { return "in \(hours / 24) days" }
-        if hours >= 24 { return "tomorrow" }
-        if hours >= 12 { return "tonight" }
-        if hours >= 6  { return "in a few hours" }
-        if hours >= 2  { return "in \(hours) hours" }
-        if hours >= 1  { return "in about an hour" }
-        if minutes >= 30 { return "in 30 min" }
-        if minutes >= 10 { return "soon" }
-        return "any moment now"
+    /// Minute-precision countdown: "3h 24m", "42 min", "1d 4h". No seconds —
+    /// the card refreshes too slowly for a seconds counter to feel honest.
+    private func precise(_ seconds: Int) -> String {
+        if seconds < 60 { return "less than a minute" }
+        let totalMinutes = seconds / 60
+        let days = totalMinutes / (60 * 24)
+        let hours = (totalMinutes / 60) % 24
+        let minutes = totalMinutes % 60
+
+        if days > 0 {
+            return hours > 0 ? "\(days)d \(hours)h" : "\(days)d"
+        }
+        if hours > 0 {
+            return minutes > 0 ? "\(hours)h \(minutes)m" : "\(hours)h"
+        }
+        return "\(minutes) min"
     }
 }
 
@@ -410,7 +408,7 @@ private struct HeroDot: View {
             event: Event(
                 name: "Joe's 26th Birthday",
                 startsAt: now.addingTimeInterval(-3600),
-                endsAt: now.addingTimeInterval(3600 * 3),
+                endsAt: now.addingTimeInterval(60 * (60 * 3 + 24)), // 3h 24m
                 releaseAt: now.addingTimeInterval(3600 * 27)
             ),
             now: now,
