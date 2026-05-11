@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import Combine
+import Network
 
 /// Status of a queued photo upload
 enum UploadStatus: String, Codable {
@@ -53,8 +54,20 @@ class OfflineSyncManager: ObservableObject {
     private let maxRetries = 3
     private let maxConcurrentUploads = 3  // Upload 3 photos at once
     private let queueFileName = "upload_queue.json"
-    
+
     private var cancellables = Set<AnyCancellable>()
+
+    /// Cooldown for `retryFailedUploads` so a user mashing the banner's
+    /// Retry button can't hammer the server. 15s is fast enough to be
+    /// responsive, slow enough to prevent a thumb-mash storm.
+    private let retryCooldown: TimeInterval = 15
+    private var lastRetryAt: Date?
+
+    /// Network path monitor — fires when connectivity transitions from
+    /// unavailable to available so we can auto-retry without the user
+    /// having to lift a finger. Created once at init; never stopped.
+    private let pathMonitor = NWPathMonitor()
+    private var lastPathStatus: NWPath.Status = .satisfied
 
     /// Safe accessor for the documents directory (avoids force-unwrap on array index)
     private var documentsDirectory: URL {
@@ -247,15 +260,23 @@ class OfflineSyncManager: ObservableObject {
         }
     }
     
-    /// Retry failed uploads
+    /// Retry failed uploads. Rate-limited via `retryCooldown` so repeated
+    /// taps on the failure banner can't hammer the server when the underlying
+    /// problem is server-side (Supabase down, network struggling).
     func retryFailedUploads() {
+        if let last = lastRetryAt, Date().timeIntervalSince(last) < retryCooldown {
+            debugLog("⏳ Retry within \(Int(retryCooldown))s cooldown — ignoring")
+            return
+        }
+        lastRetryAt = Date()
+
         Task {
             for index in queue.indices where queue[index].status == .failed {
                 queue[index].status = .pending
                 queue[index].retryCount = 0
             }
             saveQueue()
-            
+
             await processQueue()
         }
     }
@@ -400,6 +421,22 @@ class OfflineSyncManager: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        // Auto-retry when network connectivity is restored. Fires once on
+        // each unsatisfied→satisfied transition so a flaky signal doesn't
+        // trigger a barrage of retry attempts. Combined with the
+        // `retryCooldown` above, this keeps recovery friendly even on a
+        // train commute. Path-handler fires off the main thread; marshal
+        // back via Task.
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            let wasOffline = self.lastPathStatus != .satisfied
+            self.lastPathStatus = path.status
+            guard wasOffline, path.status == .satisfied else { return }
+            debugLog("📶 Network restored — processing upload queue")
+            Task { await self.processQueue() }
+        }
+        pathMonitor.start(queue: DispatchQueue.global(qos: .utility))
     }
     
     // MARK: - Queue Statistics
