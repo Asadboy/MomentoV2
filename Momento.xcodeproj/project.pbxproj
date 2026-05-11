@@ -23,6 +23,9 @@
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
 		B1MOK0102F75000000000009 /* MockMomentoAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1MOK0102F75000000000008 /* MockMomentoAPI.swift */; };
 		B1EST0102F75000000000011 /* EventStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1EST0102F75000000000010 /* EventStoreTests.swift */; };
+		B1ETT0102F7A000000000001 /* EventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ETT0102F7A000000000000 /* EventTests.swift */; };
+		B1JLP0102F7A000000000003 /* JoinLinkParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1JLP0102F7A000000000002 /* JoinLinkParserTests.swift */; };
+		B1HRT0102F7A000000000005 /* HomeRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1HRT0102F7A000000000004 /* HomeRouterTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
 		C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */; };
@@ -124,6 +127,9 @@
 		C34888EB2EB75FF2003094CB /* MomentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoTests.swift; sourceTree = "<group>"; };
 		B1MOK0102F75000000000008 /* MockMomentoAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockMomentoAPI.swift; sourceTree = "<group>"; };
 		B1EST0102F75000000000010 /* EventStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStoreTests.swift; sourceTree = "<group>"; };
+		B1ETT0102F7A000000000000 /* EventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTests.swift; sourceTree = "<group>"; };
+		B1JLP0102F7A000000000002 /* JoinLinkParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinLinkParserTests.swift; sourceTree = "<group>"; };
+		B1HRT0102F7A000000000004 /* HomeRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRouterTests.swift; sourceTree = "<group>"; };
 		C34888F12EB75FF2003094CB /* MomentoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888F52EB75FF2003094CB /* MomentoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITests.swift; sourceTree = "<group>"; };
 		C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -250,6 +256,9 @@
 				C34888EB2EB75FF2003094CB /* MomentoTests.swift */,
 				B1MOK0102F75000000000008 /* MockMomentoAPI.swift */,
 				B1EST0102F75000000000010 /* EventStoreTests.swift */,
+				B1ETT0102F7A000000000000 /* EventTests.swift */,
+				B1JLP0102F7A000000000002 /* JoinLinkParserTests.swift */,
+				B1HRT0102F7A000000000004 /* HomeRouterTests.swift */,
 			);
 			path = MomentoTests;
 			sourceTree = "<group>";
@@ -696,6 +705,9 @@
 				C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */,
 				B1MOK0102F75000000000009 /* MockMomentoAPI.swift in Sources */,
 				B1EST0102F75000000000011 /* EventStoreTests.swift in Sources */,
+				B1ETT0102F7A000000000001 /* EventTests.swift in Sources */,
+				B1JLP0102F7A000000000003 /* JoinLinkParserTests.swift in Sources */,
+				B1HRT0102F7A000000000005 /* HomeRouterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
