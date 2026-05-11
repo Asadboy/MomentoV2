@@ -57,9 +57,10 @@ jobs:
       - name: Run unit tests
         run: |
           set -o pipefail
-          # `-only-testing:MomentoTests/EventStoreTests` scopes to the tests
-          # we wrote, skipping both the empty MomentoTests scaffold class and
-          # the MomentoUITests target (which times out on CI runners anyway).
+          # Scope to the MomentoTests target so the MomentoUITests target
+          # doesn't load (those time out on CI runners — AX init fails).
+          # The empty MomentoTests scaffold class has nothing to run, so
+          # scoping to the whole target picks up all real test classes.
           xcodebuild \
             -project Momento.xcodeproj \
             -scheme Momento \
@@ -67,7 +68,7 @@ jobs:
             -configuration Debug \
             -derivedDataPath derived-data \
             -resultBundlePath TestResults.xcresult \
-            -only-testing:MomentoTests/EventStoreTests \
+            -only-testing:MomentoTests \
             CODE_SIGNING_ALLOWED=NO \
             test
 
