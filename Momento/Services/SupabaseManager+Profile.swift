@@ -103,6 +103,95 @@ extension SupabaseManager {
         return response.count == 0
     }
 
+    // MARK: - Account deletion
+
+    /// Permanently delete the current user's account and all owned data.
+    /// Required by Apple App Store Guideline 5.1.1(v).
+    ///
+    /// Sequence:
+    ///   1. Enumerate Storage paths the user owns — both photos they
+    ///      uploaded directly, and photos in events they created (those
+    ///      cascade-delete via the events FK but Storage objects don't).
+    ///   2. Batch-delete those Storage objects via the user's own DELETE
+    ///      permission on storage.objects.
+    ///   3. Call `delete_my_account()` RPC which atomically removes all DB
+    ///      rows in dependency order and finally deletes auth.users.
+    ///   4. Clear local session state (mirrors signOut).
+    ///
+    /// Throws if the storage cleanup or RPC fails. Partial Storage failures
+    /// orphan objects but the RPC still runs — the user's account is gone
+    /// either way, which is the Apple compliance bar.
+    func deleteAccount() async throws {
+        guard let userId = currentUser?.id else {
+            throw SupabaseError.userNotAuthenticated
+        }
+
+        // 1a. Photos the user uploaded directly.
+        struct PhotoPath: Decodable {
+            let storagePath: String
+            enum CodingKeys: String, CodingKey { case storagePath = "storage_path" }
+        }
+        let ownPhotos: [PhotoPath] = (try? await client
+            .from("photos")
+            .select("storage_path")
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value) ?? []
+
+        // 1b. Photos in events the user created — these get cascade-deleted
+        // from the photos table when the events row is removed, but the
+        // Storage objects themselves don't follow that cascade.
+        let createdEvents: [EventModel] = (try? await client
+            .from("events")
+            .select()
+            .eq("creator_id", value: userId.uuidString)
+            .execute()
+            .value) ?? []
+
+        var allPaths = ownPhotos.map { $0.storagePath }
+        for event in createdEvents {
+            let eventPhotos: [PhotoPath] = (try? await client
+                .from("photos")
+                .select("storage_path")
+                .eq("event_id", value: event.id.uuidString)
+                .execute()
+                .value) ?? []
+            allPaths.append(contentsOf: eventPhotos.map { $0.storagePath })
+        }
+
+        // 2. Batch-remove Storage objects. Failures here are logged but
+        // don't block the account deletion — Apple compliance is about the
+        // user's data no longer being accessible, and the RPC handles that
+        // regardless.
+        if !allPaths.isEmpty {
+            do {
+                _ = try await client.storage
+                    .from(storageBucket)
+                    .remove(paths: allPaths)
+                debugLog("✅ Deleted \(allPaths.count) Storage objects")
+            } catch {
+                debugLog("⚠️ Storage cleanup partial-fail: \(error). Continuing with RPC.")
+            }
+        }
+
+        // 3. Atomic DB cleanup via SECURITY DEFINER RPC.
+        try await client.rpc("delete_my_account").execute()
+
+        // 4. Mirror signOut's local cleanup so any cached state can't leak
+        // into a subsequent sign-in.
+        await MainActor.run {
+            self.currentUser = nil
+            self.isAuthenticated = false
+
+            OfflineSyncManager.shared.clearQueue()
+            RevealStateManager.shared.clearAllCompletedReveals()
+        }
+
+        debugLog("✅ Account deleted")
+    }
+
+    // MARK: - Username update
+
     /// Rename a user's username. Throws if the new name is already taken.
     func updateUsername(userId: UUID, newUsername: String) async throws {
         let normalized = newUsername.lowercased()

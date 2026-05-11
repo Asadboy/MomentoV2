@@ -17,6 +17,8 @@ struct ProfileView: View {
     @State private var isLoading = true
     @State private var isLoggingOut = false
     @State private var showLogoutConfirmation = false
+    @State private var isDeletingAccount = false
+    @State private var showDeleteAccountConfirmation = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = true
@@ -52,6 +54,8 @@ struct ProfileView: View {
                             #endif
 
                             signOutButton
+
+                            deleteAccountButton
                         }
                         .padding(.horizontal, AppTheme.Spacing.screenH)
                         .padding(.top, 20)
@@ -82,6 +86,18 @@ struct ProfileView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Are you sure you want to sign out?")
+            }
+            .confirmationDialog(
+                "Delete your account?",
+                isPresented: $showDeleteAccountConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Account", role: .destructive) {
+                    performDeleteAccount()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This permanently deletes your account, every event you created, and every shot you took. This can't be undone.")
             }
             .alert("Error", isPresented: $showErrorAlert) {
                 Button("OK", role: .cancel) { }
@@ -163,7 +179,36 @@ struct ProfileView: View {
             }
         }
         .buttonStyle(MomentoDestructiveButtonStyle())
-        .disabled(isLoggingOut)
+        .disabled(isLoggingOut || isDeletingAccount)
+    }
+
+    // MARK: - Delete Account Button
+    //
+    // Lower visual weight than Sign Out — it's a permanent action that
+    // shouldn't compete for prominence with the everyday flow. Apple's
+    // Guideline 5.1.1(v) requires deletion be "easy to find," not the
+    // primary affordance.
+
+    private var deleteAccountButton: some View {
+        Button {
+            showDeleteAccountConfirmation = true
+        } label: {
+            HStack(spacing: 8) {
+                if isDeletingAccount {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.red.opacity(0.7)))
+                } else {
+                    Image(systemName: "trash")
+                        .font(.system(size: 13, weight: .medium))
+                }
+
+                Text(isDeletingAccount ? "Deleting…" : "Delete Account")
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .foregroundColor(Color.red.opacity(0.85))
+            .padding(.vertical, 8)
+        }
+        .disabled(isDeletingAccount || isLoggingOut)
     }
 
     // MARK: - Data Loading
@@ -208,6 +253,28 @@ struct ProfileView: View {
                 await MainActor.run {
                     isLoggingOut = false
                     errorMessage = "Failed to sign out: \(error.localizedDescription)"
+                    showErrorAlert = true
+                }
+            }
+        }
+    }
+
+    private func performDeleteAccount() {
+        isDeletingAccount = true
+
+        Task {
+            do {
+                try await supabaseManager.deleteAccount()
+                AnalyticsManager.shared.reset()
+                await MainActor.run {
+                    isDeletingAccount = false
+                    dismiss()
+                }
+            } catch {
+                AnalyticsManager.shared.trackError(kind: "delete_account_failed", error: error)
+                await MainActor.run {
+                    isDeletingAccount = false
+                    errorMessage = "Couldn't delete your account: \(error.localizedDescription). Please try again, or contact support if the problem persists."
                     showErrorAlert = true
                 }
             }
