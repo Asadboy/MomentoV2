@@ -9,8 +9,11 @@
 /* Begin PBXBuildFile section */
 		1DBAA07BF678BD1C17796F29 /* CreateStep2ConfigureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */; };
 		C30858FD2F2E3A1800E11B8C /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = C30858FC2F2E3A1800E11B8C /* PostHog */; };
+		B1SEN0102F78000000000001 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = B1SEN0102F78000000000000 /* Sentry */; };
 		C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */; };
 		C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859002F2E3FC600E11B8C /* PostHogConfig.swift */; };
+		B1SNC0102F78000000000003 /* SentryConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1SNC0102F78000000000002 /* SentryConfig.swift */; };
+		B1SNR0102F78000000000005 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1SNR0102F78000000000004 /* CrashReporter.swift */; };
 		C3BB00012F300000000A0001 /* InviteContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BB00022F300000000A0002 /* InviteContentView.swift */; };
 		C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */; };
 		C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859072F2E4D7400E11B8C /* InviteCardView.swift */; };
@@ -107,6 +110,8 @@
 		A46BC85776B3D30FD97167D8 /* CreateStep2ConfigureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep2ConfigureView.swift; sourceTree = "<group>"; };
 		C30858FE2F2E3F4300E11B8C /* AnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsManager.swift; sourceTree = "<group>"; };
 		C30859002F2E3FC600E11B8C /* PostHogConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogConfig.swift; sourceTree = "<group>"; };
+		B1SNC0102F78000000000002 /* SentryConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryConfig.swift; sourceTree = "<group>"; };
+		B1SNR0102F78000000000004 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		C3BB00022F300000000A0002 /* InviteContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteContentView.swift; sourceTree = "<group>"; };
 		C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardRenderer.swift; sourceTree = "<group>"; };
 		C30859072F2E4D7400E11B8C /* InviteCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardView.swift; sourceTree = "<group>"; };
@@ -190,6 +195,7 @@
 				C3ACE76D2EC0E45B004B23B1 /* PostgREST in Frameworks */,
 				C3ACE76B2EC0E45B004B23B1 /* Functions in Frameworks */,
 				C30858FD2F2E3A1800E11B8C /* PostHog in Frameworks */,
+				B1SEN0102F78000000000001 /* Sentry in Frameworks */,
 				C3ACE77E2EC0F920004B23B1 /* Supabase in Frameworks */,
 				C3ACE7692EC0E45B004B23B1 /* Auth in Frameworks */,
 				C3ACE7712EC0E45B004B23B1 /* Storage in Frameworks */,
@@ -339,6 +345,7 @@
 			children = (
 				C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */,
 				C30859002F2E3FC600E11B8C /* PostHogConfig.swift */,
+				B1SNC0102F78000000000002 /* SentryConfig.swift */,
 				C3ACE7782EC0F158004B23B1 /* SupabaseConfig.swift */,
 				C30B8D0B2F51000000000010 /* PhotoLimitConfig.swift */,
 			);
@@ -460,6 +467,7 @@
 				B1STR0102F71000000000000 /* EventStore.swift */,
 				B1RTR0102F73000000000000 /* HomeRouter.swift */,
 				B1API0102F75000000000006 /* MomentoAPI.swift */,
+				B1SNR0102F78000000000004 /* CrashReporter.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -488,6 +496,7 @@
 				C3ACE7702EC0E45B004B23B1 /* Storage */,
 				C3ACE77D2EC0F920004B23B1 /* Supabase */,
 				C30858FC2F2E3A1800E11B8C /* PostHog */,
+				B1SEN0102F78000000000000 /* Sentry */,
 			);
 			productName = Momento;
 			productReference = C34888D72EB75FEF003094CB /* Momento.app */;
@@ -564,6 +573,7 @@
 			packageReferences = (
 				C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				C30858FB2F2E3A1800E11B8C /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				B1SEN0102F78000000000002 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			productRefGroup = C34888D82EB75FEF003094CB /* Products */;
 			projectDirPath = "";
@@ -663,6 +673,8 @@
 				C3THEME012F3C000000000001 /* AppTheme.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
 				C30859012F2E3FC600E11B8C /* PostHogConfig.swift in Sources */,
+				B1SNC0102F78000000000003 /* SentryConfig.swift in Sources */,
+				B1SNR0102F78000000000005 /* CrashReporter.swift in Sources */,
 				C3DBGL012F3A6B1200A1C2D3 /* DebugLog.swift in Sources */,
 				C30B8D0A2F51000000000010 /* PhotoLimitConfig.swift in Sources */,
 				C36446B62EF8200000000001 /* CreateMomentoFlow.swift in Sources */,
@@ -1017,6 +1029,14 @@
 				minimumVersion = 3.38.0;
 			};
 		};
+		B1SEN0102F78000000000002 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.40.0;
+			};
+		};
 		C3ACE7672EC0E45B004B23B1 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase-community/supabase-swift";
@@ -1032,6 +1052,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C30858FB2F2E3A1800E11B8C /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		B1SEN0102F78000000000000 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B1SEN0102F78000000000002 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 		C3ACE7682EC0E45B004B23B1 /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;

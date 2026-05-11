@@ -30,6 +30,7 @@ jobs:
           SUPABASE_ANON_KEY = ci-stub-key-not-real
           POSTHOG_API_KEY = ci-stub-posthog
           POSTHOG_HOST = https:/$()/eu.i.posthog.com
+          SENTRY_DSN = YOUR_SENTRY_DSN
           EOF
           echo "Stub Secrets.xcconfig written."
 
