@@ -41,6 +41,10 @@ class SupabaseManager: ObservableObject {
     @Published var isAuthenticated = false
     /// True once the initial session check has completed (prevents login screen flash).
     @Published var hasCompletedInitialCheck = false
+    /// Most recent auth-flow error message — published so sign-in views can
+    /// surface failures from OAuth callback handling (which fires outside the
+    /// sign-in view's own do/catch). Reset to nil on a successful sign-in.
+    @Published var lastAuthError: String? = nil
 
     private init() {
         guard SupabaseConfig.isConfigured else {
@@ -126,14 +130,20 @@ class SupabaseManager: ObservableObject {
         return session.user
     }
 
-    /// Handle OAuth callback URL (called from MomentoApp).
+    /// Handle OAuth callback URL (called from MomentoApp). On failure,
+    /// publishes `lastAuthError` so the sign-in view can show the user
+    /// what went wrong instead of leaving them on a frozen sign-in screen.
     func handleOAuthCallback(url: URL) async {
         do {
             try await client.auth.session(from: url)
             await checkSession()
+            await MainActor.run { self.lastAuthError = nil }
             debugLog("✅ OAuth callback handled successfully")
         } catch {
             debugLog("❌ OAuth callback error: \(error)")
+            await MainActor.run {
+                self.lastAuthError = "Sign-in didn't complete. Please try again."
+            }
         }
     }
 

@@ -130,6 +130,15 @@ struct SignInView: View {
                 }
             }
         }
+        .onChange(of: supabaseManager.lastAuthError) { _, newValue in
+            // OAuth callback failures live on SupabaseManager because the
+            // callback fires from MomentoApp's URL handler, not from this
+            // view's own do/catch. Surface them in the same error UI.
+            if let newValue {
+                errorMessage = newValue
+                isSigningIn = false
+            }
+        }
     }
 
     // MARK: - Google Sign In

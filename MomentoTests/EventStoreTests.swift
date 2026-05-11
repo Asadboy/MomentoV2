@@ -256,6 +256,76 @@ final class EventStoreTests: XCTestCase {
         XCTAssertEqual(api.getEventMemberCountCallCount, 3, "All three ticks should refresh when something is live")
     }
 
+    // MARK: - Error surfacing
+
+    func test_loadEvents_failure_setsErrorMessage_whenStoreEmpty() async {
+        api.myEventsError = NSError(domain: "test.network", code: 1)
+
+        await store.loadEvents()
+
+        XCTAssertNotNil(store.errorMessage, "Empty store + failed load should expose an error message to the alert")
+    }
+
+    func test_loadEvents_failure_doesNotOverwrite_whenEventsAlreadyShown() async {
+        // First load populates the store.
+        api.myEvents = [.test(
+            startsAt: Date(),
+            endsAt: Date().addingTimeInterval(60),
+            releaseAt: Date().addingTimeInterval(120)
+        )]
+        await store.loadEvents()
+        XCTAssertNil(store.errorMessage)
+
+        // Subsequent refresh fails — we want this to be quiet, not pop an
+        // alert over the user's existing data.
+        api.myEvents = []
+        api.myEventsError = NSError(domain: "test.network", code: 1)
+        await store.loadEvents()
+
+        XCTAssertNil(store.errorMessage, "Transient refresh failure with events visible should stay silent")
+    }
+
+    func test_loadEvents_success_clearsPriorErrorMessage() async {
+        // Force a failure first.
+        api.myEventsError = NSError(domain: "test.network", code: 1)
+        await store.loadEvents()
+        XCTAssertNotNil(store.errorMessage)
+
+        // Then succeed.
+        api.myEventsError = nil
+        api.myEvents = [.test(
+            startsAt: Date(),
+            endsAt: Date().addingTimeInterval(60),
+            releaseAt: Date().addingTimeInterval(120)
+        )]
+        await store.loadEvents()
+
+        XCTAssertNil(store.errorMessage, "A successful load should clear any prior error so the alert doesn't persist")
+    }
+
+    func test_deleteEvent_failure_setsErrorMessage() async {
+        let now = Date()
+        let id = UUID()
+        api.myEvents = [.test(id: id, startsAt: now, endsAt: now.addingTimeInterval(60), releaseAt: now.addingTimeInterval(120))]
+        await store.loadEvents()
+
+        api.deleteEventError = NSError(domain: "test.network", code: 1)
+        let event = store.hydratedEvents.first { $0.id == id.uuidString }!.event
+        await store.deleteEvent(event)
+
+        XCTAssertNotNil(store.errorMessage)
+        XCTAssertEqual(store.hydratedEvents.count, 1, "Failed delete shouldn't remove the event from the local list")
+    }
+
+    func test_dismissError_clearsErrorMessage() async {
+        api.myEventsError = NSError(domain: "test.network", code: 1)
+        await store.loadEvents()
+        XCTAssertNotNil(store.errorMessage)
+
+        store.dismissError()
+        XCTAssertNil(store.errorMessage)
+    }
+
     // MARK: - currentUserId proxy
 
     func test_currentUserId_proxiesFromAPI() {
