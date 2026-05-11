@@ -128,7 +128,7 @@ final class EventStore: ObservableObject {
             // (localPhotos and optimistic userPhotoCount) from the previous
             // hydration if the same event still exists.
             let previousById = Dictionary(uniqueKeysWithValues: hydratedEvents.map { ($0.id, $0) })
-            var fresh: [HydratedEvent] = loaded.map { event in
+            let fresh: [HydratedEvent] = loaded.map { event in
                 var h = HydratedEvent(event: event)
                 if let prev = previousById[event.id] {
                     h.localPhotos = prev.localPhotos
