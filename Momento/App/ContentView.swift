@@ -2,11 +2,15 @@
 //  ContentView.swift
 //  Momento
 //
-//  Home screen. Composes the EventStore (data + side effects), HomeRouter
-//  (presentation state), and local `now` state for the countdown timer.
-//  Phase 3 will split the body into HomeHeader, EmptyHomeView,
-//  ActiveEventsSection, and PastEventsSection — this file is the thin shell
-//  that wires them together.
+//  Home screen shell. Composes EventStore (data + side effects), HomeRouter
+//  (presentation state), and `now` (the 1-second countdown timer state).
+//  Section views — HomeHeader, EmptyHomeView, ActiveEventsSection,
+//  PastEventsSection — live in Features/Home and each take the store / router
+//  / now as parameters.
+//
+//  This is the final shape after the four-phase split. The file is now ~120
+//  lines of orchestration plus a HomePresentations modifier for sheet/cover
+//  plumbing.
 //
 
 import SwiftUI
@@ -18,7 +22,6 @@ struct ContentView: View {
     @StateObject private var store = EventStore()
     @StateObject private var router = HomeRouter()
 
-    /// Current time used to drive countdowns. Updated every second.
     @State private var now: Date = .now
 
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -33,7 +36,7 @@ struct ContentView: View {
                 Color.black.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    headerView
+                    HomeHeader(router: router)
 
                     if store.isLoading {
                         Spacer()
@@ -42,9 +45,18 @@ struct ContentView: View {
                             .foregroundColor(.white)
                         Spacer()
                     } else if store.hydratedEvents.isEmpty {
-                        emptyState
+                        EmptyHomeView(router: router)
                     } else {
-                        eventList
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                ActiveEventsSection(store: store, router: router, now: now)
+                                PastEventsSection(store: store, router: router, now: now)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 32)
+                        }
+                        .refreshable { await store.loadEvents() }
                     }
                 }
             }
@@ -74,188 +86,6 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Header
-
-    private var headerView: some View {
-        HStack {
-            Text("10shots")
-                .font(.custom("RalewayDots-Regular", size: 32))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            Button { router.showJoin() } label: {
-                Image(systemName: "qrcode.viewfinder")
-                    .font(.system(size: 22, weight: .light))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-
-            Button { router.showSettings() } label: {
-                Image(systemName: "person.crop.circle")
-                    .font(.system(size: 28, weight: .light))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
-    }
-
-    // MARK: - Empty State
-
-    private var emptyState: some View {
-        VStack {
-            Spacer()
-            VStack(spacing: 32) {
-                VStack(spacing: 12) {
-                    Text("📷")
-                        .font(.system(size: 56))
-
-                    Text("Start your first\nevent")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(2)
-
-                    Text("10 shots. No retakes. Revealed together.")
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundColor(.white.opacity(0.4))
-                        .multilineTextAlignment(.center)
-                }
-
-                VStack(spacing: 12) {
-                    Button { router.showCreate() } label: {
-                        Text("Create an event")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.white)
-                            .cornerRadius(28)
-                    }
-
-                    Button { router.showJoin() } label: {
-                        Text("Join with a code")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.white.opacity(0.08))
-                            .cornerRadius(28)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 28)
-                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                            )
-                    }
-                }
-                .padding(.horizontal, 40)
-            }
-            Spacer()
-        }
-    }
-
-    // MARK: - Event List
-
-    private var eventList: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                activeSection
-                pastSection
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 32)
-        }
-        .refreshable {
-            await store.loadEvents()
-        }
-    }
-
-    @ViewBuilder
-    private var activeSection: some View {
-        let active = store.activeEvents(at: now)
-
-        HStack {
-            Text(active.isEmpty ? "NO ACTIVE EVENTS" : "CURRENT EVENTS")
-                .font(.system(size: 13, weight: .semibold))
-                .tracking(1.5)
-                .foregroundColor(.white.opacity(0.4))
-
-            Spacer()
-
-            Button { router.showCreate() } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("New")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.white.opacity(0.7))
-            }
-        }
-
-        ForEach(active) { hydrated in
-            EventHeroView(
-                event: hydrated.event,
-                now: now,
-                members: hydrated.members,
-                currentUserId: store.currentUserId,
-                userHasCompletedReveal: hydrated.userHasCompletedReveal,
-                onTap: { router.handleEventTap(hydrated.event, now: now, store: store) },
-                onLongPress: { router.showInvite(hydrated.event) },
-                onInvite: { router.showInvite(hydrated.event) }
-            )
-            .overlay {
-                if store.newlyJoinedEventId == hydrated.id {
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.green.opacity(0.6), lineWidth: 2)
-                        .shadow(color: Color.green.opacity(0.4), radius: 12)
-                }
-            }
-            .animation(.easeInOut(duration: 0.3), value: store.newlyJoinedEventId)
-            .contextMenu {
-                Button { router.showInvite(hydrated.event) } label: {
-                    Label("Invite Friends", systemImage: "person.badge.plus")
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var pastSection: some View {
-        let past = store.pastEvents(at: now)
-        if !past.isEmpty {
-            HStack {
-                Text("PAST EVENTS")
-                    .font(.system(size: 13, weight: .semibold))
-                    .tracking(1.5)
-                    .foregroundColor(.white.opacity(0.4))
-                Spacer()
-            }
-            .padding(.top, 8)
-
-            ForEach(past) { hydrated in
-                PastEventCard(
-                    event: hydrated.event,
-                    now: now,
-                    photos: hydrated.likedPhotos,
-                    totalPhotoCount: hydrated.event.photoCount,
-                    totalLikeCount: hydrated.totalLikeCount,
-                    memberCount: hydrated.event.memberCount,
-                    onTap: { router.handleEventTap(hydrated.event, now: now, store: store) },
-                    onLongPress: { router.showInvite(hydrated.event) }
-                )
-                .contextMenu {
-                    Button { router.showInvite(hydrated.event) } label: {
-                        Label("Invite Friends", systemImage: "person.badge.plus")
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Helpers
-
     private func handleInitialAction() {
         guard let action = initialAction else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -269,9 +99,10 @@ struct ContentView: View {
 
 // MARK: - Sheet + Cover plumbing
 
-/// Single ViewModifier that drives all home-screen presentations from the
-/// router. Replaces the previous wall of 8 `.sheet` / `.fullScreenCover` /
-/// `.alert` modifiers driven by individual @State bools.
+/// Drives all home-screen presentations from the router via a single
+/// `.sheet(item:)` and a single `.fullScreenCover(item:)`. Mutual exclusion
+/// between presentations is structural — you can't accidentally show two
+/// sheets at once.
 private struct HomePresentations: ViewModifier {
     @ObservedObject var store: EventStore
     @ObservedObject var router: HomeRouter
@@ -284,18 +115,18 @@ private struct HomePresentations: ViewModifier {
             .fullScreenCover(item: $router.cover, onDismiss: handleCoverDismiss) { cover in
                 coverContent(cover)
             }
-            .alert("Error",
-                   isPresented: Binding(
+            .alert(
+                "Error",
+                isPresented: Binding(
                     get: { router.errorMessage != nil },
                     set: { if !$0 { router.errorMessage = nil } }
-                   )) {
+                )
+            ) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(router.errorMessage ?? "")
             }
     }
-
-    // MARK: - Sheet bodies
 
     @ViewBuilder
     private func sheetContent(_ sheet: HomeSheet) -> some View {
@@ -306,9 +137,7 @@ private struct HomePresentations: ViewModifier {
                     get: { router.sheet?.id == "join" },
                     set: { if !$0 { router.dismissSheet() } }
                 ),
-                onJoin: { joined in
-                    store.joinedEvent(joined)
-                },
+                onJoin: { joined in store.joinedEvent(joined) },
                 initialCode: code
             )
 
@@ -331,8 +160,6 @@ private struct HomePresentations: ViewModifier {
             ProfileView()
         }
     }
-
-    // MARK: - Cover bodies
 
     @ViewBuilder
     private func coverContent(_ cover: HomeCover) -> some View {
@@ -359,14 +186,9 @@ private struct HomePresentations: ViewModifier {
         }
     }
 
-    // MARK: - Cover dismiss housekeeping
-
-    /// When the stack reveal closes naturally, sync completion state from
-    /// persistent storage and refresh liked data so the past-events section
-    /// updates promptly.
+    /// After any cover dismisses, refresh once so the home reflects any
+    /// liked-photo / completion changes that may have happened inside.
     private func handleCoverDismiss() {
-        // The cover binding is nil by now; whatever was last shown lives only
-        // as side effects.
         Task { await store.loadEvents() }
     }
 }
