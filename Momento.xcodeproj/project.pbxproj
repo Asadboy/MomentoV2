@@ -18,6 +18,8 @@
 		C30B8D032F51000000000002 /* OnboardingActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30B8D022F51000000000002 /* OnboardingActionView.swift */; };
 		C30B8D0A2F51000000000010 /* PhotoLimitConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30B8D0B2F51000000000010 /* PhotoLimitConfig.swift */; };
 		C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888EB2EB75FF2003094CB /* MomentoTests.swift */; };
+		B1MOK0102F75000000000009 /* MockMomentoAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1MOK0102F75000000000008 /* MockMomentoAPI.swift */; };
+		B1EST0102F75000000000011 /* EventStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1EST0102F75000000000010 /* EventStoreTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
 		C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */; };
@@ -27,6 +29,10 @@
 		C34889122EB7C6F5003094CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889132EB7C6F5003094CB /* ContentView.swift */; };
 		C34889142EB7C7F6003094CB /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34889152EB7C7F6003094CB /* Event.swift */; };
 		B1HYD0102F72000000000001 /* HydratedEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1HYD0102F72000000000000 /* HydratedEvent.swift */; };
+		B1MWS0102F75000000000001 /* MemberWithShots.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1MWS0102F75000000000000 /* MemberWithShots.swift */; };
+		B1PHD0102F75000000000003 /* PhotoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PHD0102F75000000000002 /* PhotoData.swift */; };
+		B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PFS0102F75000000000004 /* ProfileStats.swift */; };
+		B1API0102F75000000000007 /* MomentoAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1API0102F75000000000006 /* MomentoAPI.swift */; };
 		C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348891B2EB7CAF9003094CB /* TimeFormatter.swift */; };
 		C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34A39632EDC55DB0059FA89 /* HapticsManager.swift */; };
 		C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C34D444F2F0AA5B70019CA2C /* Assets.xcassets */; };
@@ -103,6 +109,8 @@
 		C34888D72EB75FEF003094CB /* Momento.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Momento.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888E72EB75FF2003094CB /* MomentoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888EB2EB75FF2003094CB /* MomentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoTests.swift; sourceTree = "<group>"; };
+		B1MOK0102F75000000000008 /* MockMomentoAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockMomentoAPI.swift; sourceTree = "<group>"; };
+		B1EST0102F75000000000010 /* EventStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStoreTests.swift; sourceTree = "<group>"; };
 		C34888F12EB75FF2003094CB /* MomentoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888F52EB75FF2003094CB /* MomentoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITests.swift; sourceTree = "<group>"; };
 		C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -113,6 +121,10 @@
 		C34889132EB7C6F5003094CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C34889152EB7C7F6003094CB /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
 		B1HYD0102F72000000000000 /* HydratedEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydratedEvent.swift; sourceTree = "<group>"; };
+		B1MWS0102F75000000000000 /* MemberWithShots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberWithShots.swift; sourceTree = "<group>"; };
+		B1PHD0102F75000000000002 /* PhotoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoData.swift; sourceTree = "<group>"; };
+		B1PFS0102F75000000000004 /* ProfileStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStats.swift; sourceTree = "<group>"; };
+		B1API0102F75000000000006 /* MomentoAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoAPI.swift; sourceTree = "<group>"; };
 		C348891B2EB7CAF9003094CB /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		C34A39632EDC55DB0059FA89 /* HapticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsManager.swift; sourceTree = "<group>"; };
 		C34A39682EDC96D90059FA89 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -214,6 +226,8 @@
 			isa = PBXGroup;
 			children = (
 				C34888EB2EB75FF2003094CB /* MomentoTests.swift */,
+				B1MOK0102F75000000000008 /* MockMomentoAPI.swift */,
+				B1EST0102F75000000000010 /* EventStoreTests.swift */,
 			);
 			path = MomentoTests;
 			sourceTree = "<group>";
@@ -385,6 +399,9 @@
 			children = (
 				C34889152EB7C7F6003094CB /* Event.swift */,
 				B1HYD0102F72000000000000 /* HydratedEvent.swift */,
+				B1MWS0102F75000000000000 /* MemberWithShots.swift */,
+				B1PHD0102F75000000000002 /* PhotoData.swift */,
+				B1PFS0102F75000000000004 /* ProfileStats.swift */,
 				C348891B2EB7CAF9003094CB /* TimeFormatter.swift */,
 			);
 			path = Models;
@@ -421,6 +438,7 @@
 				C3ACE77A2EC0F190004B23B1 /* SupabaseManager.swift */,
 				B1STR0102F71000000000000 /* EventStore.swift */,
 				B1RTR0102F73000000000000 /* HomeRouter.swift */,
+				B1API0102F75000000000006 /* MomentoAPI.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -587,6 +605,10 @@
 				B1PES0102F74000000000007 /* PastEventsSection.swift in Sources */,
 				C34889142EB7C7F6003094CB /* Event.swift in Sources */,
 				B1HYD0102F72000000000001 /* HydratedEvent.swift in Sources */,
+				B1MWS0102F75000000000001 /* MemberWithShots.swift in Sources */,
+				B1PHD0102F75000000000003 /* PhotoData.swift in Sources */,
+				B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */,
+				B1API0102F75000000000007 /* MomentoAPI.swift in Sources */,
 				C3C4112C2EF857E9002D8DB5 /* BethanReynoldsFilter.swift in Sources */,
 				C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */,
 				C3C6D43F2F2029F700847D38 /* ImageCacheManager.swift in Sources */,
@@ -628,6 +650,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C34888EC2EB75FF2003094CB /* MomentoTests.swift in Sources */,
+				B1MOK0102F75000000000009 /* MockMomentoAPI.swift in Sources */,
+				B1EST0102F75000000000011 /* EventStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

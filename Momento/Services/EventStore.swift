@@ -42,7 +42,7 @@ final class EventStore: ObservableObject {
 
     // MARK: - Private
 
-    private let supabase = SupabaseManager.shared
+    private let api: MomentoAPI
     private let sync = OfflineSyncManager.shared
     private var isRefreshing = false
 
@@ -51,10 +51,18 @@ final class EventStore: ObservableObject {
     /// the perf optimisation in PR #6.
     private var refreshTickCount = 0
 
+    // MARK: - Init
+
+    /// Inject a `MomentoAPI` to make this store testable. Production callers
+    /// rely on the default — `SupabaseManager.shared`. Tests pass a mock.
+    init(api: MomentoAPI = SupabaseManager.shared) {
+        self.api = api
+    }
+
     // MARK: - Derived
 
     var currentUserId: String? {
-        supabase.currentUser?.id.uuidString
+        api.currentUserId?.uuidString
     }
 
     /// Active events (live / upcoming / unrevealed) shown as featured cards.
@@ -113,7 +121,7 @@ final class EventStore: ObservableObject {
         defer { isRefreshing = false }
 
         do {
-            let models = try await supabase.getMyEvents()
+            let models = try await api.getMyEvents()
             let loaded = models.map { Event(fromSupabase: $0) }
 
             // Build fresh HydratedEvents, preserving any local-only fields
@@ -149,17 +157,17 @@ final class EventStore: ObservableObject {
 
     private func hydrateActive(loaded: [Event]) async {
         let active = loaded.filter { $0.currentState() == .live || $0.currentState() == .upcoming }
-        let currentUserId = supabase.currentUser?.id
+        let currentUserId = api.currentUserId
 
         let results = await withTaskGroup(of: (String, Int, Int, Int?).self) { group in
             for event in active {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let m = (try? await self.supabase.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
-                    let p = (try? await self.supabase.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                    let m = (try? await self.api.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                    let p = (try? await self.api.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
                     var u: Int? = nil
                     if let uid = currentUserId, event.currentState() == .live {
-                        u = (try? await self.supabase.getPhotoCount(eventId: eventUUID, userId: uid)) ?? 0
+                        u = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: uid)) ?? 0
                     }
                     return (event.id, m, p, u)
                 }
@@ -185,11 +193,11 @@ final class EventStore: ObservableObject {
             for event in revealed {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let count = (try? await self.supabase.getLikedPhotoCount(eventId: eventUUID)) ?? 0
-                    let photos = (try? await self.supabase.getLikedPhotos(eventId: eventUUID)) ?? []
-                    let totalLikes = (try? await self.supabase.getTotalLikeCount(eventId: eventUUID)) ?? 0
-                    let m = (try? await self.supabase.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
-                    let p = (try? await self.supabase.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                    let count = (try? await self.api.getLikedPhotoCount(eventId: eventUUID)) ?? 0
+                    let photos = (try? await self.api.getLikedPhotos(eventId: eventUUID)) ?? []
+                    let totalLikes = (try? await self.api.getTotalLikeCount(eventId: eventUUID)) ?? 0
+                    let m = (try? await self.api.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                    let p = (try? await self.api.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
                     return (event.id, count, photos, totalLikes, m, p)
                 }
             }
@@ -223,7 +231,7 @@ final class EventStore: ObservableObject {
                 guard !alreadyDone else { continue }
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let members = (try? await self.supabase.getEventMembersWithShots(eventId: eventUUID)) ?? []
+                    let members = (try? await self.api.getEventMembersWithShots(eventId: eventUUID)) ?? []
                     return (event.id, members)
                 }
             }
@@ -251,18 +259,18 @@ final class EventStore: ObservableObject {
     /// loading state.
     private func refreshCounts() async {
         guard !hydratedEvents.isEmpty else { return }
-        let currentUserId = supabase.currentUser?.id
+        let currentUserId = api.currentUserId
         let snapshot = hydratedEvents.map { $0.event }
 
         let countResults = await withTaskGroup(of: (String, Int, Int, Int?).self) { group in
             for event in snapshot {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let m = (try? await self.supabase.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
-                    let p = (try? await self.supabase.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
+                    let m = (try? await self.api.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
+                    let p = (try? await self.api.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
                     var u: Int? = nil
                     if let uid = currentUserId, event.currentState() == .live {
-                        u = (try? await self.supabase.getPhotoCount(eventId: eventUUID, userId: uid)) ?? 0
+                        u = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: uid)) ?? 0
                     }
                     return (event.id, m, p, u)
                 }
@@ -284,7 +292,7 @@ final class EventStore: ObservableObject {
             for event in snapshot where event.currentState() == .live || event.currentState() == .upcoming {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let members = (try? await self.supabase.getEventMembersWithShots(eventId: eventUUID)) ?? []
+                    let members = (try? await self.api.getEventMembersWithShots(eventId: eventUUID)) ?? []
                     return (event.id, members)
                 }
             }
@@ -320,7 +328,7 @@ final class EventStore: ObservableObject {
     func deleteEvent(_ event: Event) async {
         guard let uuid = UUID(uuidString: event.id) else { return }
         do {
-            try await supabase.deleteEvent(id: uuid)
+            try await api.deleteEvent(id: uuid)
             hydratedEvents.removeAll { $0.id == event.id }
         } catch {
             debugLog("Failed to delete event: \(error)")
@@ -353,7 +361,7 @@ final class EventStore: ObservableObject {
             savedPhoto.image = image
 
             let queuedPhoto = try sync.queuePhoto(image: image, eventId: eventUUID)
-            let userId = supabase.currentUser?.id
+            let userId = api.currentUserId
 
             // Optimistic update — local photo, counter bump, dot bump
             updateHydrated(event.id) { h in
@@ -389,8 +397,8 @@ final class EventStore: ObservableObject {
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
                 guard let self else { return }
-                guard let userId = self.supabase.currentUser?.id else { return }
-                let realCount = (try? await self.supabase.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
+                guard let userId = self.api.currentUserId else { return }
+                let realCount = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
                 await MainActor.run {
                     self.updateHydrated(event.id) { h in
                         h.userPhotoCount = realCount
