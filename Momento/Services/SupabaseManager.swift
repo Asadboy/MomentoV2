@@ -141,6 +141,7 @@ class SupabaseManager: ObservableObject {
             debugLog("✅ OAuth callback handled successfully")
         } catch {
             debugLog("❌ OAuth callback error: \(error)")
+            AnalyticsManager.shared.trackError(kind: "oauth_callback_failed", error: error)
             await MainActor.run {
                 self.lastAuthError = "Sign-in didn't complete. Please try again."
             }

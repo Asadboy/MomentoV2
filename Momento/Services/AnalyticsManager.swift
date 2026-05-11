@@ -19,6 +19,11 @@ enum AnalyticsEvent: String {
 
     // Capture limit experiment
     case shotLimitReached = "shot_limit_reached"
+
+    // Surfaced errors — fired alongside user-facing alerts so we can see
+    // error rates in PostHog independent of whether anyone reports them.
+    // See `AnalyticsManager.trackError`.
+    case errorSurfaced = "error_surfaced"
 }
 
 final class AnalyticsManager {
@@ -59,6 +64,32 @@ final class AnalyticsManager {
         }
 
         PostHogSDK.shared.capture(event.rawValue, properties: props)
+    }
+
+    /// Track a user-facing error so we can monitor error rates in PostHog.
+    ///
+    /// Fires alongside the user-visible alert/banner — not as a replacement.
+    /// Goal: see "X% of users in the last 24h hit a load_events_failed"
+    /// without having to wait for someone to report it.
+    ///
+    /// - Parameters:
+    ///   - kind: short snake_case identifier for the error class. Keep stable
+    ///     so the PostHog dashboard can group across releases.
+    ///   - error: optional underlying error. Type name is captured;
+    ///     localizedDescription is truncated to 200 chars to avoid leaking
+    ///     user data (file paths, etc.) into telemetry.
+    ///   - context: optional extra properties (event_id, retry_count, etc.).
+    ///     Avoid passing anything that identifies a specific user beyond
+    ///     `user_id`, which is already attached automatically.
+    func trackError(kind: String, error: Error? = nil, context: [String: Any] = [:]) {
+        var props: [String: Any] = context
+        props["error_kind"] = kind
+        if let error {
+            props["error_type"] = String(describing: type(of: error))
+            let message = error.localizedDescription
+            props["error_message"] = message.count > 200 ? String(message.prefix(200)) + "…" : message
+        }
+        track(.errorSurfaced, properties: props)
     }
 
     func reset() {

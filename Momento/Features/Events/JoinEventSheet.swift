@@ -597,11 +597,15 @@ struct JoinEventSheet: View {
                 // the user knows whether to check their code or their
                 // connection.
                 let message: String
+                let kind: String
                 if case SupabaseError.eventNotFound = error {
                     message = "No event found with that code"
+                    kind = "join_event_not_found"
                 } else {
                     message = "Couldn't reach the server. Check your connection and try again."
+                    kind = "join_network_error"
                 }
+                AnalyticsManager.shared.trackError(kind: kind, error: error)
                 await MainActor.run {
                     errorMessage = message
                     isJoining = false
