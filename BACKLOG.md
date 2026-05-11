@@ -23,6 +23,7 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 ## Supabase / backend
 
+- [ ] **Wipe Momento beta data before App Store launch** — five Momento beta cycles have left events/members/photos rows written against the old schema (premium fields, dropped columns, processing states). Plan: (1) download all photos from Storage and archive locally, (2) hard-delete `photos` + `event_members` + `events` rows for everything pre-launch, (3) delete corresponding Storage objects, (4) keep `auth.users` so betas can re-log-in without re-onboarding (or wipe — TBD), (5) tell betas to reinstall to clear local UserDefaults / cache / push tokens. Run as a one-off script behind explicit confirmation. Reasoning: avoids "is it the old data?" debugging tax at launch, makes betas validate the true Day-1 empty-state path, and stops old Momento mental model bleeding into the new 10shots framing.
 - [ ] **Enable leaked-password protection** (Supabase dashboard → Auth → Password security toggle)
 - [x] **Wire `member_limit` in app** — default 10, NOT NULL, RLS-enforced cap on join; client surfaces "This event is full" error. Future monetisation tiers will write a different value per event.
 - [x] **Audit unused indexes** — dropped `idx_photos_pending` (genuinely dead; nothing queries by `upload_status = 'pending'`). Kept the 5 `events` indexes: they're flagged "unused" only because the table has ~7 rows, but each covers a real query path that will activate as the table grows.
