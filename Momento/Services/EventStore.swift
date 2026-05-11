@@ -324,7 +324,9 @@ final class EventStore: ObservableObject {
     }
 
     /// A user just joined an event via the join sheet. Triggers the 2-second
-    /// green glow on the card, then clears it.
+    /// green glow on the card, then clears it. Also schedules the reveal
+    /// notification (asking for permission if needed) so joined events get
+    /// reminders, not just created ones.
     func joinedEvent(_ event: Event) {
         newlyJoinedEventId = event.id
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -335,6 +337,9 @@ final class EventStore: ObservableObject {
                 self?.newlyJoinedEventId = nil
             }
         }
+        Task {
+            await NotificationManager.shared.requestAuthorizationAndSchedule(for: event)
+        }
     }
 
     func deleteEvent(_ event: Event) async {
@@ -342,6 +347,9 @@ final class EventStore: ObservableObject {
         do {
             try await api.deleteEvent(id: uuid)
             hydratedEvents.removeAll { $0.id == event.id }
+            // Tear down the pending notification so the user doesn't get
+            // pinged hours later about an event they deleted.
+            NotificationManager.shared.cancelReveal(for: event.id)
         } catch {
             debugLog("Failed to delete event: \(error)")
             errorMessage = "Couldn't delete that event. Try again."

@@ -36,6 +36,7 @@
 		B1PHD0102F75000000000003 /* PhotoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PHD0102F75000000000002 /* PhotoData.swift */; };
 		B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PFS0102F75000000000004 /* ProfileStats.swift */; };
 		B1API0102F75000000000007 /* MomentoAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1API0102F75000000000006 /* MomentoAPI.swift */; };
+		B1NOT0102F79000000000001 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1NOT0102F79000000000000 /* NotificationManager.swift */; };
 		B1DTO0102F76000000000001 /* SupabaseDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DTO0102F76000000000000 /* SupabaseDTOs.swift */; };
 		B1PRF0102F76000000000003 /* SupabaseManager+Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PRF0102F76000000000002 /* SupabaseManager+Profile.swift */; };
 		B1EVT0102F76000000000005 /* SupabaseManager+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1EVT0102F76000000000004 /* SupabaseManager+Events.swift */; };
@@ -137,6 +138,7 @@
 		B1PHD0102F75000000000002 /* PhotoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoData.swift; sourceTree = "<group>"; };
 		B1PFS0102F75000000000004 /* ProfileStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStats.swift; sourceTree = "<group>"; };
 		B1API0102F75000000000006 /* MomentoAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoAPI.swift; sourceTree = "<group>"; };
+		B1NOT0102F79000000000000 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		B1DTO0102F76000000000000 /* SupabaseDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseDTOs.swift; sourceTree = "<group>"; };
 		B1PRF0102F76000000000002 /* SupabaseManager+Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SupabaseManager+Profile.swift"; sourceTree = "<group>"; };
 		B1EVT0102F76000000000004 /* SupabaseManager+Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SupabaseManager+Events.swift"; sourceTree = "<group>"; };
@@ -468,6 +470,7 @@
 				B1RTR0102F73000000000000 /* HomeRouter.swift */,
 				B1API0102F75000000000006 /* MomentoAPI.swift */,
 				B1SNR0102F78000000000004 /* CrashReporter.swift */,
+				B1NOT0102F79000000000000 /* NotificationManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -641,6 +644,7 @@
 				B1PHD0102F75000000000003 /* PhotoData.swift in Sources */,
 				B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */,
 				B1API0102F75000000000007 /* MomentoAPI.swift in Sources */,
+				B1NOT0102F79000000000001 /* NotificationManager.swift in Sources */,
 				B1DTO0102F76000000000001 /* SupabaseDTOs.swift in Sources */,
 				B1PRF0102F76000000000003 /* SupabaseManager+Profile.swift in Sources */,
 				B1EVT0102F76000000000005 /* SupabaseManager+Events.swift in Sources */,
