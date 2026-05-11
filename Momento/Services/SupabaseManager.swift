@@ -343,23 +343,22 @@ class SupabaseManager: ObservableObject {
             .execute()
         
         debugLog("[createEvent] Event saved, adding creator as member...")
-        
-        // Auto-join the creator (non-fatal — a DB trigger may have already added them)
+
+        // Auto-join the creator. This must succeed — without a member row the
+        // event will not be returned by getMyEvents() and the creator will
+        // appear to lose their own event on reload. There is no DB-side
+        // trigger doing this for us.
         let member = EventMember(
             eventId: event.id,
             userId: userId,
             joinedAt: Date()
         )
 
-        do {
-            try await client
-                .from("event_members")
-                .insert(member)
-                .execute()
-        } catch {
-            debugLog("[createEvent] Member insert failed (likely already exists): \(error)")
-        }
-        
+        try await client
+            .from("event_members")
+            .insert(member)
+            .execute()
+
         debugLog("[createEvent] Success: \(name) with code \(joinCode)")
         return event
     }
@@ -1175,7 +1174,7 @@ struct PhotoLike: Codable {
 }
 
 /// A member of an event with their shot count (for people-dots card)
-struct MemberWithShots: Identifiable {
+struct MemberWithShots: Identifiable, Equatable {
     let userId: String
     let username: String
     let displayName: String?

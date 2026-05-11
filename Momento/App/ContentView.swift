@@ -264,39 +264,36 @@ struct ContentView: View {
                                     }
 
                                     ForEach(activeEvents) { event in
-                                        VStack(spacing: 6) {
-                                            EventCard(
-                                                event: event,
-                                                now: now,
-                                                members: eventMembers[event.id] ?? [],
-                                                userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
-                                                likedCount: likedCounts[event.id] ?? 0,
-                                                onTap: {
-                                                    handleEventTap(event)
-                                                },
-                                                onLongPress: {
-                                                    showInviteSheet(for: event)
-                                                },
-                                                onInvite: {
-                                                    showInviteSheet(for: event)
-                                                }
-                                            )
-                                            .overlay {
-                                                if newlyJoinedEventId == event.id {
-                                                    RoundedRectangle(cornerRadius: 20)
-                                                        .stroke(Color.green.opacity(0.6), lineWidth: 2)
-                                                        .shadow(color: Color.green.opacity(0.4), radius: 12)
-                                                }
+                                        EventHeroView(
+                                            event: event,
+                                            now: now,
+                                            members: eventMembers[event.id] ?? [],
+                                            currentUserId: supabaseManager.currentUser?.id.uuidString,
+                                            userHasCompletedReveal: revealCompletionStatus[event.id] ?? false,
+                                            onTap: {
+                                                handleEventTap(event)
+                                            },
+                                            onLongPress: {
+                                                showInviteSheet(for: event)
+                                            },
+                                            onInvite: {
+                                                showInviteSheet(for: event)
                                             }
-                                            .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
-                                            .contextMenu {
-                                                Button {
-                                                    showInviteSheet(for: event)
-                                                } label: {
-                                                    Label("Invite Friends", systemImage: "person.badge.plus")
-                                                }
+                                        )
+                                        .overlay {
+                                            if newlyJoinedEventId == event.id {
+                                                RoundedRectangle(cornerRadius: 24)
+                                                    .stroke(Color.green.opacity(0.6), lineWidth: 2)
+                                                    .shadow(color: Color.green.opacity(0.4), radius: 12)
                                             }
-
+                                        }
+                                        .animation(.easeInOut(duration: 0.3), value: newlyJoinedEventId)
+                                        .contextMenu {
+                                            Button {
+                                                showInviteSheet(for: event)
+                                            } label: {
+                                                Label("Invite Friends", systemImage: "person.badge.plus")
+                                            }
                                         }
                                     }
                                 } else {
