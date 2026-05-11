@@ -2,27 +2,23 @@
 //  ContentView.swift
 //  Momento
 //
-//  Home screen. Composes the EventStore (data + side effects) with the local
-//  presentation state (which sheet is open, what `now` is for the countdown
-//  timer). Phase 1 of the ContentView split: ~400 lines of data work moved to
-//  EventStore; this file is the view shell and the sheet plumbing. Phase 2
-//  moves sheet state to a HomeRouter.
+//  Home screen. Composes the EventStore (data + side effects), HomeRouter
+//  (presentation state), and local `now` state for the countdown timer.
+//  Phase 3 will split the body into HomeHeader, EmptyHomeView,
+//  ActiveEventsSection, and PastEventsSection — this file is the thin shell
+//  that wires them together.
 //
 
 import SwiftUI
 import UIKit
 
 struct ContentView: View {
-    /// Optional action passed from the onboarding action screen.
     var initialAction: OnboardingAction? = nil
 
-    // MARK: - Data store
-
     @StateObject private var store = EventStore()
+    @StateObject private var router = HomeRouter()
 
-    // MARK: - Time
-
-    /// Current time used to drive countdowns. Updated every second by `timer`.
+    /// Current time used to drive countdowns. Updated every second.
     @State private var now: Date = .now
 
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -30,28 +26,6 @@ struct ContentView: View {
     /// Fires every 10s; the store decides whether to actually refresh based on
     /// whether anything's live (every tick) or not (every 3rd tick).
     private let refreshTimer = Timer.publish(every: 10.0, on: .main, in: .common).autoconnect()
-
-    // MARK: - Presentation state (Phase 2 moves to HomeRouter)
-
-    @State private var showAddSheet = false
-    @State private var showJoinSheet = false
-    @State private var pendingJoinCode: String?
-
-    @State private var showPhotoCapture = false
-    @State private var selectedEventForPhoto: Event?
-
-    @State private var showStackReveal = false
-    @State private var showLikedGallery = false
-    @State private var selectedEventForReveal: Event?
-
-    @State private var eventForInvite: Event?
-
-    @State private var showErrorAlert = false
-    @State private var errorMessage = ""
-
-    @State private var showSettings = false
-
-    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -94,24 +68,9 @@ struct ContentView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .receivedJoinLink)) { note in
                 guard let code = note.userInfo?["code"] as? String else { return }
-                pendingJoinCode = code
-                showJoinSheet = true
+                router.showJoin(code: code)
             }
-            .modifier(HomeSheets(
-                store: store,
-                showAddSheet: $showAddSheet,
-                showJoinSheet: $showJoinSheet,
-                pendingJoinCode: $pendingJoinCode,
-                showPhotoCapture: $showPhotoCapture,
-                selectedEventForPhoto: $selectedEventForPhoto,
-                showStackReveal: $showStackReveal,
-                showLikedGallery: $showLikedGallery,
-                selectedEventForReveal: $selectedEventForReveal,
-                eventForInvite: $eventForInvite,
-                showErrorAlert: $showErrorAlert,
-                errorMessage: $errorMessage,
-                showSettings: $showSettings
-            ))
+            .modifier(HomePresentations(store: store, router: router))
         }
     }
 
@@ -125,13 +84,13 @@ struct ContentView: View {
 
             Spacer()
 
-            Button { showJoinSheet = true } label: {
+            Button { router.showJoin() } label: {
                 Image(systemName: "qrcode.viewfinder")
                     .font(.system(size: 22, weight: .light))
                     .foregroundColor(.white.opacity(0.6))
             }
 
-            Button { showSettings = true } label: {
+            Button { router.showSettings() } label: {
                 Image(systemName: "person.crop.circle")
                     .font(.system(size: 28, weight: .light))
                     .foregroundColor(.white.opacity(0.7))
@@ -165,7 +124,7 @@ struct ContentView: View {
                 }
 
                 VStack(spacing: 12) {
-                    Button { showAddSheet = true } label: {
+                    Button { router.showCreate() } label: {
                         Text("Create an event")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.black)
@@ -175,7 +134,7 @@ struct ContentView: View {
                             .cornerRadius(28)
                     }
 
-                    Button { showJoinSheet = true } label: {
+                    Button { router.showJoin() } label: {
                         Text("Join with a code")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white)
@@ -224,7 +183,7 @@ struct ContentView: View {
 
             Spacer()
 
-            Button { showAddSheet = true } label: {
+            Button { router.showCreate() } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "plus")
                         .font(.system(size: 13, weight: .semibold))
@@ -242,9 +201,9 @@ struct ContentView: View {
                 members: hydrated.members,
                 currentUserId: store.currentUserId,
                 userHasCompletedReveal: hydrated.userHasCompletedReveal,
-                onTap: { handleEventTap(hydrated.event) },
-                onLongPress: { eventForInvite = hydrated.event },
-                onInvite: { eventForInvite = hydrated.event }
+                onTap: { router.handleEventTap(hydrated.event, now: now, store: store) },
+                onLongPress: { router.showInvite(hydrated.event) },
+                onInvite: { router.showInvite(hydrated.event) }
             )
             .overlay {
                 if store.newlyJoinedEventId == hydrated.id {
@@ -255,9 +214,7 @@ struct ContentView: View {
             }
             .animation(.easeInOut(duration: 0.3), value: store.newlyJoinedEventId)
             .contextMenu {
-                Button {
-                    eventForInvite = hydrated.event
-                } label: {
+                Button { router.showInvite(hydrated.event) } label: {
                     Label("Invite Friends", systemImage: "person.badge.plus")
                 }
             }
@@ -285,13 +242,11 @@ struct ContentView: View {
                     totalPhotoCount: hydrated.event.photoCount,
                     totalLikeCount: hydrated.totalLikeCount,
                     memberCount: hydrated.event.memberCount,
-                    onTap: { handleEventTap(hydrated.event) },
-                    onLongPress: { eventForInvite = hydrated.event }
+                    onTap: { router.handleEventTap(hydrated.event, now: now, store: store) },
+                    onLongPress: { router.showInvite(hydrated.event) }
                 )
                 .contextMenu {
-                    Button {
-                        eventForInvite = hydrated.event
-                    } label: {
+                    Button { router.showInvite(hydrated.event) } label: {
                         Label("Invite Friends", systemImage: "person.badge.plus")
                     }
                 }
@@ -299,133 +254,120 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Tap routing (Phase 2 moves to HomeRouter)
-
-    private func handleEventTap(_ event: Event) {
-        switch event.currentState(at: now) {
-        case .upcoming:
-            break
-        case .live:
-            selectedEventForPhoto = event
-            showPhotoCapture = true
-        case .revealed:
-            if event.isRevealReady(at: now) {
-                selectedEventForReveal = event
-                let completed = store.hydratedEvents.first { $0.id == event.id }?.userHasCompletedReveal ?? false
-                if completed {
-                    HapticsManager.shared.light()
-                    showLikedGallery = true
-                } else {
-                    HapticsManager.shared.unlock()
-                    showStackReveal = true
-                }
-            }
-        }
-    }
+    // MARK: - Helpers
 
     private func handleInitialAction() {
         guard let action = initialAction else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             switch action {
-            case .create: showAddSheet = true
-            case .join: showJoinSheet = true
+            case .create: router.showCreate()
+            case .join: router.showJoin()
             }
         }
     }
 }
 
-// MARK: - Sheets
+// MARK: - Sheet + Cover plumbing
 
-/// All sheet/cover/alert presentations chained as a ViewModifier so they don't
-/// dominate the body. Phase 2 will replace this with a HomeRouter-driven
-/// single-sheet presentation.
-private struct HomeSheets: ViewModifier {
+/// Single ViewModifier that drives all home-screen presentations from the
+/// router. Replaces the previous wall of 8 `.sheet` / `.fullScreenCover` /
+/// `.alert` modifiers driven by individual @State bools.
+private struct HomePresentations: ViewModifier {
     @ObservedObject var store: EventStore
-
-    @Binding var showAddSheet: Bool
-    @Binding var showJoinSheet: Bool
-    @Binding var pendingJoinCode: String?
-
-    @Binding var showPhotoCapture: Bool
-    @Binding var selectedEventForPhoto: Event?
-
-    @Binding var showStackReveal: Bool
-    @Binding var showLikedGallery: Bool
-    @Binding var selectedEventForReveal: Event?
-
-    @Binding var eventForInvite: Event?
-
-    @Binding var showErrorAlert: Bool
-    @Binding var errorMessage: String
-
-    @Binding var showSettings: Bool
+    @ObservedObject var router: HomeRouter
 
     func body(content: Content) -> some View {
         content
-            .fullScreenCover(isPresented: $showAddSheet) {
-                CreateMomentoFlow { createdEvent in
-                    Task { @MainActor in
-                        store.appendCreatedEvent(createdEvent)
-                    }
-                }
+            .sheet(item: $router.sheet) { sheet in
+                sheetContent(sheet)
             }
-            .sheet(isPresented: $showJoinSheet, onDismiss: { pendingJoinCode = nil }) {
-                JoinEventSheet(
-                    isPresented: $showJoinSheet,
-                    onJoin: { joined in
-                        store.joinedEvent(joined)
-                    },
-                    initialCode: pendingJoinCode
-                )
+            .fullScreenCover(item: $router.cover, onDismiss: handleCoverDismiss) { cover in
+                coverContent(cover)
             }
-            .sheet(isPresented: $showPhotoCapture) {
-                Group {
-                    if let event = selectedEventForPhoto {
-                        PhotoCaptureSheet(
-                            isPresented: $showPhotoCapture,
-                            event: event,
-                            onPhotoCaptured: { image, event in
-                                store.handlePhotoCaptured(image, for: event)
-                            }
-                        )
-                    }
-                }
-            }
-            .sheet(item: $eventForInvite) { event in
-                InviteSheet(event: event, onDismiss: { eventForInvite = nil })
-            }
-            .fullScreenCover(isPresented: $showStackReveal, onDismiss: {
-                if let event = selectedEventForReveal,
-                   RevealStateManager.shared.hasCompletedReveal(for: event.id) {
-                    store.markRevealCompleted(eventId: event.id)
-                    Task { await store.loadEvents() }
-                }
-            }) {
-                if let event = selectedEventForReveal {
-                    FeedRevealView(event: event) {
-                        store.markRevealCompleted(eventId: event.id)
-                        showStackReveal = false
-                        showLikedGallery = true
-                    }
-                }
-            }
-            .fullScreenCover(isPresented: $showLikedGallery) {
-                if let event = selectedEventForReveal {
-                    LikedGalleryView(event: event) {
-                        store.clearRevealCompleted(eventId: event.id)
-                        HapticsManager.shared.unlock()
-                        showStackReveal = true
-                    }
-                }
-            }
-            .alert("Error", isPresented: $showErrorAlert) {
+            .alert("Error",
+                   isPresented: Binding(
+                    get: { router.errorMessage != nil },
+                    set: { if !$0 { router.errorMessage = nil } }
+                   )) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(errorMessage)
+                Text(router.errorMessage ?? "")
             }
-            .sheet(isPresented: $showSettings) {
-                ProfileView()
+    }
+
+    // MARK: - Sheet bodies
+
+    @ViewBuilder
+    private func sheetContent(_ sheet: HomeSheet) -> some View {
+        switch sheet {
+        case .join(let code):
+            JoinEventSheet(
+                isPresented: Binding(
+                    get: { router.sheet?.id == "join" },
+                    set: { if !$0 { router.dismissSheet() } }
+                ),
+                onJoin: { joined in
+                    store.joinedEvent(joined)
+                },
+                initialCode: code
+            )
+
+        case .photoCapture(let event):
+            PhotoCaptureSheet(
+                isPresented: Binding(
+                    get: { router.sheet?.id == "photoCapture-\(event.id)" },
+                    set: { if !$0 { router.dismissSheet() } }
+                ),
+                event: event,
+                onPhotoCaptured: { image, event in
+                    store.handlePhotoCaptured(image, for: event)
+                }
+            )
+
+        case .invite(let event):
+            InviteSheet(event: event, onDismiss: { router.dismissSheet() })
+
+        case .settings:
+            ProfileView()
+        }
+    }
+
+    // MARK: - Cover bodies
+
+    @ViewBuilder
+    private func coverContent(_ cover: HomeCover) -> some View {
+        switch cover {
+        case .create:
+            CreateMomentoFlow { createdEvent in
+                Task { @MainActor in
+                    store.appendCreatedEvent(createdEvent)
+                }
             }
+
+        case .stackReveal(let event):
+            FeedRevealView(event: event) {
+                store.markRevealCompleted(eventId: event.id)
+                router.cover = .likedGallery(event: event)
+            }
+
+        case .likedGallery(let event):
+            LikedGalleryView(event: event) {
+                store.clearRevealCompleted(eventId: event.id)
+                HapticsManager.shared.unlock()
+                router.cover = .stackReveal(event: event)
+            }
+        }
+    }
+
+    // MARK: - Cover dismiss housekeeping
+
+    /// When the stack reveal closes naturally, sync completion state from
+    /// persistent storage and refresh liked data so the past-events section
+    /// updates promptly.
+    private func handleCoverDismiss() {
+        // The cover binding is nil by now; whatever was last shown lives only
+        // as side effects.
+        Task { await store.loadEvents() }
     }
 }
 
