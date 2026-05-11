@@ -16,7 +16,11 @@ extension Notification.Name {
 @main
 struct MomentoApp: App {
     init() {
-        // Initialize PostHog analytics on app launch
+        // Crash reporting first — has to be ready before anything else can
+        // crash. No-op if SENTRY_DSN isn't configured.
+        CrashReporter.start()
+
+        // Then analytics.
         AnalyticsManager.shared.configure()
     }
 

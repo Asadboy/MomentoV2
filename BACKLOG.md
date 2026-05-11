@@ -6,6 +6,7 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 ## Blocking App Store submission
 
+- [ ] **Create Sentry project + paste DSN into `Secrets.xcconfig`** — Sentry SDK is wired in via `CrashReporter.start()`. Currently no-ops because `SENTRY_DSN` is the placeholder `YOUR_SENTRY_DSN`. Steps: (1) sentry.io → New Project → Apple iOS → name it `10shots`, (2) copy the DSN from Settings → Client Keys, (3) replace `YOUR_SENTRY_DSN` in `Secrets.xcconfig`. Free tier is fine for launch.
 - [ ] **Real privacy policy URL** — replace `https://yourmomento.app/privacy` placeholder in `Momento/Features/Auth/SignInView.swift`
 - [ ] **Real terms of service URL** — replace `https://yourmomento.app/terms` placeholder in `SignInView.swift`
 - [ ] **App icon** — final design
