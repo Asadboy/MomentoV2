@@ -45,14 +45,14 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 - [x] Drop polling to 30s for non-live events (10s when something is live, 30s otherwise)
 - [ ] Internal rename `CreateMomentoFlow` → `CreateEventFlow` (deferred per CLAUDE.md — internal-only churn)
 
-## OfflineSyncManager hardening (deferred — failed-upload banner already gives users feedback)
+## OfflineSyncManager hardening
 
-The user-trust gap the audit flagged — failed uploads sit silently in the queue with no UI signal — was closed by the `UploadFailureBanner` in the error-surfacing PR. These remaining items are correctness / robustness fixes that should ship before paid tiers but aren't launch-blockers for friends-and-family scale:
+The user-trust gap the audit flagged — failed uploads sit silently in the queue with no UI signal — was closed by the `UploadFailureBanner` in PR #17. Follow-up items:
 
-- [ ] **Pre-upload photo-limit check shouldn't bypass on failure.** If `getPhotoCount` throws during the pre-check (`OfflineSyncManager.swift:188-190`), the upload currently proceeds and gets rejected by RLS. Better: treat a failed check as "limit unknown" and either retry the check or surface to user.
-- [ ] **Stale queue entries dropped silently at cold launch.** When `loadQueue()` finds a `QueuedPhoto` whose image file is missing (deleted by iCloud / device cleanup), it discards the entry with only a debug log (`OfflineSyncManager.swift:347-353`). Rare, but the user never knows a queued photo got lost. Decide: surface, or accept as silent on the grounds that the original was already saved to PhotoStorageManager's separate cache.
-- [ ] **Retry rate limit.** `retryFailedUploads()` resets `retryCount` to 0 with no backoff; if a user mashes the banner's Retry button while Supabase is down they can hammer the server. Add a "minimum 30s between retries per photo" check or exponential backoff.
-- [ ] **Auto-retry on network restore.** Currently retries only fire on user tap. NWPathMonitor-based auto-retry when connectivity comes back would be more forgiving for the common "took shots in spotty signal" case.
+- [x] **Retry rate limit.** `retryFailedUploads()` now refuses to fire more often than every 15 seconds, so banner-mashing can't hammer the server while Supabase is down.
+- [x] **Auto-retry on network restore.** `NWPathMonitor` watches connectivity; on each transition from unavailable → available, the queue auto-processes. Combined with the cooldown, even a flaky tunnel commute recovers gracefully.
+- [ ] **Pre-upload photo-limit check on failure.** When `getPhotoCount` throws during pre-check (`OfflineSyncManager.swift:188-190`), upload currently proceeds. Defensible — refusing upload because we couldn't verify the count would block legit uploads on bad signal — but worth revisiting if server-side RLS enforcement ever drifts.
+- [ ] **Stale queue entries dropped silently at cold launch.** `loadQueue` drops entries whose local file is missing with only a debug log. Audit considered this acceptable since the original is also in `PhotoStorageManager`'s separate cache, but worth a "1 shot couldn't be recovered" toast if it ever shows up in real-user reports.
 
 ---
 
