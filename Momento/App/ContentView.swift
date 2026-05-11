@@ -67,7 +67,7 @@ struct ContentView: View {
                             .tint(.white)
                             .foregroundColor(.white)
                         Spacer()
-                    } else if store.events.isEmpty {
+                    } else if store.hydratedEvents.isEmpty {
                         emptyState
                     } else {
                         eventList
@@ -78,7 +78,7 @@ struct ContentView: View {
             .onReceive(timer) { now = $0 }
             .task {
                 AnalyticsManager.shared.track(.appOpened, properties: [
-                    "has_active_event": !store.events.filter { $0.currentState(at: now) == .live }.isEmpty
+                    "has_active_event": store.hydratedEvents.contains { $0.event.currentState(at: now) == .live }
                 ])
                 await store.loadEvents()
             }
@@ -235,19 +235,19 @@ struct ContentView: View {
             }
         }
 
-        ForEach(active) { event in
+        ForEach(active) { hydrated in
             EventHeroView(
-                event: event,
+                event: hydrated.event,
                 now: now,
-                members: store.eventMembers[event.id] ?? [],
+                members: hydrated.members,
                 currentUserId: store.currentUserId,
-                userHasCompletedReveal: store.revealCompletionStatus[event.id] ?? false,
-                onTap: { handleEventTap(event) },
-                onLongPress: { eventForInvite = event },
-                onInvite: { eventForInvite = event }
+                userHasCompletedReveal: hydrated.userHasCompletedReveal,
+                onTap: { handleEventTap(hydrated.event) },
+                onLongPress: { eventForInvite = hydrated.event },
+                onInvite: { eventForInvite = hydrated.event }
             )
             .overlay {
-                if store.newlyJoinedEventId == event.id {
+                if store.newlyJoinedEventId == hydrated.id {
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(Color.green.opacity(0.6), lineWidth: 2)
                         .shadow(color: Color.green.opacity(0.4), radius: 12)
@@ -256,7 +256,7 @@ struct ContentView: View {
             .animation(.easeInOut(duration: 0.3), value: store.newlyJoinedEventId)
             .contextMenu {
                 Button {
-                    eventForInvite = event
+                    eventForInvite = hydrated.event
                 } label: {
                     Label("Invite Friends", systemImage: "person.badge.plus")
                 }
@@ -277,20 +277,20 @@ struct ContentView: View {
             }
             .padding(.top, 8)
 
-            ForEach(past) { event in
+            ForEach(past) { hydrated in
                 PastEventCard(
-                    event: event,
+                    event: hydrated.event,
                     now: now,
-                    photos: store.pastEventPhotos[event.id] ?? [],
-                    totalPhotoCount: event.photoCount,
-                    totalLikeCount: store.totalLikeCounts[event.id] ?? 0,
-                    memberCount: event.memberCount,
-                    onTap: { handleEventTap(event) },
-                    onLongPress: { eventForInvite = event }
+                    photos: hydrated.likedPhotos,
+                    totalPhotoCount: hydrated.event.photoCount,
+                    totalLikeCount: hydrated.totalLikeCount,
+                    memberCount: hydrated.event.memberCount,
+                    onTap: { handleEventTap(hydrated.event) },
+                    onLongPress: { eventForInvite = hydrated.event }
                 )
                 .contextMenu {
                     Button {
-                        eventForInvite = event
+                        eventForInvite = hydrated.event
                     } label: {
                         Label("Invite Friends", systemImage: "person.badge.plus")
                     }
@@ -311,7 +311,7 @@ struct ContentView: View {
         case .revealed:
             if event.isRevealReady(at: now) {
                 selectedEventForReveal = event
-                let completed = store.revealCompletionStatus[event.id] ?? false
+                let completed = store.hydratedEvents.first { $0.id == event.id }?.userHasCompletedReveal ?? false
                 if completed {
                     HapticsManager.shared.light()
                     showLikedGallery = true

@@ -4,17 +4,18 @@
 //
 //  Owns all event-related state and side effects for the home screen.
 //
-//  Lifted out of ContentView (which previously carried 27 @State properties and
-//  ~400 lines of business logic). Centralising here means:
-//    1. Views don't run network task groups or do optimistic-update reconciliation
-//    2. Per-event hydration (members, photos, liked counts, reveal status) has
-//       a single source of truth
+//  Lifted out of ContentView (which previously carried 27 @State properties
+//  and ~400 lines of business logic). Centralising here means:
+//    1. Views don't run network task groups or do optimistic-update
+//       reconciliation
+//    2. Per-event hydration (members, photos, liked counts, reveal status)
+//       has a single source of truth
 //    3. The same store can back future screens (event detail, widgets) without
 //       duplicating fetch/refresh logic
 //
-//  Phase 1 of the ContentView split — this commit still uses dict-per-field
-//  hydration to keep the structural move faithful. Phase 4 will collapse the
-//  dicts into a single HydratedEvent struct.
+//  Phase 4 of the ContentView split — the seven per-event dictionaries are
+//  collapsed into a single [HydratedEvent]. The view layer reads
+//  `hydrated.members`, `hydrated.likedCount` etc. instead of dict lookups.
 //
 
 import Foundation
@@ -26,18 +27,11 @@ final class EventStore: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var events: [Event] = []
-    @Published var isLoading: Bool = true
+    /// Source of truth for every event the user belongs to plus all its
+    /// hydration. Replaces the seven parallel dicts from Phase 1.
+    @Published var hydratedEvents: [HydratedEvent] = []
 
-    // Per-event hydration — keyed by event.id. Phase 4 collapses these into a
-    // single [HydratedEvent].
-    @Published var eventMembers: [String: [MemberWithShots]] = [:]
-    @Published var revealCompletionStatus: [String: Bool] = [:]
-    @Published var likedCounts: [String: Int] = [:]
-    @Published var pastEventPhotos: [String: [PhotoData]] = [:]
-    @Published var userPhotoCounts: [String: Int] = [:]
-    @Published var totalLikeCounts: [String: Int] = [:]
-    @Published var eventPhotos: [String: [EventPhoto]] = [:]
+    @Published var isLoading: Bool = true
 
     /// Event id that was just joined — drives the 2-second green glow on the
     /// active-events card. Cleared back to nil 2s after a join.
@@ -64,17 +58,17 @@ final class EventStore: ObservableObject {
     }
 
     /// Active events (live / upcoming / unrevealed) shown as featured cards.
-    func activeEvents(at now: Date) -> [Event] {
-        events
+    func activeEvents(at now: Date) -> [HydratedEvent] {
+        hydratedEvents
             .filter {
-                let state = $0.currentState(at: now)
+                let state = $0.event.currentState(at: now)
                 if state == .live || state == .upcoming { return true }
-                if state == .revealed && !(revealCompletionStatus[$0.id] ?? false) { return true }
+                if state == .revealed && !$0.userHasCompletedReveal { return true }
                 return false
             }
-            .sorted { e1, e2 in
-                let s1 = e1.currentState(at: now)
-                let s2 = e2.currentState(at: now)
+            .sorted { a, b in
+                let sa = a.event.currentState(at: now)
+                let sb = b.event.currentState(at: now)
                 func priority(_ s: Event.State) -> Int {
                     switch s {
                     case .live: return 0
@@ -82,20 +76,28 @@ final class EventStore: ObservableObject {
                     case .upcoming: return 2
                     }
                 }
-                let p1 = priority(s1)
-                let p2 = priority(s2)
-                if p1 != p2 { return p1 < p2 }
-                return e1.startsAt < e2.startsAt
+                let pa = priority(sa)
+                let pb = priority(sb)
+                if pa != pb { return pa < pb }
+                return a.event.startsAt < b.event.startsAt
             }
     }
 
     /// Past events (completed reveals) shown as compact rows.
-    func pastEvents(at now: Date) -> [Event] {
-        events
-            .filter { e in
-                e.currentState(at: now) == .revealed && (revealCompletionStatus[e.id] ?? false)
+    func pastEvents(at now: Date) -> [HydratedEvent] {
+        hydratedEvents
+            .filter { h in
+                h.event.currentState(at: now) == .revealed && h.userHasCompletedReveal
             }
-            .sorted { $0.releaseAt > $1.releaseAt }
+            .sorted { $0.event.releaseAt > $1.event.releaseAt }
+    }
+
+    // MARK: - Mutation helpers
+
+    /// Find the HydratedEvent by id and mutate it in place. No-op if not found.
+    private func updateHydrated(_ id: String, _ mutate: (inout HydratedEvent) -> Void) {
+        guard let idx = hydratedEvents.firstIndex(where: { $0.id == id }) else { return }
+        mutate(&hydratedEvents[idx])
     }
 
     // MARK: - Load
@@ -107,28 +109,37 @@ final class EventStore: ObservableObject {
             return
         }
         isRefreshing = true
-        isLoading = events.isEmpty
+        isLoading = hydratedEvents.isEmpty
         defer { isRefreshing = false }
 
         do {
             let models = try await supabase.getMyEvents()
             let loaded = models.map { Event(fromSupabase: $0) }
 
-            // Restore reveal completion from local persistent storage first.
-            var restoredRevealStatus: [String: Bool] = [:]
-            for e in loaded where RevealStateManager.shared.hasCompletedReveal(for: e.id) {
-                restoredRevealStatus[e.id] = true
+            // Build fresh HydratedEvents, preserving any local-only fields
+            // (localPhotos and optimistic userPhotoCount) from the previous
+            // hydration if the same event still exists.
+            let previousById = Dictionary(uniqueKeysWithValues: hydratedEvents.map { ($0.id, $0) })
+            var fresh: [HydratedEvent] = loaded.map { event in
+                var h = HydratedEvent(event: event)
+                if let prev = previousById[event.id] {
+                    h.localPhotos = prev.localPhotos
+                    h.userPhotoCount = prev.userPhotoCount
+                    h.userHasCompletedReveal = prev.userHasCompletedReveal
+                }
+                if RevealStateManager.shared.hasCompletedReveal(for: event.id) {
+                    h.userHasCompletedReveal = true
+                }
+                return h
             }
 
-            events = loaded
-            revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
+            hydratedEvents = fresh
             isLoading = false
 
-            await hydrateActive(events: loaded)
-            await hydrateRevealed(events: loaded, restoredRevealStatus: &restoredRevealStatus)
-            await hydrateMembers(events: loaded, restoredRevealStatus: restoredRevealStatus)
+            await hydrateActive(loaded: loaded)
+            await hydrateRevealed(loaded: loaded)
+            await hydrateMembers(loaded: loaded)
 
-            revealCompletionStatus.merge(restoredRevealStatus) { _, new in new }
             debugLog("✅ Loaded \(models.count) events")
         } catch {
             debugLog("Failed to load events: \(error)")
@@ -136,7 +147,7 @@ final class EventStore: ObservableObject {
         }
     }
 
-    private func hydrateActive(events loaded: [Event]) async {
+    private func hydrateActive(loaded: [Event]) async {
         let active = loaded.filter { $0.currentState() == .live || $0.currentState() == .upcoming }
         let currentUserId = supabase.currentUser?.id
 
@@ -159,15 +170,15 @@ final class EventStore: ObservableObject {
         }
 
         for (id, m, p, u) in results {
-            if let idx = events.firstIndex(where: { $0.id == id }) {
-                events[idx].memberCount = m
-                events[idx].photoCount = p
+            updateHydrated(id) { h in
+                h.event.memberCount = m
+                h.event.photoCount = p
+                if let u { h.userPhotoCount = u }
             }
-            if let u { userPhotoCounts[id] = u }
         }
     }
 
-    private func hydrateRevealed(events loaded: [Event], restoredRevealStatus: inout [String: Bool]) async {
+    private func hydrateRevealed(loaded: [Event]) async {
         let revealed = loaded.filter { $0.currentState() == .revealed }
 
         let results = await withTaskGroup(of: (String, Int, [PhotoData], Int, Int, Int).self) { group in
@@ -187,30 +198,29 @@ final class EventStore: ObservableObject {
             return out
         }
 
-        var likeCounts: [String: Int] = [:]
-        var pastPhotos: [String: [PhotoData]] = [:]
         for (id, count, photos, totalLikes, m, p) in results {
-            likeCounts[id] = count
-            pastPhotos[id] = photos
-            totalLikeCounts[id] = totalLikes
-            if let idx = events.firstIndex(where: { $0.id == id }) {
-                events[idx].memberCount = m
-                events[idx].photoCount = p
+            updateHydrated(id) { h in
+                h.likedCount = count
+                if !photos.isEmpty || h.likedPhotos.isEmpty {
+                    h.likedPhotos = photos
+                }
+                h.totalLikeCount = totalLikes
+                h.event.memberCount = m
+                h.event.photoCount = p
+                if count > 0 || RevealStateManager.shared.hasCompletedReveal(for: id) {
+                    h.userHasCompletedReveal = true
+                }
             }
-            if count > 0 || RevealStateManager.shared.hasCompletedReveal(for: id) {
-                restoredRevealStatus[id] = true
-            }
-        }
-
-        likedCounts = likeCounts
-        for (id, photos) in pastPhotos where !photos.isEmpty || pastEventPhotos[id] == nil {
-            pastEventPhotos[id] = photos
         }
     }
 
-    private func hydrateMembers(events loaded: [Event], restoredRevealStatus: [String: Bool]) async {
+    private func hydrateMembers(loaded: [Event]) async {
         let results = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
-            for event in loaded where event.currentState() != .revealed || !(restoredRevealStatus[event.id] ?? false) {
+            for event in loaded {
+                // Skip revealed-and-completed events; they don't need fresh member dots.
+                let h = hydratedEvents.first { $0.id == event.id }
+                let alreadyDone = (event.currentState() == .revealed) && (h?.userHasCompletedReveal ?? false)
+                guard !alreadyDone else { continue }
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
                     let members = (try? await self.supabase.getEventMembersWithShots(eventId: eventUUID)) ?? []
@@ -221,28 +231,31 @@ final class EventStore: ObservableObject {
             for await r in group { out.append(r) }
             return out
         }
-        for (id, members) in results { eventMembers[id] = members }
+        for (id, members) in results {
+            updateHydrated(id) { $0.members = members }
+        }
     }
 
     // MARK: - Refresh tick (10s)
 
     /// Called by the view on every 10s timer fire. If something's live we
-    /// refresh every tick; otherwise every 3rd tick (~30s).
+    /// refresh every tick; otherwise every 3rd tick (~30s) to save battery.
     func refreshTick(at now: Date) async {
         refreshTickCount += 1
-        let hasLive = events.contains { $0.currentState(at: now) == .live }
+        let hasLive = hydratedEvents.contains { $0.event.currentState(at: now) == .live }
         guard hasLive || refreshTickCount % 3 == 0 else { return }
-        await refreshCounts(now: now)
+        await refreshCounts()
     }
 
     /// Silent refresh: re-fetch counts + member dots without redrawing the
-    /// loading state. Used by the 10s timer.
-    private func refreshCounts(now: Date) async {
-        guard !events.isEmpty else { return }
+    /// loading state.
+    private func refreshCounts() async {
+        guard !hydratedEvents.isEmpty else { return }
         let currentUserId = supabase.currentUser?.id
+        let snapshot = hydratedEvents.map { $0.event }
 
         let countResults = await withTaskGroup(of: (String, Int, Int, Int?).self) { group in
-            for event in events {
+            for event in snapshot {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
                     let m = (try? await self.supabase.getEventMemberCount(eventId: eventUUID)) ?? event.memberCount
@@ -260,15 +273,15 @@ final class EventStore: ObservableObject {
         }
 
         for (id, m, p, u) in countResults {
-            if let idx = events.firstIndex(where: { $0.id == id }) {
-                events[idx].memberCount = m
-                events[idx].photoCount = p
+            updateHydrated(id) { h in
+                h.event.memberCount = m
+                h.event.photoCount = p
+                if let u { h.userPhotoCount = u }
             }
-            if let u { userPhotoCounts[id] = u }
         }
 
         let memberResults = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
-            for event in events where event.currentState() == .live || event.currentState() == .upcoming {
+            for event in snapshot where event.currentState() == .live || event.currentState() == .upcoming {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
                     let members = (try? await self.supabase.getEventMembersWithShots(eventId: eventUUID)) ?? []
@@ -279,13 +292,15 @@ final class EventStore: ObservableObject {
             for await r in group { out.append(r) }
             return out
         }
-        for (id, members) in memberResults { eventMembers[id] = members }
+        for (id, members) in memberResults {
+            updateHydrated(id) { $0.members = members }
+        }
     }
 
     // MARK: - Mutations
 
     func appendCreatedEvent(_ event: Event) {
-        events.append(event)
+        hydratedEvents.append(HydratedEvent(event: event))
     }
 
     /// A user just joined an event via the join sheet. Triggers the 2-second
@@ -293,7 +308,7 @@ final class EventStore: ObservableObject {
     func joinedEvent(_ event: Event) {
         newlyJoinedEventId = event.id
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            events.append(event)
+            hydratedEvents.append(HydratedEvent(event: event))
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             withAnimation(.easeOut(duration: 0.5)) {
@@ -306,19 +321,19 @@ final class EventStore: ObservableObject {
         guard let uuid = UUID(uuidString: event.id) else { return }
         do {
             try await supabase.deleteEvent(id: uuid)
-            events.removeAll { $0.id == event.id }
+            hydratedEvents.removeAll { $0.id == event.id }
         } catch {
             debugLog("Failed to delete event: \(error)")
         }
     }
 
     func markRevealCompleted(eventId: String) {
-        revealCompletionStatus[eventId] = true
+        updateHydrated(eventId) { $0.userHasCompletedReveal = true }
         RevealStateManager.shared.markRevealCompleted(for: eventId)
     }
 
     func clearRevealCompleted(eventId: String) {
-        revealCompletionStatus[eventId] = nil
+        updateHydrated(eventId) { $0.userHasCompletedReveal = false }
         RevealStateManager.shared.clearRevealCompleted(for: eventId)
     }
 
@@ -337,59 +352,58 @@ final class EventStore: ObservableObject {
             var savedPhoto = try PhotoStorageManager.shared.save(image: image, for: event)
             savedPhoto.image = image
 
-            if eventPhotos[event.id] == nil { eventPhotos[event.id] = [] }
-            eventPhotos[event.id]?.append(savedPhoto)
-
             let queuedPhoto = try sync.queuePhoto(image: image, eventId: eventUUID)
+            let userId = supabase.currentUser?.id
 
-            // Optimistic counter bump
-            let eventId = event.id
-            userPhotoCounts[eventId, default: 0] += 1
-            let shotNumber = userPhotoCounts[eventId] ?? 1
+            // Optimistic update — local photo, counter bump, dot bump
+            updateHydrated(event.id) { h in
+                h.localPhotos.append(savedPhoto)
+                h.userPhotoCount += 1
+                if let userId,
+                   let mIdx = h.members.firstIndex(where: { $0.userId == userId.uuidString }) {
+                    let m = h.members[mIdx]
+                    h.members[mIdx] = MemberWithShots(
+                        userId: m.userId,
+                        username: m.username,
+                        displayName: m.displayName,
+                        avatarUrl: m.avatarUrl,
+                        shotsTaken: m.shotsTaken + 1
+                    )
+                }
+            }
 
+            let shotNumber = hydratedEvents.first(where: { $0.id == event.id })?.userPhotoCount ?? 1
             var props: [String: Any] = [
-                "event_id": eventId,
+                "event_id": event.id,
                 "user_photo_count": shotNumber
             ]
-            if shotNumber == 1, let secs = AnalyticsManager.secondsSinceJoin(eventId: eventId) {
+            if shotNumber == 1, let secs = AnalyticsManager.secondsSinceJoin(eventId: event.id) {
                 props["seconds_since_join"] = secs
             }
             AnalyticsManager.shared.track(.shotCaptured, properties: props)
 
-            // Bump the same user's dot row optimistically
-            if let userId = supabase.currentUser?.id.uuidString,
-               let memberIdx = eventMembers[eventId]?.firstIndex(where: { $0.userId == userId }) {
-                let current = eventMembers[eventId]![memberIdx]
-                eventMembers[eventId]![memberIdx] = MemberWithShots(
-                    userId: current.userId,
-                    username: current.username,
-                    displayName: current.displayName,
-                    avatarUrl: current.avatarUrl,
-                    shotsTaken: current.shotsTaken + 1
-                )
-            }
-
             debugLog("✅ Photo captured and queued for upload: \(queuedPhoto.id)")
             debugLog("   Pending uploads: \(sync.pendingCount)")
 
-            // Reconcile against server-truth 3s later — corrects if the upload
-            // failed or another shot landed in the same window.
+            // Reconcile against server-truth 3s later.
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
                 guard let self else { return }
                 guard let userId = self.supabase.currentUser?.id else { return }
                 let realCount = (try? await self.supabase.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
                 await MainActor.run {
-                    self.userPhotoCounts[eventId] = realCount
-                    if let memberIdx = self.eventMembers[eventId]?.firstIndex(where: { $0.userId == userId.uuidString }) {
-                        let current = self.eventMembers[eventId]![memberIdx]
-                        self.eventMembers[eventId]![memberIdx] = MemberWithShots(
-                            userId: current.userId,
-                            username: current.username,
-                            displayName: current.displayName,
-                            avatarUrl: current.avatarUrl,
-                            shotsTaken: realCount
-                        )
+                    self.updateHydrated(event.id) { h in
+                        h.userPhotoCount = realCount
+                        if let mIdx = h.members.firstIndex(where: { $0.userId == userId.uuidString }) {
+                            let m = h.members[mIdx]
+                            h.members[mIdx] = MemberWithShots(
+                                userId: m.userId,
+                                username: m.username,
+                                displayName: m.displayName,
+                                avatarUrl: m.avatarUrl,
+                                shotsTaken: realCount
+                            )
+                        }
                     }
                 }
             }
