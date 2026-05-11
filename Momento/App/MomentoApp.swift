@@ -20,6 +20,11 @@ struct MomentoApp: App {
         // crash. No-op if SENTRY_DSN isn't configured.
         CrashReporter.start()
 
+        // Touch the NotificationManager singleton early so its UNUserNotificationCenter
+        // delegate is set before any notification could fire (e.g., user taps a
+        // notification on the lock screen and the app cold-launches into the tap).
+        _ = NotificationManager.shared
+
         // Then analytics.
         AnalyticsManager.shared.configure()
     }

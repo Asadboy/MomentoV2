@@ -86,6 +86,11 @@ struct ContentView: View {
                 guard let code = note.userInfo?["code"] as? String else { return }
                 router.showJoin(code: code)
             }
+            .onReceive(NotificationCenter.default.publisher(for: .receivedRevealLink)) { note in
+                guard let eventId = note.userInfo?["eventId"] as? String,
+                      let hydrated = store.hydratedEvents.first(where: { $0.id == eventId }) else { return }
+                router.handleEventTap(hydrated.event, now: now, store: store)
+            }
             .modifier(HomePresentations(store: store, router: router))
         }
     }

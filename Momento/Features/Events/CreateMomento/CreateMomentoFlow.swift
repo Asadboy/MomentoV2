@@ -143,6 +143,13 @@ struct CreateMomentoFlow: View {
                     "reveal_delay_minutes": Int(event.releaseAt.timeIntervalSince(event.endsAt) / 60)
                 ])
 
+                // Schedule the "your shots are ready to reveal" local
+                // notification, asking the user for permission if this is
+                // the first one. Doesn't block the UI — fire and forget.
+                Task {
+                    await NotificationManager.shared.requestAuthorizationAndSchedule(for: event)
+                }
+
                 debugLog("[CreateMomento] 3/4 — updating UI state")
                 createdEvent = event
                 isCreating = false

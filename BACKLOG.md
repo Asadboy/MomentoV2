@@ -44,7 +44,9 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 ## Nice to have (not blocking)
 
 - [x] Drop polling to 30s for non-live events (10s when something is live, 30s otherwise)
+- [x] **Local notifications for reveal-ready** — `NotificationManager` schedules a "your 10shots are ready" notification at `event.releaseAt` whenever an event is created or joined. Tap deep-links into the reveal flow. Permission requested in context on first event create/join.
 - [ ] Internal rename `CreateMomentoFlow` → `CreateEventFlow` (deferred per CLAUDE.md — internal-only churn)
+- [ ] **Push notifications (v1.1).** Member-joined / new-shot-taken / liked-your-shot notifications would need APNs setup, device token registration, and a server-side trigger (Supabase Edge Function or external). Worth doing once user retention data shows reveal-ready alone isn't enough engagement.
 
 ## OfflineSyncManager hardening
 
