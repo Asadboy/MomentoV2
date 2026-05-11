@@ -1152,14 +1152,6 @@ struct PhotoModel: Codable, Identifiable {
     }
 }
 
-/// Simplified photo data for reveal UI
-struct PhotoData: Identifiable {
-    let id: String
-    let url: URL?
-    let capturedAt: Date
-    let photographerName: String?
-}
-
 /// A user's like on a photo
 struct PhotoLike: Codable {
     let photoId: UUID
@@ -1173,27 +1165,3 @@ struct PhotoLike: Codable {
     }
 }
 
-/// A member of an event with their shot count (for people-dots card)
-struct MemberWithShots: Identifiable, Equatable {
-    let userId: String
-    let username: String
-    let displayName: String?
-    let avatarUrl: String?
-    let shotsTaken: Int
-
-    var id: String { userId }
-
-    /// Display name with fallback to username
-    var name: String {
-        displayName ?? username
-    }
-}
-
-/// User profile statistics for display
-struct ProfileStats {
-    let eventsJoined: Int
-    let eventsHosted: Int
-    let photosTaken: Int
-    let photosLiked: Int
-    let userNumber: Int
-}
