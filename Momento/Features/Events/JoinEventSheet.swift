@@ -593,8 +593,17 @@ struct JoinEventSheet: View {
                     isJoining = false
                 }
             } catch {
+                // Distinguish "no such event" from network / RPC failures so
+                // the user knows whether to check their code or their
+                // connection.
+                let message: String
+                if case SupabaseError.eventNotFound = error {
+                    message = "No event found with that code"
+                } else {
+                    message = "Couldn't reach the server. Check your connection and try again."
+                }
                 await MainActor.run {
-                    errorMessage = "No event found with that code"
+                    errorMessage = message
                     isJoining = false
                 }
             }

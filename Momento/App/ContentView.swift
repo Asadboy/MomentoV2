@@ -21,6 +21,7 @@ struct ContentView: View {
 
     @StateObject private var store = EventStore()
     @StateObject private var router = HomeRouter()
+    @StateObject private var sync = OfflineSyncManager.shared
 
     @State private var now: Date = .now
 
@@ -37,6 +38,9 @@ struct ContentView: View {
 
                 VStack(spacing: 0) {
                     HomeHeader(router: router)
+
+                    UploadFailureBanner(sync: sync)
+                        .animation(.easeInOut(duration: 0.25), value: sync.failedCount)
 
                     if store.isLoading {
                         Spacer()
@@ -116,15 +120,20 @@ private struct HomePresentations: ViewModifier {
                 coverContent(cover)
             }
             .alert(
-                "Error",
+                "Something went wrong",
                 isPresented: Binding(
-                    get: { router.errorMessage != nil },
-                    set: { if !$0 { router.errorMessage = nil } }
+                    get: { (router.errorMessage ?? store.errorMessage) != nil },
+                    set: { showing in
+                        if !showing {
+                            router.errorMessage = nil
+                            store.dismissError()
+                        }
+                    }
                 )
             ) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(router.errorMessage ?? "")
+                Text(router.errorMessage ?? store.errorMessage ?? "")
             }
     }
 

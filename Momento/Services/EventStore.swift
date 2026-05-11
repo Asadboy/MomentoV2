@@ -122,6 +122,7 @@ final class EventStore: ObservableObject {
 
         do {
             let models = try await api.getMyEvents()
+            errorMessage = nil // clear any prior error
             let loaded = models.map { Event(fromSupabase: $0) }
 
             // Build fresh HydratedEvents, preserving any local-only fields
@@ -152,7 +153,18 @@ final class EventStore: ObservableObject {
         } catch {
             debugLog("Failed to load events: \(error)")
             isLoading = false
+            // Only surface to user if they have nothing on screen — a transient
+            // refresh failure with existing events visible is better swallowed
+            // than turned into a noisy alert.
+            if hydratedEvents.isEmpty {
+                errorMessage = "Couldn't load your events. Pull down to retry."
+            }
         }
+    }
+
+    /// Clear the displayed error. Called when the user dismisses the alert.
+    func dismissError() {
+        errorMessage = nil
     }
 
     private func hydrateActive(loaded: [Event]) async {
@@ -332,6 +344,7 @@ final class EventStore: ObservableObject {
             hydratedEvents.removeAll { $0.id == event.id }
         } catch {
             debugLog("Failed to delete event: \(error)")
+            errorMessage = "Couldn't delete that event. Try again."
         }
     }
 

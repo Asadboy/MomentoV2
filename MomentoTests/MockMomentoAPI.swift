@@ -20,6 +20,7 @@ final class MockMomentoAPI: MomentoAPI {
 
     var myEvents: [EventModel] = []
     var myEventsError: Error?
+    var deleteEventError: Error?
 
     var memberCounts: [UUID: Int] = [:]
     var photoCounts: [UUID: Int] = [:]
@@ -51,6 +52,7 @@ final class MockMomentoAPI: MomentoAPI {
 
     func deleteEvent(id: UUID) async throws {
         deleteEventCalls.append(id)
+        if let e = deleteEventError { throw e }
     }
 
     func getEventMemberCount(eventId: UUID) async throws -> Int {
