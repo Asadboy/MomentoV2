@@ -125,12 +125,21 @@ extension SupabaseManager {
         // path makes every upload fail RLS silently. Lowercase to match.
         let path = "\(userId.uuidString.lowercased())/avatar.jpg"
 
+        // First-time upload uses INSERT; if the user already has an
+        // avatar, remove it first then re-upload. This avoids upsert's
+        // separate code path on the storage server, which appears to
+        // hit an RLS check we couldn't reproduce as either authenticated
+        // OR anon roles in direct SQL.
+        _ = try? await client.storage
+            .from("avatars")
+            .remove(paths: [path])
+
         _ = try await client.storage
             .from("avatars")
             .upload(
                 path,
                 data: jpegData,
-                options: FileOptions(contentType: "image/jpeg", upsert: true)
+                options: FileOptions(contentType: "image/jpeg", upsert: false)
             )
 
         let publicURL = try client.storage.from("avatars").getPublicURL(path: path).absoluteString
