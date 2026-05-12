@@ -119,7 +119,11 @@ extension SupabaseManager {
             throw SupabaseError.userNotAuthenticated
         }
 
-        let path = "\(userId.uuidString)/avatar.jpg"
+        // PostgreSQL's auth.uid()::text returns the UUID in lowercase,
+        // but Swift's UUID.uuidString returns uppercase. The avatars
+        // bucket RLS policies compare them as strings, so an uppercase
+        // path makes every upload fail RLS silently. Lowercase to match.
+        let path = "\(userId.uuidString.lowercased())/avatar.jpg"
 
         _ = try await client.storage
             .from("avatars")
@@ -151,7 +155,7 @@ extension SupabaseManager {
             throw SupabaseError.userNotAuthenticated
         }
 
-        let path = "\(userId.uuidString)/avatar.jpg"
+        let path = "\(userId.uuidString.lowercased())/avatar.jpg"
         _ = try? await client.storage.from("avatars").remove(paths: [path])
 
         struct AvatarClear: Encodable { let avatar_url: String? }
@@ -224,7 +228,7 @@ extension SupabaseManager {
         // Avatar — best-effort, the RPC also cascades via the profile delete.
         _ = try? await client.storage
             .from("avatars")
-            .remove(paths: ["\(userId.uuidString)/avatar.jpg"])
+            .remove(paths: ["\(userId.uuidString.lowercased())/avatar.jpg"])
 
         try await client.rpc("delete_my_account").execute()
 

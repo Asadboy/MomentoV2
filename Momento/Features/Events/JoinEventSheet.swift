@@ -498,26 +498,15 @@ struct JoinEventSheet: View {
     /// first — that one does NOT show the banner — and only read the
     /// string content if a relevant pattern is present.
     private func checkClipboard() {
-        Task {
-            // detectPatterns(for:) is the iOS 14+ probe that doesn't
-            // trigger the "Pasted from" system banner. .probableWebURL
-            // catches a URL-shaped paste (likely an invite link);
-            // .number catches a numeric-ish paste (could be a code).
-            let patterns: Set<UIPasteboard.DetectionPattern>
-            do {
-                patterns = try await UIPasteboard.general.detectPatterns(
-                    for: [.probableWebURL, .number]
-                )
-            } catch {
-                patterns = []
-            }
-            let hasRelevantPattern = patterns.contains(.probableWebURL) || patterns.contains(.number)
-            guard hasRelevantPattern else {
-                await MainActor.run { showClipboardBanner = false }
-                return
-            }
-            await MainActor.run { readClipboardForJoinCode() }
-        }
+        // Direct read. iOS 17+ shows a one-time "Allow paste from
+        // 10shots" prompt the first time the app reads the clipboard,
+        // then remembers the decision — a noticeably less invasive UX
+        // than the per-read banner on older iOS versions. For 1k-user
+        // launch scale that's an acceptable trade-off. The earlier
+        // attempt to gate this behind a `detectPatterns` probe didn't
+        // compile cleanly (the async overload's type inference is
+        // brittle in our Swift toolchain) and the win was marginal.
+        readClipboardForJoinCode()
     }
 
     /// Actually pulls the clipboard contents. Only called after
