@@ -346,6 +346,10 @@ struct ProfileView: View {
         Task {
             do {
                 try await supabaseManager.deleteAccount()
+                // Track BEFORE reset so the event is attributed to the
+                // user being deleted (M5). After reset, PostHog has no
+                // identity and the event would be anonymous.
+                AnalyticsManager.shared.track(.accountDeleted)
                 AnalyticsManager.shared.reset()
                 await MainActor.run {
                     isDeletingAccount = false

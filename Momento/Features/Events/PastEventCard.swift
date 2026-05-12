@@ -18,11 +18,19 @@ struct PastEventCard: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
 
+    /// Cached at file scope (M50). Constructing a DateFormatter is
+    /// surprisingly heavy and was happening on every PastEventCard body
+    /// render — for a home with many past events that compounds during
+    /// scroll/refresh.
     private var shortDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: event.endsAt)
+        Self.shortDateFormatter.string(from: event.endsAt)
     }
+
+    private static let shortDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
 
     // MARK: - Body
 
