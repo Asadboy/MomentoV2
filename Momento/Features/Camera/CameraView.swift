@@ -484,10 +484,20 @@ class CameraController: NSObject, ObservableObject {
     @Published var isFlashOn: Bool = false
     @Published var isUsingFrontCamera: Bool = false
     @Published var isUltraWide: Bool = false
+    /// True while a system-level interruption is in effect (incoming
+    /// phone call, Control Center camera, screen-recording, etc). The
+    /// preview goes black during these so the UI can show a hint.
+    @Published var isInterrupted: Bool = false
 
     var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
     private var videoDeviceInput: AVCaptureDeviceInput?
+    private var observers: [NSObjectProtocol] = []
+    /// Tracks whether the session was running before the app went into
+    /// the background so we know whether to restart on foregrounding.
+    /// A user who manually closed the camera sheet shouldn't have it
+    /// re-open itself on next foreground.
+    private var wasRunningBeforeBackground: Bool = false
 
     var hasUltraWide: Bool {
         AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) != nil
@@ -496,6 +506,82 @@ class CameraController: NSObject, ObservableObject {
     override init() {
         super.init()
         checkPermission()
+        installLifecycleObservers()
+    }
+
+    deinit {
+        observers.forEach { NotificationCenter.default.removeObserver($0) }
+    }
+
+    // MARK: - Lifecycle observers
+
+    /// Wires up the three families of notifications that affect a live
+    /// capture session:
+    ///   1. AVCaptureSessionWasInterrupted / InterruptionEnded — phone
+    ///      call, Control Center camera takeover, screen recording.
+    ///   2. AVCaptureSessionRuntimeError — hardware faults, OOM kills.
+    ///   3. UIApplication willResignActive / didBecomeActive — user
+    ///      backgrounded the app with the camera open. Without this,
+    ///      the green privacy indicator stays on and battery drains.
+    private func installLifecycleObservers() {
+        let nc = NotificationCenter.default
+
+        observers.append(nc.addObserver(
+            forName: AVCaptureSession.wasInterruptedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.isInterrupted = true
+        })
+
+        observers.append(nc.addObserver(
+            forName: AVCaptureSession.interruptionEndedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.isInterrupted = false
+            // The session pauses itself during interruption. Re-start it
+            // so the preview comes back without the user having to
+            // dismiss and reopen the sheet.
+            self?.startSession()
+        })
+
+        observers.append(nc.addObserver(
+            forName: AVCaptureSession.runtimeErrorNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            let err = note.userInfo?[AVCaptureSessionErrorKey] as? AVError
+            self?.errorMessage = "Camera error: \(err?.localizedDescription ?? "unknown")"
+        })
+
+        observers.append(nc.addObserver(
+            forName: UIApplication.willResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleResignActive()
+        })
+
+        observers.append(nc.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleBecomeActive()
+        })
+    }
+
+    private func handleResignActive() {
+        guard let session = captureSession, session.isRunning else { return }
+        wasRunningBeforeBackground = true
+        stopSession()
+    }
+
+    private func handleBecomeActive() {
+        guard wasRunningBeforeBackground, hasPermission else { return }
+        wasRunningBeforeBackground = false
+        startSession()
     }
 
     func checkPermission() {
@@ -513,7 +599,17 @@ class CameraController: NSObject, ObservableObject {
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             DispatchQueue.main.async {
                 self?.hasPermission = granted
-                if granted { self?.setupSession() }
+                if granted {
+                    self?.setupSession()
+                    // Belt-and-suspenders: also start the session here.
+                    // The view's onAppear will call startSession() once
+                    // SwiftUI re-renders with hasPermission=true, but
+                    // there's a small race where the user's tap on the
+                    // permission prompt and SwiftUI re-render aren't
+                    // perfectly synchronised. Calling here means the
+                    // viewfinder lights up the instant grant lands.
+                    self?.startSession()
+                }
             }
         }
     }
@@ -625,6 +721,11 @@ class CameraController: NSObject, ObservableObject {
     }
 
     func stopSession() {
+        // Explicit stops (sheet dismiss, capture-button bail) should
+        // also clear the "resume on foreground" flag — otherwise a
+        // background→foreground transition right after dismiss would
+        // briefly restart a session whose owner is gone.
+        wasRunningBeforeBackground = false
         guard let session = captureSession else { return }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             if session.isRunning {
