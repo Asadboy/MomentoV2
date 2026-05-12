@@ -2,7 +2,14 @@
 //  ProfileView.swift
 //  Momento
 //
-//  User profile screen with stats
+//  User profile screen — display name, avatar, sign-out, account delete.
+//
+//  Previously included a stats grid (events joined/hosted, photos taken/
+//  liked) + a founding-member badge. Culled pre-launch: stats encourage
+//  the social-network engagement-counter feel VISION explicitly avoids,
+//  the numbers weren't motivating at friend-group scale, and every
+//  query was extra maintenance surface. Can be reintroduced later if
+//  user research finds people miss them.
 //
 
 import SwiftUI
@@ -15,8 +22,6 @@ struct ProfileView: View {
     @State private var displayName: String?
     @State private var avatarUrl: String?
     @State private var avatarUpdatedAt: Date?
-    @State private var userNumber: Int?
-    @State private var stats: ProfileStats?
     @State private var isLoading = true
     @State private var isLoggingOut = false
     @State private var showLogoutConfirmation = false
@@ -42,10 +47,6 @@ struct ProfileView: View {
                     ScrollView {
                         VStack(spacing: AppTheme.Spacing.screenH) {
                             headerSection
-
-                            if let stats = stats {
-                                statsSection(stats: stats)
-                            }
 
                             Spacer(minLength: AppTheme.Spacing.ctaBottom)
 
@@ -121,24 +122,10 @@ struct ProfileView: View {
         VStack(spacing: 16) {
             avatarPicker
 
-            VStack(spacing: 6) {
-                if let displayName = displayName {
-                    Text(displayName)
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                }
-
-                if let userNumber = userNumber {
-                    HStack(spacing: 4) {
-                        if userNumber <= 100 {
-                            Image(systemName: "sparkle")
-                                .font(.system(size: 10, weight: .medium))
-                        }
-                        Text(userNumber <= 100 ? "Founding Member" : "Member #\(userNumber)")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(AppTheme.Colors.textQuaternary)
-                }
+            if let displayName = displayName {
+                Text(displayName)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.white)
             }
         }
         .padding(.vertical, 28)
@@ -200,19 +187,6 @@ struct ProfileView: View {
             components.queryItems = [URLQueryItem(name: "v", value: String(Int(updatedAt.timeIntervalSince1970)))]
         }
         return components.url
-    }
-
-    // MARK: - Stats Section
-
-    private func statsSection(stats: ProfileStats) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("STATS")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
-                .tracking(1.5)
-
-            StatsGridView(stats: stats)
-        }
     }
 
     // MARK: - Sign Out Button
@@ -278,14 +252,11 @@ struct ProfileView: View {
 
         do {
             let profile = try await supabaseManager.getUserProfile(userId: userId)
-            let profileStats = try await supabaseManager.getProfileStats()
 
             await MainActor.run {
                 self.displayName = profile.displayName
                 self.avatarUrl = profile.avatarUrl
                 self.avatarUpdatedAt = profile.updatedAt
-                self.userNumber = profileStats.userNumber
-                self.stats = profileStats
                 self.isLoading = false
             }
         } catch {
