@@ -114,6 +114,25 @@ final class PhotoStorageManager {
         }
         try fileManager.removeItem(at: eventDirectory)
     }
+
+    /// Removes every event directory this manager has written. Called
+    /// from sign-out and account deletion so a second user signing in on
+    /// the same device can't see the previous user's photos.
+    /// Best-effort: per-directory failures are swallowed because the
+    /// caller has nothing useful to do with them.
+    func removeAllEvents() {
+        guard let cacheDirectory = try? baseCacheDirectory() else { return }
+        guard let entries = try? fileManager.contentsOfDirectory(
+            at: cacheDirectory,
+            includingPropertiesForKeys: nil
+        ) else { return }
+
+        var removed = 0
+        for entry in entries where entry.lastPathComponent.hasPrefix("momento_") {
+            if (try? fileManager.removeItem(at: entry)) != nil { removed += 1 }
+        }
+        if removed > 0 { debugLog("🗑️ PhotoStorage removed \(removed) event directories") }
+    }
     
     // MARK: - Helpers
     

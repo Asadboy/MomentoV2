@@ -92,9 +92,14 @@ final class AnalyticsManager {
         track(.errorSurfaced, properties: props)
     }
 
+    /// Reset PostHog distinct-id and clear local join-timestamp keys.
+    /// Called from sign-out and account deletion so PostHog identifies
+    /// the next user fresh and the per-event "joined_at_<id>" keys don't
+    /// accumulate forever on a shared device.
     func reset() {
         PostHogSDK.shared.reset()
         userId = nil
+        AnalyticsManager.clearJoinStamps()
     }
 
     /// Records when the current user joined/created an event, so we can later
@@ -108,6 +113,16 @@ final class AnalyticsManager {
     static func secondsSinceJoin(eventId: String, now: Date = .now) -> Int? {
         guard let joined = UserDefaults.standard.object(forKey: "joined_at_\(eventId)") as? Date else { return nil }
         return Int(now.timeIntervalSince(joined))
+    }
+
+    /// Wipe every `joined_at_*` UserDefaults entry. Called on sign-out so
+    /// the next user on the same device doesn't inherit a previous
+    /// user's join history.
+    static func clearJoinStamps() {
+        let defaults = UserDefaults.standard
+        let keys = defaults.dictionaryRepresentation().keys.filter { $0.hasPrefix("joined_at_") }
+        for key in keys { defaults.removeObject(forKey: key) }
+        if !keys.isEmpty { debugLog("🗑️ Cleared \(keys.count) join-timestamp keys") }
     }
 
     static func mapActivityToDestination(_ activity: UIActivity.ActivityType?) -> String {

@@ -204,17 +204,48 @@ class SupabaseManager: ObservableObject {
 
     /// Sign out and clear all app-side state to prevent data leaking between
     /// accounts.
+    ///
+    /// What's cleared on sign-out:
+    /// - Supabase auth session (the obvious one)
+    /// - OfflineSyncManager queue + local image files: previous user's
+    ///   queued shots would otherwise upload under the next user's
+    ///   session when connectivity restored.
+    /// - RevealStateManager: legacy global key cleared; new keys are
+    ///   per-user-namespaced and stay untouched.
+    /// - ImageCacheManager: in-memory + disk thumbnails. Otherwise the
+    ///   next user sees the previous user's cached event photos until
+    ///   eviction or reinstall.
+    /// - PhotoStorageManager: locally-saved capture sources.
+    /// - NotificationManager: pending "your reveal is ready" alerts.
+    /// - AnalyticsManager: PostHog distinct-id reset + join-timestamp
+    ///   UserDefaults keys.
     func signOut() async throws {
         try await client.auth.signOut()
 
-        await MainActor.run {
-            self.currentUser = nil
-            self.isAuthenticated = false
-
-            OfflineSyncManager.shared.clearQueue()
-            RevealStateManager.shared.clearAllCompletedReveals()
-        }
+        await clearLocalUserState()
 
         debugLog("✅ User signed out")
+    }
+
+    /// Internal helper used by both `signOut` and `deleteAccount` so the
+    /// two paths can't drift apart. Note: `RevealStateManager` reads the
+    /// current user id internally, so its clear must happen BEFORE
+    /// currentUser is set to nil (otherwise it would clear the
+    /// unauthenticated/legacy key, not the user's own).
+    func clearLocalUserState() async {
+        await MainActor.run {
+            // Order matters: RevealStateManager + AnalyticsManager.reset
+            // read or unread the current user id, so they must run BEFORE
+            // we null out currentUser.
+            RevealStateManager.shared.clearAllCompletedReveals()
+            OfflineSyncManager.shared.clearQueue()
+            ImageCacheManager.shared.clearAll()
+            PhotoStorageManager.shared.removeAllEvents()
+            NotificationManager.shared.cancelAllScheduled()
+            AnalyticsManager.shared.reset()
+
+            self.currentUser = nil
+            self.isAuthenticated = false
+        }
     }
 }

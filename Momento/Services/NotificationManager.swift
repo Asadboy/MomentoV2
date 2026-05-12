@@ -114,6 +114,16 @@ final class NotificationManager: NSObject, ObservableObject {
         center.removePendingNotificationRequests(withIdentifiers: [identifier(for: eventId)])
     }
 
+    /// Cancel every pending notification this manager has scheduled, plus
+    /// clear delivered ones from Notification Center. Called from sign-out
+    /// and account deletion so a second user on the same device doesn't
+    /// get a "your reveal is ready" alert for the previous user's event.
+    func cancelAllScheduled() {
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
+        debugLog("🗑️ Cancelled all scheduled notifications")
+    }
+
     /// Convenience: request auth (if not yet decided) and schedule. Use this
     /// from event create/join paths where it's contextually clear why we'd
     /// want to remind the user. Returns the granted bool for callers that
