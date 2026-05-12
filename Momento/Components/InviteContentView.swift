@@ -22,17 +22,26 @@ struct InviteContentView: View {
     @State private var appeared = false
 
     private var inviteURL: String {
+        // Kept forward-compatible with the 10shots.app domain launch + AASA.
+        // Until that ships, scanning this URL with a third-party reader
+        // shows "Couldn't open page", but the in-app QR scanner extracts
+        // the code from the path regardless, and the share message below
+        // gives recipients the code in plain text.
         "https://10shots.app/join/\(joinCode)"
     }
 
+    /// Share message. Leads with the code so it works without the domain
+    /// or app-store link being live yet (H31). The QR embeds the URL form
+    /// for forward-compat; this text form is the reliable path right now.
     private var shareMessage: String {
         """
-        Join my 10shots event: \(eventName)!
-
-        10 shots each \u{2192} Wait for reveal \u{2192} See the roll together
+        Join my 10shots event: \(eventName)
 
         Code: \(joinCode)
-        Get the app: 10shots.app
+
+        10 shots each \u{2192} wait for the reveal \u{2192} see the roll together.
+
+        Open the 10shots app and enter the code, or scan the QR.
         """
     }
 

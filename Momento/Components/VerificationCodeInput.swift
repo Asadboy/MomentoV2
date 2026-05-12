@@ -26,11 +26,19 @@ struct VerificationCodeInput: View {
                 .focused($isFocused)
                 .opacity(0)
                 .onChange(of: code) { _, newValue in
-                    // Extract code from URL if pasted
-                    let extracted = extractCodeFromPaste(newValue)
-                    // Limit to maxLength and filter to alphanumeric
-                    let filtered = String(extracted.uppercased().prefix(maxLength))
-                        .filter { $0.isLetter || $0.isNumber }
+                    // Extract code from URL if pasted, uppercase, length-cap,
+                    // alphanumeric-only, then reject the visually ambiguous
+                    // glyphs the generator never uses (H35). The join-code
+                    // alphabet is ABCDEFGHJKLMNPQRSTUVWXYZ23456789 — no I,
+                    // O, 0, 1. A user typing one of those would have failed
+                    // lookup silently with a confusing "event not found".
+                    // Now they just don't appear in the box, which is a
+                    // visible hint to look again at the invite.
+                    let ambiguous: Set<Character> = ["I", "O", "0", "1"]
+                    let filtered = String(extractCodeFromPaste(newValue)
+                        .uppercased()
+                        .prefix(maxLength))
+                        .filter { ($0.isLetter || $0.isNumber) && !ambiguous.contains($0) }
                     if filtered != code {
                         code = filtered
                     }
