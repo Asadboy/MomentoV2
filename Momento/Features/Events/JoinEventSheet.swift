@@ -489,8 +489,30 @@ struct JoinEventSheet: View {
 
     // MARK: - Actions
 
-    /// Check clipboard for valid join code or link
+    /// Check clipboard for valid join code or link.
+    ///
+    /// H33: iOS 14+ shows a system "Pasted from <app>" banner on every
+    /// direct read of `UIPasteboard.string`. The previous impl fired one
+    /// of those every time the JoinEventSheet appeared, which felt
+    /// surveillance-y. We now use `detectPatterns(for: .number/.URL)`
+    /// first — that one does NOT show the banner — and only read the
+    /// string content if a relevant pattern is present.
     private func checkClipboard() {
+        Task {
+            let patterns = try? await UIPasteboard.general.detectPatterns(for: [.URL, .number])
+            let hasRelevantPattern = (patterns?.contains(.URL) == true) || (patterns?.contains(.number) == true)
+            guard hasRelevantPattern else {
+                await MainActor.run { showClipboardBanner = false }
+                return
+            }
+            await MainActor.run { readClipboardForJoinCode() }
+        }
+    }
+
+    /// Actually pulls the clipboard contents. Only called after
+    /// `checkClipboard()` has confirmed there's a URL or number in there —
+    /// this is what triggers the iOS "Pasted from" banner.
+    private func readClipboardForJoinCode() {
         guard let clipboardString = UIPasteboard.general.string else {
             showClipboardBanner = false
             return
@@ -609,6 +631,11 @@ struct JoinEventSheet: View {
                 await MainActor.run {
                     errorMessage = message
                     isJoining = false
+                    // H36: reset the QR scanner so the same code can be
+                    // re-scanned after a network blip. Without this, the
+                    // dedup-by-last-value guard in QRCodeScanner would
+                    // swallow the next scan as a duplicate.
+                    qrScanner.scannedCode = nil
                 }
             }
         }

@@ -25,7 +25,12 @@ enum HomeSheet: Identifiable {
 
     var id: String {
         switch self {
-        case .join: return "join"
+        // H34: include the code in the id so a Universal Link arriving
+        // while a no-code join sheet is already open triggers SwiftUI
+        // to re-present with the new code. Same id would have meant
+        // the second presentation was a no-op and the code was silently
+        // dropped.
+        case .join(let code): return "join-\(code ?? "")"
         case .photoCapture(let e): return "photoCapture-\(e.id)"
         case .invite(let e): return "invite-\(e.id)"
         case .settings: return "settings"
