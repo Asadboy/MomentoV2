@@ -64,6 +64,7 @@ struct CameraView: View {
                                     .frame(width: 44, height: 44)
                                     .background(Circle().fill(Color.black.opacity(0.4)))
                             }
+                            .accessibilityLabel("Close camera")
 
                             Spacer()
                         }
@@ -82,6 +83,7 @@ struct CameraView: View {
                                     .foregroundColor(cameraController.isFlashOn ? .yellow : .white.opacity(0.7))
                                     .frame(width: 44, height: 44)
                             }
+                            .accessibilityLabel(cameraController.isFlashOn ? "Turn flash off" : "Turn flash on")
 
                             Spacer()
 
@@ -124,6 +126,7 @@ struct CameraView: View {
                                     .foregroundColor(.white.opacity(0.7))
                                     .frame(width: 44, height: 44)
                             }
+                            .accessibilityLabel(cameraController.isUsingFrontCamera ? "Switch to back camera" : "Switch to front camera")
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 8)
@@ -175,6 +178,10 @@ struct CameraView: View {
                     .scaleEffect(shutterButtonScale)
                     .offset(x: shutterShakeOffset)
                     .disabled(!cameraController.isSessionRunning || isCapturing)
+                    .accessibilityLabel(isLocked
+                        ? "Shutter locked. All \(photoLimit) shots have been used."
+                        : "Take a shot. \(photosRemaining) of \(photoLimit) remaining.")
+                    .accessibilityHint(isLocked ? "" : "Double-tap to capture a photo.")
 
                     // Shot dots
                     ShotDots(

@@ -25,6 +25,8 @@ struct VerificationCodeInput: View {
                 .autocorrectionDisabled()
                 .focused($isFocused)
                 .opacity(0)
+                .accessibilityLabel("Invite code")
+                .accessibilityHint("Enter the \(maxLength)-character code from your invite.")
                 .onChange(of: code) { _, newValue in
                     // Extract code from URL if pasted
                     let extracted = extractCodeFromPaste(newValue)
@@ -40,7 +42,9 @@ struct VerificationCodeInput: View {
                     }
                 }
 
-            // Visual character boxes - relaxed spacing
+            // Visual character boxes - relaxed spacing.
+            // Hidden from VoiceOver since the underlying TextField above
+            // already announces typing; the boxes are pure decoration.
             HStack(spacing: 8) {
                 ForEach(0..<maxLength, id: \.self) { index in
                     CharacterBox(
@@ -50,6 +54,7 @@ struct VerificationCodeInput: View {
                     )
                 }
             }
+            .accessibilityHidden(true)
         }
         .onTapGesture {
             isFocused = true

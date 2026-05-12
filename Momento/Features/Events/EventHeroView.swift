@@ -247,6 +247,7 @@ struct EventHeroView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                 )
+                .accessibilityHidden(true)  // covered by the row-level label
 
             Spacer(minLength: 0)
 
@@ -259,10 +260,13 @@ struct EventHeroView: View {
                         isRevealReady: isRevealCTA,
                         size: dotSize
                     )
+                    .accessibilityHidden(true)  // ditto — aggregate label
                 }
             }
         }
         .padding(.vertical, 14)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(member.name), \(member.shotsTaken) of \(totalShots) shots taken")
     }
 
     private var inviteRow: some View {
