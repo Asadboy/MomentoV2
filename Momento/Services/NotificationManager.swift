@@ -72,8 +72,17 @@ final class NotificationManager: NSObject, ObservableObject {
     /// releaseAt. Idempotent — re-scheduling for the same event id replaces
     /// the existing request (so editing an event's release time updates
     /// the notification cleanly). No-op if releaseAt has already passed.
+    ///
+    /// Uses an absolute time-interval trigger (review H28). The previous
+    /// implementation extracted date components via Calendar.current —
+    /// implicitly the device's current timezone — so a user who created
+    /// an event in London and was in Tokyo at releaseAt would get the
+    /// alert at the Tokyo wall-clock equivalent of the London time, not
+    /// at the original absolute UTC instant. Time-interval triggers
+    /// fire at "now + N seconds" which is timezone-agnostic.
     func scheduleRevealReady(for event: Event) {
-        guard event.releaseAt > Date() else {
+        let secondsUntil = event.releaseAt.timeIntervalSinceNow
+        guard secondsUntil > 0 else {
             debugLog("📅 Skipping notification — releaseAt already passed for \(event.name)")
             return
         }
@@ -87,11 +96,10 @@ final class NotificationManager: NSObject, ObservableObject {
             "kind": "reveal-ready"
         ]
 
-        let components = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute, .second],
-            from: event.releaseAt
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: secondsUntil,
+            repeats: false
         )
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
 
         let request = UNNotificationRequest(
             identifier: identifier(for: event.id),
@@ -103,7 +111,7 @@ final class NotificationManager: NSObject, ObservableObject {
             if let error {
                 debugLog("Failed to schedule reveal notification: \(error)")
             } else {
-                debugLog("📅 Scheduled reveal notification for '\(event.name)' at \(event.releaseAt)")
+                debugLog("📅 Scheduled reveal notification for '\(event.name)' in \(Int(secondsUntil))s (\(event.releaseAt))")
             }
         }
     }
