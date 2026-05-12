@@ -40,7 +40,6 @@
 		B1HYD0102F72000000000001 /* HydratedEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1HYD0102F72000000000000 /* HydratedEvent.swift */; };
 		B1MWS0102F75000000000001 /* MemberWithShots.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1MWS0102F75000000000000 /* MemberWithShots.swift */; };
 		B1PHD0102F75000000000003 /* PhotoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PHD0102F75000000000002 /* PhotoData.swift */; };
-		B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1PFS0102F75000000000004 /* ProfileStats.swift */; };
 		B1API0102F75000000000007 /* MomentoAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1API0102F75000000000006 /* MomentoAPI.swift */; };
 		B1NOT0102F79000000000001 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1NOT0102F79000000000000 /* NotificationManager.swift */; };
 		B1DTO0102F76000000000001 /* SupabaseDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DTO0102F76000000000000 /* SupabaseDTOs.swift */; };
@@ -57,8 +56,6 @@
 		C36446B82EF8200000000002 /* CreateStep1NameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446B92EF8200000000002 /* CreateStep1NameView.swift */; };
 		C36446BC2EF8200000000004 /* CreateStep3ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */; };
 		C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B32F26C55A00F905AE /* ProfileView.swift */; };
-		C372E3BC2F26C55A00F905AE /* StatCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B62F26C55A00F905AE /* StatCardView.swift */; };
-		C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C372E3B72F26C55A00F905AE /* StatsGridView.swift */; };
 		C3ACE7612EC0A137004B23B1 /* PhotoStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */; };
 		A7C581CF2F29000000000001 /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C581CF2F29000000000000 /* EventCard.swift */; };
 		B1HER0102F70000000000001 /* EventHeroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1HER0102F70000000000000 /* EventHeroView.swift */; };
@@ -148,7 +145,6 @@
 		B1HYD0102F72000000000000 /* HydratedEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydratedEvent.swift; sourceTree = "<group>"; };
 		B1MWS0102F75000000000000 /* MemberWithShots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberWithShots.swift; sourceTree = "<group>"; };
 		B1PHD0102F75000000000002 /* PhotoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoData.swift; sourceTree = "<group>"; };
-		B1PFS0102F75000000000004 /* ProfileStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStats.swift; sourceTree = "<group>"; };
 		B1API0102F75000000000006 /* MomentoAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoAPI.swift; sourceTree = "<group>"; };
 		B1NOT0102F79000000000000 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		B1DTO0102F76000000000000 /* SupabaseDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseDTOs.swift; sourceTree = "<group>"; };
@@ -167,8 +163,6 @@
 		C36446B92EF8200000000002 /* CreateStep1NameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep1NameView.swift; sourceTree = "<group>"; };
 		C36446BD2EF8200000000004 /* CreateStep3ShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateStep3ShareView.swift; sourceTree = "<group>"; };
 		C372E3B32F26C55A00F905AE /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		C372E3B62F26C55A00F905AE /* StatCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCardView.swift; sourceTree = "<group>"; };
-		C372E3B72F26C55A00F905AE /* StatsGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsGridView.swift; sourceTree = "<group>"; };
 		C3ACE75F2EC0A137004B23B1 /* PhotoStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoStorageManager.swift; sourceTree = "<group>"; };
 		A7C581CF2F29000000000000 /* EventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventCard.swift; sourceTree = "<group>"; };
 		B1HER0102F70000000000000 /* EventHeroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHeroView.swift; sourceTree = "<group>"; };
@@ -442,7 +436,6 @@
 				B1HYD0102F72000000000000 /* HydratedEvent.swift */,
 				B1MWS0102F75000000000000 /* MemberWithShots.swift */,
 				B1PHD0102F75000000000002 /* PhotoData.swift */,
-				B1PFS0102F75000000000004 /* ProfileStats.swift */,
 				C348891B2EB7CAF9003094CB /* TimeFormatter.swift */,
 			);
 			path = Models;
@@ -452,8 +445,6 @@
 			isa = PBXGroup;
 			children = (
 				C372E3B32F26C55A00F905AE /* ProfileView.swift */,
-				C372E3B62F26C55A00F905AE /* StatCardView.swift */,
-				C372E3B72F26C55A00F905AE /* StatsGridView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -660,7 +651,6 @@
 				B1HYD0102F72000000000001 /* HydratedEvent.swift in Sources */,
 				B1MWS0102F75000000000001 /* MemberWithShots.swift in Sources */,
 				B1PHD0102F75000000000003 /* PhotoData.swift in Sources */,
-				B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */,
 				B1API0102F75000000000007 /* MomentoAPI.swift in Sources */,
 				B1NOT0102F79000000000001 /* NotificationManager.swift in Sources */,
 				B1SCH0102F7B000000000001 /* Scheduler.swift in Sources */,
@@ -686,12 +676,10 @@
 				C30858FF2F2E3F4300E11B8C /* AnalyticsManager.swift in Sources */,
 				C3ACE7742EC0F096004B23B1 /* SignInView.swift in Sources */,
 				C3ACE7772EC0F101004B23B1 /* OfflineSyncManager.swift in Sources */,
-				C372E3BC2F26C55A00F905AE /* StatCardView.swift in Sources */,
 				C348890E2EB7B4F3003094CB /* PhotoCaptureSheet.swift in Sources */,
 				C3ACE7662EC0B414004B23B1 /* InviteSheet.swift in Sources */,
 				C348891A2EB7CAF9003094CB /* TimeFormatter.swift in Sources */,
 				C34A39642EDC55DB0059FA89 /* HapticsManager.swift in Sources */,
-				C372E3BD2F26C55A00F905AE /* StatsGridView.swift in Sources */,
 				C372E3B92F26C55A00F905AE /* ProfileView.swift in Sources */,
 				C3THEME012F3C000000000001 /* AppTheme.swift in Sources */,
 				C3ACE7792EC0F158004B23B1 /* SupabaseConfig.swift in Sources */,
