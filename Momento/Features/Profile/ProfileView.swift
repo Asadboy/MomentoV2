@@ -304,8 +304,12 @@ struct ProfileView: View {
                 self.avatarUpdatedAt = .now
             }
         } catch {
+            // Log the underlying error to the console so we can see it
+            // in Xcode. The user-facing message stays generic.
+            debugLog("❌ Avatar upload failed: \(error)")
+            AnalyticsManager.shared.trackError(kind: "avatar_upload_failed", error: error)
             await MainActor.run {
-                errorMessage = "Couldn't upload that photo."
+                errorMessage = "Couldn't upload that photo. \(error.localizedDescription)"
                 showErrorAlert = true
             }
         }
