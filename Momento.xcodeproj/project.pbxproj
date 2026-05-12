@@ -26,6 +26,9 @@
 		B1ETT0102F7A000000000001 /* EventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ETT0102F7A000000000000 /* EventTests.swift */; };
 		B1JLP0102F7A000000000003 /* JoinLinkParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1JLP0102F7A000000000002 /* JoinLinkParserTests.swift */; };
 		B1HRT0102F7A000000000005 /* HomeRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1HRT0102F7A000000000004 /* HomeRouterTests.swift */; };
+		B1SCH0102F7B000000000001 /* Scheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1SCH0102F7B000000000000 /* Scheduler.swift */; };
+		B1TSC0102F7B000000000003 /* TestScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1TSC0102F7B000000000002 /* TestScheduler.swift */; };
+		B1ETM0102F7B000000000005 /* EventStoreTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1ETM0102F7B000000000004 /* EventStoreTimingTests.swift */; };
 		C34888F62EB75FF2003094CB /* MomentoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F52EB75FF2003094CB /* MomentoUITests.swift */; };
 		C34888F82EB75FF2003094CB /* MomentoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */; };
 		C348890A2EB7B2F1003094CB /* JoinEventSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C348890B2EB7B2F1003094CB /* JoinEventSheet.swift */; };
@@ -130,6 +133,9 @@
 		B1ETT0102F7A000000000000 /* EventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTests.swift; sourceTree = "<group>"; };
 		B1JLP0102F7A000000000002 /* JoinLinkParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinLinkParserTests.swift; sourceTree = "<group>"; };
 		B1HRT0102F7A000000000004 /* HomeRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRouterTests.swift; sourceTree = "<group>"; };
+		B1SCH0102F7B000000000000 /* Scheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scheduler.swift; sourceTree = "<group>"; };
+		B1TSC0102F7B000000000002 /* TestScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestScheduler.swift; sourceTree = "<group>"; };
+		B1ETM0102F7B000000000004 /* EventStoreTimingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStoreTimingTests.swift; sourceTree = "<group>"; };
 		C34888F12EB75FF2003094CB /* MomentoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MomentoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C34888F52EB75FF2003094CB /* MomentoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITests.swift; sourceTree = "<group>"; };
 		C34888F72EB75FF2003094CB /* MomentoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentoUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -259,6 +265,8 @@
 				B1ETT0102F7A000000000000 /* EventTests.swift */,
 				B1JLP0102F7A000000000002 /* JoinLinkParserTests.swift */,
 				B1HRT0102F7A000000000004 /* HomeRouterTests.swift */,
+				B1TSC0102F7B000000000002 /* TestScheduler.swift */,
+				B1ETM0102F7B000000000004 /* EventStoreTimingTests.swift */,
 			);
 			path = MomentoTests;
 			sourceTree = "<group>";
@@ -480,6 +488,7 @@
 				B1API0102F75000000000006 /* MomentoAPI.swift */,
 				B1SNR0102F78000000000004 /* CrashReporter.swift */,
 				B1NOT0102F79000000000000 /* NotificationManager.swift */,
+				B1SCH0102F7B000000000000 /* Scheduler.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -654,6 +663,7 @@
 				B1PFS0102F75000000000005 /* ProfileStats.swift in Sources */,
 				B1API0102F75000000000007 /* MomentoAPI.swift in Sources */,
 				B1NOT0102F79000000000001 /* NotificationManager.swift in Sources */,
+				B1SCH0102F7B000000000001 /* Scheduler.swift in Sources */,
 				B1DTO0102F76000000000001 /* SupabaseDTOs.swift in Sources */,
 				B1PRF0102F76000000000003 /* SupabaseManager+Profile.swift in Sources */,
 				B1EVT0102F76000000000005 /* SupabaseManager+Events.swift in Sources */,
@@ -708,6 +718,8 @@
 				B1ETT0102F7A000000000001 /* EventTests.swift in Sources */,
 				B1JLP0102F7A000000000003 /* JoinLinkParserTests.swift in Sources */,
 				B1HRT0102F7A000000000005 /* HomeRouterTests.swift in Sources */,
+				B1TSC0102F7B000000000003 /* TestScheduler.swift in Sources */,
+				B1ETM0102F7B000000000005 /* EventStoreTimingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

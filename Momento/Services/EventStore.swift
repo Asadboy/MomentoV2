@@ -43,6 +43,7 @@ final class EventStore: ObservableObject {
     // MARK: - Private
 
     private let api: MomentoAPI
+    private let scheduler: Scheduler
     private let sync = OfflineSyncManager.shared
     private var isRefreshing = false
 
@@ -53,10 +54,14 @@ final class EventStore: ObservableObject {
 
     // MARK: - Init
 
-    /// Inject a `MomentoAPI` to make this store testable. Production callers
-    /// rely on the default — `SupabaseManager.shared`. Tests pass a mock.
-    init(api: MomentoAPI = SupabaseManager.shared) {
+    /// Inject a `MomentoAPI` (the data backend) and a `Scheduler` (for
+    /// time-coupled paths like the 2s join glow + 3s post-upload
+    /// reconciliation). Production callers rely on the defaults —
+    /// `SupabaseManager.shared` and `LiveScheduler`. Tests pass mocks.
+    init(api: MomentoAPI = SupabaseManager.shared,
+         scheduler: Scheduler = LiveScheduler()) {
         self.api = api
+        self.scheduler = scheduler
     }
 
     // MARK: - Derived
@@ -337,9 +342,11 @@ final class EventStore: ObservableObject {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             hydratedEvents.append(HydratedEvent(event: event))
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+        Task { [weak self] in
+            guard let self else { return }
+            await self.scheduler.sleep(seconds: 2.0)
             withAnimation(.easeOut(duration: 0.5)) {
-                self?.newlyJoinedEventId = nil
+                self.newlyJoinedEventId = nil
             }
         }
         Task {
@@ -426,8 +433,8 @@ final class EventStore: ObservableObject {
 
             // Reconcile against server-truth 3s later.
             Task { [weak self] in
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
                 guard let self else { return }
+                await self.scheduler.sleep(seconds: 3.0)
                 guard let userId = self.api.currentUserId else { return }
                 let realCount = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
                 await MainActor.run {
