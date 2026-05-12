@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CryptoKit
 
 class ImageCacheManager {
     static let shared = ImageCacheManager()
@@ -16,18 +17,26 @@ class ImageCacheManager {
 
     // MARK: - Disk Cache
     private let diskCacheLimit = 100 * 1024 * 1024 // 100MB
-    private let cacheDirectory: URL
+
+    /// Optional because we want the manager to degrade to memory-only if
+    /// the caches directory is genuinely unavailable (vanishingly rare on
+    /// iOS but a fatalError in a singleton init is a worse failure mode
+    /// than a degraded cache).
+    private let cacheDirectory: URL?
 
     private init() {
-        // Set up disk cache directory
+        // Set up disk cache directory.
         let fileManager = FileManager.default
-        guard let cacheDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
-            fatalError("Unable to locate caches directory")
+        if let cacheDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            let dir = cacheDir.appendingPathComponent("ImageCache", isDirectory: true)
+            try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+            cacheDirectory = dir
+        } else {
+            // Closes review H19 — fatalError in a singleton init was a
+            // launch-blocker pattern. Degrade to memory-only.
+            debugLog("⚠️ ImageCache: caches directory unavailable; running memory-only")
+            cacheDirectory = nil
         }
-        cacheDirectory = cacheDir.appendingPathComponent("ImageCache", isDirectory: true)
-
-        // Create directory if needed
-        try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
 
         // Configure memory cache
         memoryCache.countLimit = 30 // Max 30 images in memory
@@ -89,36 +98,49 @@ class ImageCacheManager {
     /// Clear all caches
     func clearAll() {
         memoryCache.removeAllObjects()
+        guard let cacheDirectory else { return }
         try? FileManager.default.removeItem(at: cacheDirectory)
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
     }
 
     /// Clear disk cache only (memory stays for current session)
     func clearDiskCache() {
+        guard let cacheDirectory else { return }
         try? FileManager.default.removeItem(at: cacheDirectory)
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
     }
 
     // MARK: - Private Helpers
 
+    /// Closes review H20.
+    ///
+    /// The previous implementation used `url.absoluteString.hashValue`,
+    /// which Swift seeds randomly per process — so the same URL produced
+    /// a different key on every cold launch. The disk cache was
+    /// effectively empty on every cold start; every image re-downloaded.
+    ///
+    /// SHA-256 of the URL string is deterministic across launches.
+    /// First 16 hex chars are unique enough for our cache scale
+    /// (10⁻²⁰ collision odds at thousands of images).
     private func cacheKey(for url: URL) -> String {
-        // Use URL's last path component + hash for uniqueness
-        let hash = url.absoluteString.hashValue
-        return "\(url.lastPathComponent)_\(hash)"
+        let data = Data(url.absoluteString.utf8)
+        let digest = SHA256.hash(data: data)
+        let hex = digest.compactMap { String(format: "%02x", $0) }.joined()
+        return "\(url.lastPathComponent)_\(hex.prefix(16))"
     }
 
-    private func diskPath(for key: String) -> URL {
-        cacheDirectory.appendingPathComponent(key)
+    private func diskPath(for key: String) -> URL? {
+        cacheDirectory?.appendingPathComponent(key)
     }
 
     private func loadFromDisk(key: String) -> UIImage? {
-        let path = diskPath(for: key)
+        guard let path = diskPath(for: key) else { return nil }
         guard let data = try? Data(contentsOf: path) else { return nil }
         return UIImage(data: data)
     }
 
     private func saveToDisk(image: UIImage, key: String) {
-        let path = diskPath(for: key)
+        guard let path = diskPath(for: key) else { return }
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
 
         // Check cache size before saving
@@ -139,6 +161,7 @@ class ImageCacheManager {
 
     private func enforceDiskLimit() {
         let fileManager = FileManager.default
+        guard let cacheDirectory else { return }
         guard let files = try? fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey, .creationDateKey]) else { return }
 
         // Calculate total size

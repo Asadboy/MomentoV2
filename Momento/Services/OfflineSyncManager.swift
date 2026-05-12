@@ -69,12 +69,31 @@ class OfflineSyncManager: ObservableObject {
     private let pathMonitor = NWPathMonitor()
     private var lastPathStatus: NWPath.Status = .satisfied
 
-    /// Safe accessor for the documents directory (avoids force-unwrap on array index)
-    private var documentsDirectory: URL {
-        guard let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            fatalError("Unable to locate documents directory")
-        }
-        return dir
+    /// Safe accessor for the documents directory. Returns nil on the
+    /// (vanishingly rare) iOS case where it's unavailable — fatalError
+    /// in a singleton init/getter is a worse failure mode than a
+    /// disabled upload queue (review H19).
+    private var documentsDirectory: URL? {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+    }
+
+    /// Same accessor with the queue subdirectory appended, plus an
+    /// `isExcludedFromBackup` flag applied. Without the flag the queue
+    /// would sync to iCloud — wasted bandwidth + storage for the user.
+    private var queueDirectory: URL? {
+        guard let documentsDirectory else { return nil }
+        let dir = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        // Mark the directory non-backed-up. Best-effort: iOS quietly
+        // ignores the request if the directory doesn't exist yet, hence
+        // the create-then-set order.
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        var mutableDir = dir
+        try? mutableDir.setResourceValues(values)
+
+        return mutableDir
     }
 
     private init() {
@@ -318,17 +337,15 @@ class OfflineSyncManager: ObservableObject {
             throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to JPEG"])
         }
         
-        let documentsDirectory = documentsDirectory
-        let queueDirectory = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
-        
-        // Create queue directory if it doesn't exist
-        try? FileManager.default.createDirectory(at: queueDirectory, withIntermediateDirectories: true)
-        
+        guard let queueDirectory = queueDirectory else {
+            throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Documents directory unavailable"])
+        }
+
         let fileURL = queueDirectory.appendingPathComponent("\(photoId.uuidString).jpg")
         try imageData.write(to: fileURL)
-        
+
         debugLog("🎞️ Photo processed: \(imageData.count / 1024)KB with Kodak Gold filter")
-        
+
         return fileURL
     }
     
@@ -353,9 +370,9 @@ class OfflineSyncManager: ObservableObject {
     
     /// Save queue to disk
     private func saveQueue() {
-        let documentsDirectory = documentsDirectory
+        guard let documentsDirectory = documentsDirectory else { return }
         let queueFileURL = documentsDirectory.appendingPathComponent(queueFileName)
-        
+
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
@@ -365,10 +382,10 @@ class OfflineSyncManager: ObservableObject {
             debugLog("Failed to save queue: \(error)")
         }
     }
-    
+
     /// Load queue from disk
     private func loadQueue() {
-        let documentsDirectory = documentsDirectory
+        guard let documentsDirectory = documentsDirectory else { return }
         let queueFileURL = documentsDirectory.appendingPathComponent(queueFileName)
         
         guard FileManager.default.fileExists(atPath: queueFileURL.path) else {
@@ -480,12 +497,13 @@ class OfflineSyncManager: ObservableObject {
         debugLog("🗑️ Clearing entire upload queue (\(queue.count) items)")
         queue.removeAll()
         saveQueue()
-        
+
         // Also delete the queue directory
-        let documentsDirectory = documentsDirectory
-        let queueDirectory = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
-        try? FileManager.default.removeItem(at: queueDirectory)
-        
+        if let documentsDirectory = documentsDirectory {
+            let dir = documentsDirectory.appendingPathComponent("upload_queue", isDirectory: true)
+            try? FileManager.default.removeItem(at: dir)
+        }
+
         debugLog("✅ Upload queue cleared")
     }
 }
