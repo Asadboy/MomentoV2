@@ -168,8 +168,11 @@ struct MomentoPrimaryButtonStyle: ButtonStyle {
             .font(AppTheme.Fonts.body)
             .frame(maxWidth: .infinity)
             .frame(height: AppTheme.Dimensions.primaryButtonHeight)
-            .background(isEnabled ? Color.white : Color.white.opacity(0.1))
-            .foregroundColor(isEnabled ? .black : .white.opacity(0.3))
+            // Disabled state used to be white/0.3 on white/0.1 — about
+            // a 1.1:1 contrast ratio, effectively invisible. Now 0.45/0.18
+            // for ~3:1, readable but clearly inactive (review L2).
+            .background(isEnabled ? Color.white : Color.white.opacity(0.18))
+            .foregroundColor(isEnabled ? .black : .white.opacity(0.45))
             .cornerRadius(AppTheme.Radii.primaryButton)
             .opacity(configuration.isPressed ? 0.85 : 1)
     }

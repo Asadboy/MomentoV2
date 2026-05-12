@@ -42,6 +42,11 @@ struct RevealCardView: View {
             .onTapGesture {
                 revealPhoto()
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(isRevealed
+                ? "Photo by \(photo.photographerName ?? "Unknown")"
+                : "Tap to reveal next photo")
+            .accessibilityAddTraits(isRevealed ? [] : .isButton)
 
             // Metadata + action bar - always reserve space, fade in content
             VStack(spacing: 12) {

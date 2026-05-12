@@ -34,6 +34,15 @@ struct MomentoApp: App {
             // This is your app's entry point: loads the main screen
             AuthenticationRootView()
                 .preferredColorScheme(.dark)
+                // App-wide Dynamic Type cap (review B13). Honours the
+                // user's preference up through accessibility1, beyond
+                // which the lobby roster, camera overlay, and
+                // verification-code input start to break visually.
+                // accessibility1 is roughly equivalent to iOS's
+                // "Larger Text" slider at ~60% which is still a real
+                // accommodation; the AX1-5 tiers are for users with
+                // strong vision needs and accept a different layout.
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 .onOpenURL { url in
                     // Handle OAuth callback from Google/Apple Sign In
                     handleOAuthCallback(url)
