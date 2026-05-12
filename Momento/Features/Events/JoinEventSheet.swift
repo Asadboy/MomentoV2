@@ -499,8 +499,19 @@ struct JoinEventSheet: View {
     /// string content if a relevant pattern is present.
     private func checkClipboard() {
         Task {
-            let patterns = try? await UIPasteboard.general.detectPatterns(for: [.URL, .number])
-            let hasRelevantPattern = (patterns?.contains(.URL) == true) || (patterns?.contains(.number) == true)
+            // detectPatterns(for:) is the iOS 14+ probe that doesn't
+            // trigger the "Pasted from" system banner. .probableWebURL
+            // catches a URL-shaped paste (likely an invite link);
+            // .number catches a numeric-ish paste (could be a code).
+            let patterns: Set<UIPasteboard.DetectionPattern>
+            do {
+                patterns = try await UIPasteboard.general.detectPatterns(
+                    for: [.probableWebURL, .number]
+                )
+            } catch {
+                patterns = []
+            }
+            let hasRelevantPattern = patterns.contains(.probableWebURL) || patterns.contains(.number)
             guard hasRelevantPattern else {
                 await MainActor.run { showClipboardBanner = false }
                 return
