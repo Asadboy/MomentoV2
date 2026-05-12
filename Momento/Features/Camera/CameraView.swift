@@ -30,6 +30,12 @@ struct CameraView: View {
     @State private var flyingThumbnail: UIImage? = nil
     @State private var thumbnailFlying: Bool = false
     @State private var nextDotTargetIndex: Int = 0
+    /// Guards against the shutter-mash race: a tap reserves a shot
+    /// synchronously, but the camera delegate fires asynchronously ~80–
+    /// 200 ms later. Without this gate a fast tapper could fire a dozen
+    /// captures before the first one returned. Cleared once the delegate
+    /// resolves (success or error).
+    @State private var isCapturing: Bool = false
 
     var body: some View {
         ZStack {
@@ -143,6 +149,9 @@ struct CameraView: View {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
                                 withAnimation(.default) { shutterShakeOffset = 0 }
                             }
+                        } else if isCapturing {
+                            // Camera roundtrip in flight — ignore the tap.
+                            // Don't shake; the previous shot is still landing.
                         } else {
                             captureWithFeedback()
                         }
@@ -165,7 +174,7 @@ struct CameraView: View {
                     }
                     .scaleEffect(shutterButtonScale)
                     .offset(x: shutterShakeOffset)
-                    .disabled(!cameraController.isSessionRunning)
+                    .disabled(!cameraController.isSessionRunning || isCapturing)
 
                     // Shot dots
                     ShotDots(
@@ -262,10 +271,19 @@ struct CameraView: View {
                 onPhotoCaptured(image)
                 cameraController.clearCapturedImage()
 
-                let wasLastShot = photosRemaining == 1
+                // photosRemaining and isLocked were already updated
+                // synchronously on tap. The capture is now in hand — the
+                // shutter button can accept the next press as soon as
+                // this scope returns. The flying-thumbnail animation
+                // below is purely cosmetic.
+                isCapturing = false
 
-                // Stage the flying thumbnail at its start position
-                nextDotTargetIndex = photoLimit - photosRemaining
+                let wasLastShot = isLocked  // we already locked if this was the 10th
+
+                // Stage the flying thumbnail at its start position.
+                // nextDotTargetIndex was captured pre-decrement in
+                // captureWithFeedback so it still points at the freshly-
+                // filled dot.
                 thumbnailFlying = false
                 flyingThumbnail = image
 
@@ -276,18 +294,10 @@ struct CameraView: View {
                     }
                 }
 
-                // Mid-flight: dot fills + tick haptic, synced to the thumbnail "landing"
+                // Mid-flight: tick haptic at the moment the thumbnail "lands".
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) {
                     let tick = UIImpactFeedbackGenerator(style: .light)
                     tick.impactOccurred()
-
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                        photosRemaining -= 1
-                    }
-
-                    if photosRemaining <= 0 {
-                        isLocked = true
-                    }
                 }
 
                 // Clear the flying thumbnail after the flight completes
@@ -309,10 +319,34 @@ struct CameraView: View {
                 }
             }
         }
+        .onChange(of: cameraController.errorMessage) { _, newError in
+            // Camera delegate failed (lens covered, hardware error, etc.).
+            // Roll back the reservation so the user doesn't lose a shot
+            // they never got, and release the capture lock.
+            guard newError != nil, isCapturing else { return }
+            isCapturing = false
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                photosRemaining = min(photoLimit, photosRemaining + 1)
+            }
+            if photosRemaining > 0 { isLocked = false }
+        }
     }
 
     private func captureWithFeedback() {
+        // Reserve the shot synchronously. This is the correctness gate
+        // for the 10-shot limit — the camera delegate is async and
+        // mashing the shutter could otherwise fire multiple captures
+        // before any of them decrement the count.
+        //
+        // Order matters: capture the pre-decrement index for the flying
+        // thumbnail's target dot, *then* decrement, *then* possibly lock.
         let isLastShot = photosRemaining == 1
+        nextDotTargetIndex = photoLimit - photosRemaining
+        isCapturing = true
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+            photosRemaining -= 1
+        }
+        if photosRemaining <= 0 { isLocked = true }
 
         // Two-stage haptic: rigid "click" + soft "clunk" 60ms later — feels mechanical
         if isLastShot {

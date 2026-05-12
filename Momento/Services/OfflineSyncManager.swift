@@ -244,21 +244,36 @@ class OfflineSyncManager: ObservableObject {
             debugLog("✅ Photo \(photo.id.uuidString.prefix(8)) uploaded!")
             
         } catch {
-            // Mark as failed, increment retry count
+            let isLimit = isPhotoLimitError(error)
             await MainActor.run {
                 if let updatedIndex = queue.firstIndex(where: { $0.id == photo.id }) {
                     queue[updatedIndex].status = .failed
-                    queue[updatedIndex].retryCount += 1
-                    queue[updatedIndex].errorMessage = error.localizedDescription
+                    if isLimit {
+                        // Terminal failure — retrying won't help, and we
+                        // want the user-facing message to be honest about
+                        // why. Cap retryCount so auto-retry skips this row.
+                        queue[updatedIndex].retryCount = maxRetries
+                        queue[updatedIndex].errorMessage = "Photo limit reached — this shot was not uploaded"
+                    } else {
+                        queue[updatedIndex].retryCount += 1
+                        queue[updatedIndex].errorMessage = error.localizedDescription
+                    }
                     activeUploads = max(0, activeUploads - 1)
                     saveQueue()
                 }
             }
-            
-            debugLog("❌ Upload failed: \(error.localizedDescription)")
+
+            if isLimit {
+                // No point keeping the bytes around — server will never
+                // accept them. Mirrors the pre-upload limit-check path.
+                try? FileManager.default.removeItem(at: photo.localFileURL)
+                debugLog("❌ Upload rejected: server-side photo limit reached")
+            } else {
+                debugLog("❌ Upload failed: \(error.localizedDescription)")
+            }
         }
     }
-    
+
     /// Remove completed uploads from queue
     private func cleanupCompletedUploads() {
         DispatchQueue.main.async {
