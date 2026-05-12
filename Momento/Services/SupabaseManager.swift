@@ -163,16 +163,17 @@ class SupabaseManager: ObservableObject {
         return session.user
     }
 
-    /// Sign up with email and password. Creates a profile row alongside the
-    /// auth user.
-    func signUpWithEmail(email: String, password: String, username: String) async throws -> User {
+    /// Sign up with email and password. Creates a placeholder profile row
+    /// alongside the auth user — the caller is expected to route the user
+    /// through ProfileSetupView to set a real display name.
+    func signUpWithEmail(email: String, password: String, displayName: String) async throws -> User {
         let response = try await client.auth.signUp(
             email: email,
             password: password
         )
 
         let user = response.user
-        try await createProfile(userId: user.id, username: username)
+        try await createProfile(userId: user.id, displayName: displayName)
 
         await MainActor.run {
             self.currentUser = user

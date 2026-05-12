@@ -38,24 +38,31 @@ extension SupabaseManager {
             throw SupabaseError.userNotAuthenticated
         }
 
-        // Lightweight row used only here.
+        // Lightweight row used only here. Reads captured_by (preferred)
+        // with username fallback for legacy rows.
         struct PhotoRow: Decodable {
             let id: UUID
             let storagePath: String
             let capturedAt: Date
+            let capturedBy: String?
             let username: String?
+
+            var photographerName: String {
+                capturedBy ?? username ?? "Unknown"
+            }
 
             enum CodingKeys: String, CodingKey {
                 case id
                 case storagePath = "storage_path"
                 case capturedAt = "captured_at"
+                case capturedBy = "captured_by"
                 case username
             }
         }
 
         let photos: [PhotoRow] = try await client
             .from("photos")
-            .select("id, storage_path, captured_at, username")
+            .select("id, storage_path, captured_at, captured_by, username")
             .eq("event_id", value: eventId.uuidString)
             .order("captured_at", ascending: true)
             .execute()
@@ -88,7 +95,7 @@ extension SupabaseManager {
                         id: photo.id.uuidString,
                         url: signedURL,
                         capturedAt: photo.capturedAt,
-                        photographerName: photo.username
+                        photographerName: photo.photographerName
                     )
                     return (index, photoData)
                 }

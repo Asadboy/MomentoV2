@@ -10,18 +10,15 @@
 
 import Foundation
 
-/// A member of an event with their shot count (for people-dots card).
+/// A member of an event with their shot count (for the lobby roster).
 struct MemberWithShots: Identifiable, Equatable {
     let userId: String
-    let username: String
-    let displayName: String?
+    let displayName: String
     let avatarUrl: String?
     let shotsTaken: Int
 
     var id: String { userId }
 
-    /// Display name with fallback to username.
-    var name: String {
-        displayName ?? username
-    }
+    /// Alias kept for readability at call sites.
+    var name: String { displayName }
 }

@@ -93,7 +93,7 @@ struct CreateMomentoFlow: View {
         do {
             let profile = try await supabaseManager.getUserProfile(userId: userId)
             await MainActor.run {
-                hostName = profile.displayName ?? profile.username
+                hostName = profile.displayName
             }
         } catch {
             debugLog("[CreateMomento] Failed to fetch host name: \(error)")

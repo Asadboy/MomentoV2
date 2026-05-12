@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var supabaseManager = SupabaseManager.shared
 
-    @State private var username: String?
+    @State private var displayName: String?
+    @State private var avatarUrl: String?
+    @State private var avatarUpdatedAt: Date?
     @State private var userNumber: Int?
     @State private var stats: ProfileStats?
     @State private var isLoading = true
@@ -21,6 +24,8 @@ struct ProfileView: View {
     @State private var showDeleteAccountConfirmation = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
+    @State private var photoPickerItem: PhotosPickerItem?
+    @State private var isUploadingAvatar = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = true
 
     var body: some View {
@@ -114,14 +119,11 @@ struct ProfileView: View {
 
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Profile icon - clean, no glow
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 100, weight: .light))
-                .foregroundColor(.white.opacity(0.9))
+            avatarPicker
 
             VStack(spacing: 6) {
-                if let username = username {
-                    Text("@\(username)")
+                if let displayName = displayName {
+                    Text(displayName)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                 }
@@ -145,6 +147,59 @@ struct ProfileView: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color(white: 0.12))
         )
+    }
+
+    /// Avatar with tap-to-change. Loads via AsyncImage with a query-string
+    /// cache-buster derived from profiles.updated_at so a fresh upload
+    /// shows immediately even though the storage path doesn't change.
+    private var avatarPicker: some View {
+        PhotosPicker(selection: $photoPickerItem,
+                     matching: .images,
+                     photoLibrary: .shared()) {
+            ZStack {
+                if let url = avatarURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        default:
+                            avatarFallback
+                        }
+                    }
+                    .frame(width: 100, height: 100)
+                    .clipShape(Circle())
+                } else {
+                    avatarFallback
+                }
+
+                if isUploadingAvatar {
+                    Circle().fill(Color.black.opacity(0.4)).frame(width: 100, height: 100)
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                }
+            }
+        }
+        .disabled(isUploadingAvatar)
+        .onChange(of: photoPickerItem) { _, newItem in
+            Task { await loadAvatar(from: newItem) }
+        }
+        .accessibilityLabel("Change profile photo")
+    }
+
+    private var avatarFallback: some View {
+        Image(systemName: "person.circle.fill")
+            .font(.system(size: 100, weight: .light))
+            .foregroundColor(.white.opacity(0.9))
+    }
+
+    /// Bake updated_at into the URL as a cache-buster so changing the
+    /// avatar takes effect immediately.
+    private var avatarURL: URL? {
+        guard let raw = avatarUrl, var components = URLComponents(string: raw) else { return nil }
+        if let updatedAt = avatarUpdatedAt {
+            components.queryItems = [URLQueryItem(name: "v", value: String(Int(updatedAt.timeIntervalSince1970)))]
+        }
+        return components.url
     }
 
     // MARK: - Stats Section
@@ -226,7 +281,9 @@ struct ProfileView: View {
             let profileStats = try await supabaseManager.getProfileStats()
 
             await MainActor.run {
-                self.username = profile.username
+                self.displayName = profile.displayName
+                self.avatarUrl = profile.avatarUrl
+                self.avatarUpdatedAt = profile.updatedAt
                 self.userNumber = profileStats.userNumber
                 self.stats = profileStats
                 self.isLoading = false
@@ -259,6 +316,30 @@ struct ProfileView: View {
         }
     }
 
+    private func loadAvatar(from item: PhotosPickerItem?) async {
+        guard let item else { return }
+        await MainActor.run { isUploadingAvatar = true }
+        defer { Task { @MainActor in isUploadingAvatar = false } }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data) else { return }
+            let resized = image.resizedForProfile()
+            guard let jpeg = resized.jpegData(compressionQuality: 0.82) else { return }
+
+            let publicURL = try await supabaseManager.uploadAvatar(jpegData: jpeg)
+            await MainActor.run {
+                self.avatarUrl = publicURL
+                self.avatarUpdatedAt = .now
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Couldn't upload that photo."
+                showErrorAlert = true
+            }
+        }
+    }
+
     private func performDeleteAccount() {
         isDeletingAccount = true
 
@@ -278,6 +359,30 @@ struct ProfileView: View {
                     showErrorAlert = true
                 }
             }
+        }
+    }
+}
+
+// MARK: - UIImage helpers
+
+private extension UIImage {
+    /// Center-crop + downscale to 512×512 for avatar upload.
+    func resizedForProfile(maxSide: CGFloat = 512) -> UIImage {
+        let cropSide = min(size.width, size.height)
+        let cropOrigin = CGPoint(
+            x: (size.width - cropSide) / 2,
+            y: (size.height - cropSide) / 2
+        )
+        let cropRect = CGRect(origin: cropOrigin, size: CGSize(width: cropSide, height: cropSide))
+
+        guard let cgImage = cgImage?.cropping(to: cropRect) else { return self }
+        let cropped = UIImage(cgImage: cgImage, scale: self.scale, orientation: imageOrientation)
+
+        let target = CGSize(width: min(cropSide, maxSide), height: min(cropSide, maxSide))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            cropped.draw(in: CGRect(origin: .zero, size: target))
         }
     }
 }

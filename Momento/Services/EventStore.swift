@@ -410,7 +410,6 @@ final class EventStore: ObservableObject {
                     let m = h.members[mIdx]
                     h.members[mIdx] = MemberWithShots(
                         userId: m.userId,
-                        username: m.username,
                         displayName: m.displayName,
                         avatarUrl: m.avatarUrl,
                         shotsTaken: m.shotsTaken + 1
@@ -444,7 +443,6 @@ final class EventStore: ObservableObject {
                             let m = h.members[mIdx]
                             h.members[mIdx] = MemberWithShots(
                                 userId: m.userId,
-                                username: m.username,
                                 displayName: m.displayName,
                                 avatarUrl: m.avatarUrl,
                                 shotsTaken: realCount

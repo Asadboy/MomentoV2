@@ -53,7 +53,7 @@ struct InviteSheet: View {
         do {
             let profile = try await SupabaseManager.shared.getUserProfile(userId: userId)
             await MainActor.run {
-                hostName = profile.displayName ?? profile.username
+                hostName = profile.displayName
             }
         } catch {
             await MainActor.run { hostName = "Host" }
