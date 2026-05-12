@@ -20,6 +20,10 @@ enum AnalyticsEvent: String {
     // Capture limit experiment
     case shotLimitReached = "shot_limit_reached"
 
+    // Account lifecycle (M5). Fired before AnalyticsManager.reset so the
+    // event is attributed to the user being deleted.
+    case accountDeleted = "account_deleted"
+
     // Surfaced errors — fired alongside user-facing alerts so we can see
     // error rates in PostHog independent of whether anyone reports them.
     // See `AnalyticsManager.trackError`.

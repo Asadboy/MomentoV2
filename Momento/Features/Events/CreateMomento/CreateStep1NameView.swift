@@ -150,7 +150,12 @@ struct CreateStep1NameView: View {
     }
 
     private var isValidName: Bool {
-        !momentoName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        // 1–60 chars, trimmed. The upper cap (M44) prevents a paste of a
+        // 5000-char string from blowing through every layout downstream
+        // (lobby card title, share card, push title). 60 fits typical
+        // party names ("Asad's 30th @ The Old Blue Last") with headroom.
+        let trimmed = momentoName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.count <= 60
     }
 }
 

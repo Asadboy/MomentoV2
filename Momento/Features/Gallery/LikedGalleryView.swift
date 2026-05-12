@@ -353,7 +353,19 @@ struct LikedGalleryView: View {
                     throw NSError(domain: "Gallery", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create image"])
                 }
 
-                let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                // Check cached status first (M22). requestAuthorization
+                // re-prompts iOS-side only on first call per install;
+                // subsequent calls return cached. But checking
+                // authorizationStatus directly skips even that one
+                // round-trip on the hot path and lets us route the user
+                // to Settings if they previously denied.
+                let cached = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+                let status: PHAuthorizationStatus
+                if cached == .notDetermined {
+                    status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                } else {
+                    status = cached
+                }
                 guard status == .authorized || status == .limited else {
                     await MainActor.run {
                         saveAlertMessage = "Please allow photo access in Settings"
