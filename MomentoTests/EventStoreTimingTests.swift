@@ -116,6 +116,8 @@ final class EventStoreTimingTests: XCTestCase {
         let now = Date()
         let userId = api.currentUserId!
         let eventId = UUID()
+        let key = "\(eventId):\(userId)"
+
         api.myEvents = [.test(
             id: eventId,
             startsAt: now.addingTimeInterval(-60),
@@ -125,13 +127,19 @@ final class EventStoreTimingTests: XCTestCase {
         api.membersWithShots[eventId] = [
             MemberWithShots(userId: userId.uuidString, username: "me", displayName: "Me", avatarUrl: nil, shotsTaken: 4)
         ]
+        // Seed initial photo count so load sets userPhotoCount=4 (matches
+        // the member's shotsTaken). Without this, the load path returns 0
+        // from the mock and the optimistic bump goes 0→1 instead of 4→5.
+        api.userPhotoCounts[key] = 4
+
         await store.loadEvents()
         let event = store.hydratedEvents.first!.event
+        XCTAssertEqual(store.hydratedEvents.first?.userPhotoCount, 4, "Post-load, userPhotoCount should reflect the seeded value")
 
         // Server insists the real count is 7 — maybe another upload landed
         // in the same window, maybe the optimistic bump was off. Doesn't
         // matter; we want to reconcile to whatever the server says.
-        api.userPhotoCounts["\(eventId):\(userId)"] = 7
+        api.userPhotoCounts[key] = 7
 
         store.handlePhotoCaptured(makeTestImage(), for: event)
 
