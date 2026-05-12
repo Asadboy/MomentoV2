@@ -133,11 +133,27 @@ struct AuthenticationRootView: View {
                     isCheckingProfile = false
                 }
             } catch {
-                debugLog("❌ Failed to check profile status: \(error)")
-                // If the profile row is genuinely missing (rare; the
-                // handle_new_user trigger should have created it), route to
-                // setup so the user can establish identity rather than land
-                // in an unrecoverable onboarding loop.
+                debugLog("❌ Profile check failed (\(error)); attempting self-heal")
+                // H5 self-heal: the profile row is genuinely missing.
+                // The handle_new_user trigger should have created it on
+                // auth.users insert, but a returning user whose row was
+                // wiped (account-delete bug, schema migration, etc.)
+                // would otherwise be stuck in an unrecoverable loop:
+                // route to setup → setup tries to UPDATE → no row to
+                // update → fail. Insert a placeholder row first so the
+                // ProfileSetupView update has something to write to.
+                do {
+                    try await supabaseManager.createProfileIfNeeded(
+                        user: supabaseManager.currentUser!
+                    )
+                    debugLog("✅ Self-healed missing profile row")
+                } catch {
+                    debugLog("❌ Self-heal failed too: \(error)")
+                    AnalyticsManager.shared.trackError(
+                        kind: "profile_self_heal_failed",
+                        error: error
+                    )
+                }
                 await MainActor.run {
                     appState = .needsProfileSetup
                     isCheckingProfile = false

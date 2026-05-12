@@ -259,6 +259,14 @@ struct SignInView: View {
             }
 
         case .failure(let error):
+            // ASAuthorizationError.canceled is what fires when the user
+            // taps Cancel on the system sheet. It's a normal outcome,
+            // not a sign-in failure — surfacing "Sign in failed: The
+            // user canceled the authorization attempt" looks scary and
+            // confusing. Quietly swallow it. Closes review H6.
+            if let asError = error as? ASAuthorizationError, asError.code == .canceled {
+                return
+            }
             errorMessage = "Sign in failed: \(error.localizedDescription)"
         }
     }
