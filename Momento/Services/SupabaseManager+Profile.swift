@@ -228,13 +228,11 @@ extension SupabaseManager {
 
         try await client.rpc("delete_my_account").execute()
 
-        await MainActor.run {
-            self.currentUser = nil
-            self.isAuthenticated = false
-
-            OfflineSyncManager.shared.clearQueue()
-            RevealStateManager.shared.clearAllCompletedReveals()
-        }
+        // Mirror sign-out's full local-state clear. The shared helper
+        // covers image cache, photo storage, notifications, analytics,
+        // reveal state, and the offline-sync queue — all the surfaces
+        // that would otherwise survive into the next sign-in.
+        await clearLocalUserState()
 
         debugLog("✅ Account deleted")
     }
