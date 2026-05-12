@@ -18,6 +18,10 @@ enum SupabaseError: LocalizedError {
     case eventFull
     case invalidEventID
     case configurationError(String)
+    /// Server rejected the photo insert because the user already has 10
+    /// shots in this event. Maps to SQLSTATE 'P0010' raised by the
+    /// `enforce_photo_limit_per_user` trigger.
+    case photoLimitReached
 
     var errorDescription: String? {
         switch self {
@@ -26,8 +30,23 @@ enum SupabaseError: LocalizedError {
         case .eventFull: return "This event is full"
         case .invalidEventID: return "Invalid event ID"
         case .configurationError(let msg): return msg
+        case .photoLimitReached: return "You've already taken all 10 shots in this event."
         }
     }
+}
+
+/// True if the error came from the server-side photo-limit trigger.
+/// Lives at module scope so OfflineSyncManager / CameraView can branch
+/// on it without each one importing PostgrestError directly.
+func isPhotoLimitError(_ error: Error) -> Bool {
+    // Supabase wraps Postgres errors as PostgrestError with the SQLSTATE
+    // in `code`. We rely on the code (string match) rather than the
+    // message because the message can be localised by Postgres.
+    let mirror = Mirror(reflecting: error)
+    for child in mirror.children where child.label == "code" {
+        if let code = child.value as? String, code == "P0010" { return true }
+    }
+    return false
 }
 
 /// Centralized Supabase client manager.
