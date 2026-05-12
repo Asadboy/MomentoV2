@@ -184,7 +184,14 @@ struct FeedRevealView: View {
     @State private var currentPhotoIndex = 0
     @State private var isScrollLocked = false
     @State private var showExitConfirmation = false
+    @State private var showSkipConfirmation = false
 
+    /// Distinct contributor count by photographer name. Best-effort —
+    /// two real people with the same display name would be undercounted,
+    /// and unknowns ("Unknown" fallback for legacy rows) collapse to one.
+    /// At launch scale (5-15 person events) the false-undercount edge is
+    /// rare; review M19's user-id-based dedup would need a denormalised
+    /// user_id column on PhotoData, deferred.
     private var uniqueContributorCount: Int {
         Set(viewModel.photos.compactMap { $0.photographerName }).count
     }
@@ -426,8 +433,12 @@ struct FeedRevealView: View {
 
             Spacer()
 
-            // Photo counter
-            Text("\(currentPhotoIndex + 1) / \(event.photoCount)")
+            // Photo counter. Uses the loaded photos count rather than
+            // event.photoCount because the latter is client-side
+            // hydrated and can race with delayed uploads from other
+            // members (review M20): you'd see "3 / 8" even though the
+            // feed has 10 photos loaded.
+            Text("\(currentPhotoIndex + 1) / \(viewModel.photos.count)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
 
@@ -435,10 +446,7 @@ struct FeedRevealView: View {
 
             // Skip to end
             Button {
-                HapticsManager.shared.light()
-                withAnimation(.easeInOut(duration: 0.4)) {
-                    flowPhase = .complete
-                }
+                showSkipConfirmation = true
             } label: {
                 Text("Skip")
                     .font(.system(size: 14, weight: .medium))
@@ -458,6 +466,21 @@ struct FeedRevealView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Your liked shots will be saved, but you'll need to reveal again to continue.")
+        }
+        // Skip confirmation (review H24). Tapping Skip used to jump to
+        // .complete which on dismiss marked the reveal completed
+        // *forever*. A miss-tap permanently locked the user out of the
+        // reveal. Now the user has to confirm the irreversible action.
+        .confirmationDialog("Skip to the end?", isPresented: $showSkipConfirmation, titleVisibility: .visible) {
+            Button("Skip", role: .destructive) {
+                HapticsManager.shared.light()
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    flowPhase = .complete
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll see the rest of the shots in the gallery, but you can't replay the reveal animation later.")
         }
     }
 
@@ -584,33 +607,6 @@ struct FeedRevealView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var completionSection: some View {
-        VStack(spacing: 20) {
-            Text("End of shots")
-                .font(.headline)
-                .foregroundColor(.white.opacity(0.5))
-
-            Text("\(viewModel.likedCount) shots liked")
-                .foregroundColor(.white.opacity(0.7))
-
-            Button {
-                HapticsManager.shared.celebration()
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    flowPhase = .complete
-                }
-            } label: {
-                Text("Finish")
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(12)
-            }
-        }
-        .padding(.vertical, 32)
     }
 
 }
