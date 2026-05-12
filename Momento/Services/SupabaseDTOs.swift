@@ -23,7 +23,6 @@ struct UserProfile: Codable {
     var username: String?
     var displayName: String
     var avatarUrl: String?
-    var deviceToken: String?
     var profileSetupComplete: Bool
     let createdAt: Date
     var updatedAt: Date?
@@ -33,7 +32,6 @@ struct UserProfile: Codable {
         case username
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
-        case deviceToken = "device_token"
         case profileSetupComplete = "profile_setup_complete"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
