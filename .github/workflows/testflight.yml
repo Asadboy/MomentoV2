@@ -23,22 +23,29 @@ jobs:
       - name: Install Fastlane
         run: bundle install
 
-      - name: Create SupabaseConfig.swift
+      # Write Secrets.xcconfig from GitHub Secrets rather than overwriting
+      # SupabaseConfig.swift. Closes review H46:
+      #   - The previous version hardcoded the Supabase anon key inline
+      #     in this YAML (leaked-in-history-class risk).
+      #   - It only wrote SupabaseConfig.swift; PostHog + Sentry were
+      #     never plumbed, so TestFlight builds shipped with empty
+      #     analytics and zero crash visibility.
+      # The build reads these via Info.plist substitution exactly the
+      # same way the tests workflow and local dev do.
+      - name: Write Secrets.xcconfig
         run: |
-          mkdir -p Momento/Config
-          mkdir -p "Momento/Preview Content"
-          cat > Momento/Config/SupabaseConfig.swift << 'EOF'
-          import Foundation
-
-          enum SupabaseConfig {
-              static let supabaseURL = "https://thnbjfcmawwaxvihggjm.supabase.co"
-              static let supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobmJqZmNtYXd3YXh2aWhnZ2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ1MTksImV4cCI6MjA3ODI3MDUxOX0.3J44x3rZbRAV_rNHiSejiMGVZvc-qsp49FUSph_99DY"
-
-              static var isConfigured: Bool {
-                  !supabaseURL.contains("YOUR_") && !supabaseAnonKey.contains("YOUR_")
-              }
-          }
+          cat > Secrets.xcconfig << EOF
+          SUPABASE_URL = ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY = ${{ secrets.SUPABASE_ANON_KEY }}
+          POSTHOG_API_KEY = ${{ secrets.POSTHOG_API_KEY }}
+          POSTHOG_HOST = ${{ secrets.POSTHOG_HOST }}
+          SENTRY_DSN = ${{ secrets.SENTRY_DSN }}
           EOF
+          # Sanity check (won't print values) — fail fast if a required
+          # secret is missing rather than shipping an empty config to TF.
+          test -s Secrets.xcconfig || (echo "Secrets.xcconfig is empty"; exit 1)
+          grep -q "^SUPABASE_URL = " Secrets.xcconfig || (echo "SUPABASE_URL missing"; exit 1)
+          grep -q "^SUPABASE_ANON_KEY = " Secrets.xcconfig || (echo "SUPABASE_ANON_KEY missing"; exit 1)
 
       - name: Set up App Store Connect API Key
         run: |

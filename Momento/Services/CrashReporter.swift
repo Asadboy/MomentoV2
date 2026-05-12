@@ -39,15 +39,34 @@ enum CrashReporter {
             options.sampleRate = 1.0
             options.tracesSampleRate = 0.0
 
-            // Attach screenshots and view hierarchy to crashes for context.
-            // Heavy on payload size but the signal is worth it pre-launch.
+            // Screenshot + view hierarchy attachment (review H39).
+            //
+            // In Debug we keep both on — they're invaluable while iterating
+            // and only the developer sees them. In Release we strip both:
+            // a crash on the camera preview or the reveal gallery would
+            // otherwise upload an actual photo of someone's face into
+            // Sentry. That's not an acceptable production privacy posture
+            // even with sendDefaultPii=false.
+            #if DEBUG
             options.attachScreenshot = true
             options.attachViewHierarchy = true
+            #else
+            options.attachScreenshot = false
+            options.attachViewHierarchy = false
+            #endif
 
             // Don't ship debug breadcrumbs that contain secrets / PII. Sentry
             // does basic PII scrubbing by default; we keep `sendDefaultPii`
             // off to be explicit.
             options.sendDefaultPii = false
+
+            // Defensive: even with attachScreenshot=false, strip any
+            // image attachments that slipped through (custom SentrySDK
+            // wrapper code, breadcrumb attachments, etc).
+            options.beforeSend = { event in
+                event.context?["screenshot"] = nil
+                return event
+            }
 
             #if DEBUG
             options.debug = true

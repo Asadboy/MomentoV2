@@ -63,6 +63,28 @@
 				<string>E174.1</string>
 			</array>
 		</dict>
+		<dict>
+			<!-- File timestamps: ImageCacheManager reads .creationDate on
+			     cached files to enforce the disk-size limit (LRU eviction).
+			     Reason 0A2A.1 = "Display file timestamps to the user." -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- System boot time: Sentry SDK reads mach_absolute_time() for
+			     crash report timing. Reason 35F9.1 = "Measure time elapsed
+			     between events in the app." -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
