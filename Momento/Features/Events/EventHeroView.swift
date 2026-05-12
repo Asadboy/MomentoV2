@@ -240,7 +240,7 @@ struct EventHeroView: View {
     private func memberRow(_ member: MemberWithShots) -> some View {
         HStack(spacing: 16) {
             Circle()
-                .fill(avatarColor(for: member.username))
+                .fill(avatarColor(for: member.userId))
                 .frame(width: avatarSize, height: avatarSize)
                 .overlay(
                     Text(String(member.name.prefix(1)).uppercased())
@@ -397,10 +397,10 @@ private struct HeroDot: View {
 #Preview("Live — mid game · 4 friends") {
     let now = Date()
     let members = [
-        MemberWithShots(userId: "me", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
-        MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 3),
-        MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
-        MemberWithShots(userId: "4", username: "marc", displayName: "Marc", avatarUrl: nil, shotsTaken: 9)
+        MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
+        MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 3),
+        MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
+        MemberWithShots(userId: "4", displayName: "Marc", avatarUrl: nil, shotsTaken: 9)
     ]
     return ZStack {
         Color.black.ignoresSafeArea()
@@ -423,11 +423,11 @@ private struct HeroDot: View {
 #Preview("Live — full free tier · 5 friends") {
     let now = Date()
     let members = [
-        MemberWithShots(userId: "me", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 4),
-        MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 8),
-        MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
-        MemberWithShots(userId: "4", username: "marc", displayName: "Marc", avatarUrl: nil, shotsTaken: 10),
-        MemberWithShots(userId: "5", username: "liam", displayName: "Liam", avatarUrl: nil, shotsTaken: 5)
+        MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 4),
+        MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 8),
+        MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
+        MemberWithShots(userId: "4", displayName: "Marc", avatarUrl: nil, shotsTaken: 10),
+        MemberWithShots(userId: "5", displayName: "Liam", avatarUrl: nil, shotsTaken: 5)
     ]
     return ZStack {
         Color.black.ignoresSafeArea()
@@ -450,9 +450,9 @@ private struct HeroDot: View {
 #Preview("Live — fresh start") {
     let now = Date()
     let members = [
-        MemberWithShots(userId: "me", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 0),
-        MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 1),
-        MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 0)
+        MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 0),
+        MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 1),
+        MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 0)
     ]
     return ZStack {
         Color.black.ignoresSafeArea()
@@ -485,8 +485,8 @@ private struct HeroDot: View {
             ),
             now: now,
             members: [
-                MemberWithShots(userId: "me", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 0),
-                MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 0)
+                MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 0),
+                MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 0)
             ],
             currentUserId: "me",
             onTap: {}, onLongPress: {}, onInvite: {}
@@ -508,9 +508,9 @@ private struct HeroDot: View {
             ),
             now: now,
             members: [
-                MemberWithShots(userId: "me", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 10),
-                MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 10),
-                MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 10)
+                MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 10),
+                MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 10),
+                MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 10)
             ],
             currentUserId: "me",
             onTap: {}, onLongPress: {}, onInvite: {}
@@ -534,9 +534,9 @@ private struct HeroDot: View {
                     ),
                     now: now,
                     members: [
-                        MemberWithShots(userId: "me", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
-                        MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 3),
-                        MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2)
+                        MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
+                        MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 3),
+                        MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2)
                     ],
                     currentUserId: "me",
                     onTap: {}, onLongPress: {}, onInvite: {}

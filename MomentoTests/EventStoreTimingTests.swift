@@ -95,7 +95,7 @@ final class EventStoreTimingTests: XCTestCase {
             releaseAt: now.addingTimeInterval(7200)
         )]
         api.membersWithShots[eventId] = [
-            MemberWithShots(userId: userId.uuidString, username: "me", displayName: "Me", avatarUrl: nil, shotsTaken: 4)
+            MemberWithShots(userId: userId.uuidString, displayName: "Me", avatarUrl: nil, shotsTaken: 4)
         ]
         await store.loadEvents()
         await yieldUntil {
@@ -125,7 +125,7 @@ final class EventStoreTimingTests: XCTestCase {
             releaseAt: now.addingTimeInterval(7200)
         )]
         api.membersWithShots[eventId] = [
-            MemberWithShots(userId: userId.uuidString, username: "me", displayName: "Me", avatarUrl: nil, shotsTaken: 4)
+            MemberWithShots(userId: userId.uuidString, displayName: "Me", avatarUrl: nil, shotsTaken: 4)
         ]
         // Seed initial photo count so load sets userPhotoCount=4 (matches
         // the member's shotsTaken). Without this, the load path returns 0

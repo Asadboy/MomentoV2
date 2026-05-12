@@ -14,13 +14,19 @@
 import Foundation
 
 /// User profile row from the `profiles` table.
+///
+/// `displayName` is the only identity surfaced to users. `username` is
+/// kept as a nullable dormant column in case @-handles are ever
+/// reintroduced — see migration `20260512150000_drop_username_requirement`.
 struct UserProfile: Codable {
     let id: UUID
-    let username: String
-    var displayName: String?
+    var username: String?
+    var displayName: String
     var avatarUrl: String?
     var deviceToken: String?
+    var profileSetupComplete: Bool
     let createdAt: Date
+    var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -28,7 +34,9 @@ struct UserProfile: Codable {
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
         case deviceToken = "device_token"
+        case profileSetupComplete = "profile_setup_complete"
         case createdAt = "created_at"
+        case updatedAt = "updated_at"
     }
 }
 
@@ -73,13 +81,18 @@ struct EventMember: Codable {
 }
 
 /// Photo row from the `photos` table.
+///
+/// `capturedBy` is the photographer's display name at upload time —
+/// denormalised so the reveal flow doesn't need to join `profiles`.
+/// `username` is a dormant legacy column kept on the schema for old rows.
 struct PhotoModel: Codable, Identifiable {
     let id: UUID
     let eventId: UUID
     let userId: UUID
     let storagePath: String
     let capturedAt: Date
-    var username: String
+    var capturedBy: String
+    var username: String?
     var width: Int?
     var height: Int?
     var uploadStatus: String
@@ -91,6 +104,7 @@ struct PhotoModel: Codable, Identifiable {
         case userId = "user_id"
         case storagePath = "storage_path"
         case capturedAt = "captured_at"
+        case capturedBy = "captured_by"
         case username
         case width
         case height

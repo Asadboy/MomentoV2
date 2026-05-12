@@ -48,7 +48,6 @@ extension SupabaseManager {
                     guard let profile else { return nil }
                     return MemberWithShots(
                         userId: member.userId.uuidString,
-                        username: profile.username,
                         displayName: profile.displayName,
                         avatarUrl: profile.avatarUrl,
                         shotsTaken: count

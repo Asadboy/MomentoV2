@@ -15,6 +15,11 @@ extension SupabaseManager {
 
     /// Create user profile if it doesn't exist. Called from `signInWithApple`
     /// and `signInWithGoogle` for first-time OAuth users.
+    ///
+    /// The DB trigger `handle_new_user` also runs on `auth.users` insert and
+    /// creates a profile row with a random handle + `profile_setup_complete
+    /// = false`. This client-side call is a safety net for the rare case
+    /// where the trigger missed (e.g. an auth.users row created out-of-band).
     func createProfileIfNeeded(user: User) async throws {
         let response: [UserProfile] = try await client
             .from("profiles")
@@ -24,23 +29,24 @@ extension SupabaseManager {
             .value
 
         if response.isEmpty {
-            let email = user.email ?? "user"
-            let username = email.components(separatedBy: "@").first ?? "user"
-            let uniqueUsername = "\(username)\(Int.random(in: 1000...9999))"
-            try await createProfile(userId: user.id, username: uniqueUsername)
+            let randomHandle = "user_" + UUID().uuidString.prefix(8).lowercased()
+            try await createProfile(userId: user.id, displayName: randomHandle)
         }
     }
 
-    /// Insert a new profile row. Called from `signUpWithEmail` and from
-    /// `createProfileIfNeeded` for OAuth users.
-    func createProfile(userId: UUID, username: String) async throws {
-        let profile = UserProfile(
+    /// Insert a new profile row with a placeholder display name. The user
+    /// will be routed through `ProfileSetupView` to set their real one.
+    func createProfile(userId: UUID, displayName: String) async throws {
+        struct NewProfile: Encodable {
+            let id: UUID
+            let display_name: String
+            let profile_setup_complete: Bool
+        }
+
+        let profile = NewProfile(
             id: userId,
-            username: username.lowercased(),
-            displayName: username,
-            avatarUrl: nil,
-            deviceToken: nil,
-            createdAt: Date()
+            display_name: displayName,
+            profile_setup_complete: false
         )
 
         try await client
@@ -48,7 +54,7 @@ extension SupabaseManager {
             .insert(profile)
             .execute()
 
-        debugLog("✅ Profile created for user: \(username)")
+        debugLog("✅ Profile created (placeholder) for: \(userId.uuidString.prefix(8))")
     }
 
     // MARK: - Profile reads
@@ -69,38 +75,91 @@ extension SupabaseManager {
         return profile
     }
 
-    /// Update fields on a profile row.
-    func updateProfile(userId: UUID, updates: [String: AnyJSON]) async throws {
+    /// True when the user still needs to pick a real display name (and
+    /// optionally upload an avatar). Backed by the `profile_setup_complete`
+    /// column rather than pattern-matching the name — closes review H3.
+    func needsProfileSetup(userId: UUID) async throws -> Bool {
+        let profile = try await getUserProfile(userId: userId)
+        return profile.profileSetupComplete == false
+    }
+
+    // MARK: - Profile update
+
+    /// Set the user's display name and mark setup complete. Trims whitespace
+    /// and strips any emoji scalars — display names are a typographic
+    /// surface, not a TikTok handle.
+    func updateDisplayName(userId: UUID, displayName: String) async throws {
+        let cleaned = DisplayName.sanitise(displayName)
+        guard !cleaned.isEmpty else {
+            throw SupabaseError.configurationError("Display name can't be empty")
+        }
+
+        struct Update: Encodable {
+            let display_name: String
+            let profile_setup_complete: Bool
+        }
+
         try await client
             .from("profiles")
-            .update(updates)
+            .update(Update(display_name: cleaned, profile_setup_complete: true))
             .eq("id", value: userId.uuidString)
             .execute()
 
-        debugLog("✅ Profile updated")
+        debugLog("✅ Display name set")
     }
 
-    /// True when the profile still has an auto-generated username
-    /// (something ending in exactly 4 digits — see `createProfileIfNeeded`).
-    func needsUsernameSelection(userId: UUID) async throws -> Bool {
-        let profile = try await getUserProfile(userId: userId)
-        let pattern = ".*\\d{4}$"
-        let regex = try NSRegularExpression(pattern: pattern)
-        let range = NSRange(location: 0, length: profile.username.utf16.count)
-        return regex.firstMatch(in: profile.username, range: range) != nil
-    }
+    // MARK: - Avatar upload
 
-    /// True when the given username is not yet taken.
-    func checkUsernameAvailability(_ username: String) async throws -> Bool {
-        let normalized = username.lowercased()
+    /// Upload a JPEG avatar for the current user. Path is fixed at
+    /// `<userId>/avatar.jpg` so replacements overwrite in place; the
+    /// returned URL embeds the profile's `updated_at` as a cache-buster.
+    @discardableResult
+    func uploadAvatar(jpegData: Data) async throws -> String {
+        guard let userId = currentUser?.id else {
+            throw SupabaseError.userNotAuthenticated
+        }
 
-        let response = try await client
+        let path = "\(userId.uuidString)/avatar.jpg"
+
+        _ = try await client.storage
+            .from("avatars")
+            .upload(
+                path,
+                data: jpegData,
+                options: FileOptions(contentType: "image/jpeg", upsert: true)
+            )
+
+        let publicURL = try client.storage.from("avatars").getPublicURL(path: path).absoluteString
+
+        // Touch updated_at so any cached URL gets invalidated. The
+        // `update_profiles_updated_at` trigger handles this server-side
+        // on any UPDATE, so writing avatar_url is enough.
+        struct AvatarUpdate: Encodable { let avatar_url: String }
+        try await client
             .from("profiles")
-            .select("username", head: true, count: .exact)
-            .eq("username", value: normalized)
+            .update(AvatarUpdate(avatar_url: publicURL))
+            .eq("id", value: userId.uuidString)
             .execute()
 
-        return response.count == 0
+        debugLog("✅ Avatar uploaded")
+        return publicURL
+    }
+
+    /// Remove the current user's avatar.
+    func removeAvatar() async throws {
+        guard let userId = currentUser?.id else {
+            throw SupabaseError.userNotAuthenticated
+        }
+
+        let path = "\(userId.uuidString)/avatar.jpg"
+        _ = try? await client.storage.from("avatars").remove(paths: [path])
+
+        struct AvatarClear: Encodable { let avatar_url: String? }
+        try await client
+            .from("profiles")
+            .update(AvatarClear(avatar_url: nil))
+            .eq("id", value: userId.uuidString)
+            .execute()
     }
 
     // MARK: - Account deletion
@@ -117,16 +176,11 @@ extension SupabaseManager {
     ///   3. Call `delete_my_account()` RPC which atomically removes all DB
     ///      rows in dependency order and finally deletes auth.users.
     ///   4. Clear local session state (mirrors signOut).
-    ///
-    /// Throws if the storage cleanup or RPC fails. Partial Storage failures
-    /// orphan objects but the RPC still runs — the user's account is gone
-    /// either way, which is the Apple compliance bar.
     func deleteAccount() async throws {
         guard let userId = currentUser?.id else {
             throw SupabaseError.userNotAuthenticated
         }
 
-        // 1a. Photos the user uploaded directly.
         struct PhotoPath: Decodable {
             let storagePath: String
             enum CodingKeys: String, CodingKey { case storagePath = "storage_path" }
@@ -138,9 +192,6 @@ extension SupabaseManager {
             .execute()
             .value) ?? []
 
-        // 1b. Photos in events the user created — these get cascade-deleted
-        // from the photos table when the events row is removed, but the
-        // Storage objects themselves don't follow that cascade.
         let createdEvents: [EventModel] = (try? await client
             .from("events")
             .select()
@@ -159,10 +210,6 @@ extension SupabaseManager {
             allPaths.append(contentsOf: eventPhotos.map { $0.storagePath })
         }
 
-        // 2. Batch-remove Storage objects. Failures here are logged but
-        // don't block the account deletion — Apple compliance is about the
-        // user's data no longer being accessible, and the RPC handles that
-        // regardless.
         if !allPaths.isEmpty {
             do {
                 _ = try await client.storage
@@ -174,11 +221,13 @@ extension SupabaseManager {
             }
         }
 
-        // 3. Atomic DB cleanup via SECURITY DEFINER RPC.
+        // Avatar — best-effort, the RPC also cascades via the profile delete.
+        _ = try? await client.storage
+            .from("avatars")
+            .remove(paths: ["\(userId.uuidString)/avatar.jpg"])
+
         try await client.rpc("delete_my_account").execute()
 
-        // 4. Mirror signOut's local cleanup so any cached state can't leak
-        // into a subsequent sign-in.
         await MainActor.run {
             self.currentUser = nil
             self.isAuthenticated = false
@@ -188,26 +237,6 @@ extension SupabaseManager {
         }
 
         debugLog("✅ Account deleted")
-    }
-
-    // MARK: - Username update
-
-    /// Rename a user's username. Throws if the new name is already taken.
-    func updateUsername(userId: UUID, newUsername: String) async throws {
-        let normalized = newUsername.lowercased()
-
-        let isAvailable = try await checkUsernameAvailability(normalized)
-        guard isAvailable else {
-            throw SupabaseError.configurationError("Username is already taken")
-        }
-
-        try await client
-            .from("profiles")
-            .update(["username": AnyJSON.string(normalized)])
-            .eq("id", value: userId.uuidString)
-            .execute()
-
-        debugLog("✅ Username updated to: \(normalized)")
     }
 
     // MARK: - Profile Stats (used by the profile screen)
@@ -262,7 +291,6 @@ extension SupabaseManager {
         let photosTaken = photosTakenResult.count ?? 0
         let photosLiked = photosLikedResult.count ?? 0
 
-        // User number needs the profile created_at first.
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let profileData = try decoder.decode([String: String].self, from: profileResult.data)
@@ -282,5 +310,29 @@ extension SupabaseManager {
             photosLiked: photosLiked,
             userNumber: userNumber
         )
+    }
+}
+
+// MARK: - DisplayName sanitisation
+
+/// Display-name validation rules. Kept in one place so onboarding,
+/// profile edits, and any future paths agree.
+enum DisplayName {
+    static let minLength = 1
+    static let maxLength = 30
+
+    /// Trim whitespace and strip emoji. Returns the cleaned string.
+    static func sanitise(_ input: String) -> String {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stripped = trimmed.unicodeScalars
+            .filter { !$0.properties.isEmojiPresentation && !($0.properties.isEmoji && $0.value > 0x2000) }
+            .map(Character.init)
+        return String(stripped).prefix(maxLength).description
+    }
+
+    /// True if the sanitised form is a valid display name.
+    static func isValid(_ input: String) -> Bool {
+        let cleaned = sanitise(input)
+        return cleaned.count >= minLength
     }
 }

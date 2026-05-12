@@ -11,10 +11,10 @@ import SwiftUI
 #if DEBUG
 
 private let previewMembers = [
-    MemberWithShots(userId: "1", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
-    MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 4),
-    MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
-    MemberWithShots(userId: "4", username: "mike", displayName: "Mike", avatarUrl: nil, shotsTaken: 0),
+    MemberWithShots(userId: "1", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
+    MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 4),
+    MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
+    MemberWithShots(userId: "4", displayName: "Mike", avatarUrl: nil, shotsTaken: 0),
 ]
 
 private struct EventsScreenPreviewContent: View {

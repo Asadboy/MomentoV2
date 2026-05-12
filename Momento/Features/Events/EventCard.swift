@@ -287,7 +287,7 @@ struct EventCard: View {
 
     private func avatar(for member: MemberWithShots) -> some View {
         Circle()
-            .fill(avatarColor(for: member.username))
+            .fill(avatarColor(for: member.userId))
             .frame(width: 32, height: 32)
             .overlay(
                 Text(String(member.name.prefix(1)).uppercased())
@@ -296,11 +296,11 @@ struct EventCard: View {
             )
     }
 
-    private func avatarColor(for username: String) -> Color {
+    private func avatarColor(for seed: String) -> Color {
         let colors: [Color] = [
             .blue, .purple, .pink, .orange, .green, .cyan, .indigo, .mint
         ]
-        let hash = username.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        let hash = seed.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         return colors[hash % colors.count].opacity(0.6)
     }
 
@@ -423,9 +423,9 @@ private struct ShotDot: View {
 #Preview {
     let now = Date()
     let members = [
-        MemberWithShots(userId: "1", username: "asad", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
-        MemberWithShots(userId: "2", username: "joe", displayName: "Joe", avatarUrl: nil, shotsTaken: 4),
-        MemberWithShots(userId: "3", username: "sarah", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
+        MemberWithShots(userId: "1", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
+        MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 4),
+        MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
     ]
 
     return ScrollView {

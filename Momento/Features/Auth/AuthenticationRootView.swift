@@ -11,13 +11,13 @@ struct AuthenticationRootView: View {
     @StateObject private var supabaseManager = SupabaseManager.shared
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var appState: AppState = .checkingAuth
-    @State private var isCheckingUsername = false
+    @State private var isCheckingProfile = false
     @State private var initialAction: OnboardingAction?
 
     enum AppState {
         case checkingAuth
         case needsSignIn
-        case needsUsername
+        case needsProfileSetup
         case needsOnboarding
         case needsAction
         case authenticated
@@ -43,8 +43,20 @@ struct AuthenticationRootView: View {
                 case .needsSignIn:
                     SignInView()
 
-                case .needsUsername:
-                    UsernameSelectionView()
+                case .needsProfileSetup:
+                    ProfileSetupView {
+                        // ProfileSetupView posts ProfileSetupCompleted on success;
+                        // this closure handles the local screen transition.
+                        if hasSeenOnboarding {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                appState = .authenticated
+                            }
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                appState = .needsOnboarding
+                            }
+                        }
+                    }
 
                 case .needsOnboarding:
                     OnboardingView {
@@ -82,13 +94,6 @@ struct AuthenticationRootView: View {
             guard appState == .checkingAuth || appState == .needsSignIn else { return }
             Task { await checkAuthState() }
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UsernameUpdated"))) { _ in
-            // Re-check auth state to transition from needsUsername to authenticated
-            if let userId = supabaseManager.currentUser?.id {
-                isCheckingUsername = false // Reset flag to allow re-check
-                checkUsernameStatus(userId: userId)
-            }
-        }
     }
 
     // MARK: - Auth State Checking
@@ -100,37 +105,42 @@ struct AuthenticationRootView: View {
             if !supabaseManager.isAuthenticated {
                 appState = .needsSignIn
             } else if let userId = supabaseManager.currentUser?.id {
-                checkUsernameStatus(userId: userId)
+                checkProfileStatus(userId: userId)
             }
         }
     }
 
-    private func checkUsernameStatus(userId: UUID) {
+    private func checkProfileStatus(userId: UUID) {
         // Prevent multiple simultaneous checks
-        guard !isCheckingUsername else { return }
+        guard !isCheckingProfile else { return }
 
         Task {
             await MainActor.run {
-                isCheckingUsername = true
+                isCheckingProfile = true
             }
 
             do {
-                let needsUsername = try await supabaseManager.needsUsernameSelection(userId: userId)
+                let needsSetup = try await supabaseManager.needsProfileSetup(userId: userId)
+                identifyUserForAnalytics(userId: userId)
                 await MainActor.run {
-                    if needsUsername {
-                        appState = .needsUsername
+                    if needsSetup {
+                        appState = .needsProfileSetup
                     } else if hasSeenOnboarding {
                         appState = .authenticated
                     } else {
                         appState = .needsOnboarding
                     }
-                    isCheckingUsername = false
+                    isCheckingProfile = false
                 }
             } catch {
-                debugLog("❌ Failed to check username status: \(error)")
+                debugLog("❌ Failed to check profile status: \(error)")
+                // If the profile row is genuinely missing (rare; the
+                // handle_new_user trigger should have created it), route to
+                // setup so the user can establish identity rather than land
+                // in an unrecoverable onboarding loop.
                 await MainActor.run {
-                    appState = .needsOnboarding
-                    isCheckingUsername = false
+                    appState = .needsProfileSetup
+                    isCheckingProfile = false
                 }
             }
         }
@@ -142,7 +152,7 @@ struct AuthenticationRootView: View {
                 let profile = try await supabaseManager.getUserProfile(userId: userId)
                 AnalyticsManager.shared.identify(
                     userId: userId.uuidString,
-                    username: profile.username
+                    username: profile.displayName
                 )
             } catch {
                 debugLog("❌ Failed to identify user for analytics: \(error)")
@@ -154,4 +164,3 @@ struct AuthenticationRootView: View {
 #Preview {
     AuthenticationRootView()
 }
-

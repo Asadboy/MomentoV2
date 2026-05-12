@@ -21,27 +21,27 @@ extension SupabaseManager {
     }
 
     /// Upload a photo: storage object first, then the photos row. The row
-    /// stores the photographer's username denormalized for fast reveal display.
+    /// denormalises the photographer's display name into `captured_by` so
+    /// the reveal flow doesn't have to join `profiles`.
     func uploadPhoto(image: Data, eventId: UUID, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
             debugLog("❌ [uploadPhoto] User not authenticated")
             throw SupabaseError.userNotAuthenticated
         }
 
-        let username: String
+        let capturedBy: String
         do {
             let profile = try await getUserProfile(userId: userId)
-            // Username (e.g., "Asad") not displayName (e.g., "Asad Amjid").
-            username = profile.username
+            capturedBy = profile.displayName
         } catch {
-            username = "Unknown"
-            debugLog("⚠️ Could not fetch username, using 'Unknown'")
+            capturedBy = "Unknown"
+            debugLog("⚠️ Could not fetch display name, using 'Unknown'")
         }
 
         let photoId = UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
 
-        debugLog("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(username)...")
+        debugLog("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(capturedBy)...")
 
         _ = try await client.storage
             .from(self.storageBucket)
@@ -60,7 +60,8 @@ extension SupabaseManager {
             userId: userId,
             storagePath: fileName,
             capturedAt: Date(),
-            username: username,
+            capturedBy: capturedBy,
+            username: nil,
             width: width,
             height: height,
             uploadStatus: "uploaded",
@@ -125,7 +126,7 @@ extension SupabaseManager {
                         id: photo.id.uuidString,
                         url: signedURL,
                         capturedAt: photo.capturedAt,
-                        photographerName: photo.username ?? "Unknown"
+                        photographerName: photo.photographerName
                     )
                     return (index, photoData)
                 }
@@ -179,7 +180,7 @@ extension SupabaseManager {
                         id: photo.id.uuidString,
                         url: signedURL,
                         capturedAt: photo.capturedAt,
-                        photographerName: photo.username ?? "Unknown"
+                        photographerName: photo.photographerName
                     )
                     return (index, photoData)
                 }
@@ -224,14 +225,21 @@ extension SupabaseManager {
 // MARK: - Helpers
 
 /// Lightweight photo row used when joining profile info for reveal / gallery.
-/// Kept file-private to the photos extension since no other domain reads it.
+/// Reads `captured_by` (the new column) with a fallback to the legacy
+/// `username` column for any rows uploaded before migration
+/// `20260512150000_drop_username_requirement`.
 struct PhotoWithProfile: Codable {
     let id: UUID
     let eventId: UUID
     let userId: UUID
     let storagePath: String
     let capturedAt: Date
+    let capturedBy: String?
     let username: String?
+
+    var photographerName: String {
+        capturedBy ?? username ?? "Unknown"
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -239,6 +247,7 @@ struct PhotoWithProfile: Codable {
         case userId = "user_id"
         case storagePath = "storage_path"
         case capturedAt = "captured_at"
+        case capturedBy = "captured_by"
         case username
     }
 }
