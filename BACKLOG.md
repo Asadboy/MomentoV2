@@ -6,14 +6,15 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 ## Blocking App Store submission
 
+- [ ] **Onboarding redesign + username decision** — leaning towards killing usernames as user-visible entirely (UsernameSelectionView goes away, ProfileView shows display name not "@asad", avatar hash switches from `username` to `userId.uuidString`). Combined "Choose your display name + optional photo" onboarding screen replaces the current two-step flow. Display name required, photo optional with re-prompt later. See chat history for the full pros/cons walkthrough. Estimated ~3 hours once the decision is locked.
 - [x] **In-app account deletion (Apple Guideline 5.1.1(v))** — `Delete Account` button in `ProfileView` below Sign Out, with a confirmation dialog. Implementation: client batch-deletes the user's Supabase Storage objects (their own photos + photos in events they created), then calls the `delete_my_account()` SECURITY DEFINER RPC which atomically removes `photo_likes`, the user's own `photos`, `events` they created (cascades to event_members + photos in those events), remaining `event_members`, `profiles`, and finally `auth.users`. Migration: `20260511180000_delete_my_account_rpc.sql`.
 - [ ] **Create Sentry project + paste DSN into `Secrets.xcconfig`** — Sentry SDK is wired in via `CrashReporter.start()`. Currently no-ops because `SENTRY_DSN` is the placeholder `YOUR_SENTRY_DSN`. Steps: (1) sentry.io → New Project → Apple iOS → name it `10shots`, (2) copy the DSN from Settings → Client Keys, (3) replace `YOUR_SENTRY_DSN` in `Secrets.xcconfig`. Free tier is fine for launch.
 - [ ] **Real privacy policy URL** — replace `https://yourmomento.app/privacy` placeholder in `Momento/Features/Auth/SignInView.swift`
 - [ ] **Real terms of service URL** — replace `https://yourmomento.app/terms` placeholder in `SignInView.swift`
 - [ ] **App icon** — final design
 - [ ] **App Store screenshots** — capture set covering create, live event with shot counter, reveal, gallery
-- [ ] **App Store listing copy** — name, subtitle, keywords, description, category
-- [ ] **App review notes** — explain camera permission, photo storage, why 10 shots
+- [ ] **App Store listing copy** — name, subtitle, keywords, description, category. **Draft ready at `Docs/launch/APP_STORE_COPY.md` — review + edit before pasting into App Store Connect.**
+- [ ] **App review notes** — explain camera permission, photo storage, why 10 shots. **Draft ready at `Docs/launch/APP_REVIEW_NOTES.md`.**
 - [ ] **Submit to App Store Connect**
 
 ## Pending external dependency
@@ -57,6 +58,22 @@ The user-trust gap the audit flagged — failed uploads sit silently in the queu
 - [x] **Auto-retry on network restore.** `NWPathMonitor` watches connectivity; on each transition from unavailable → available, the queue auto-processes. Combined with the cooldown, even a flaky tunnel commute recovers gracefully.
 - [ ] **Pre-upload photo-limit check on failure.** When `getPhotoCount` throws during pre-check (`OfflineSyncManager.swift:188-190`), upload currently proceeds. Defensible — refusing upload because we couldn't verify the count would block legit uploads on bad signal — but worth revisiting if server-side RLS enforcement ever drifts.
 - [ ] **Stale queue entries dropped silently at cold launch.** `loadQueue` drops entries whose local file is missing with only a debug log. Audit considered this acceptable since the original is also in `PhotoStorageManager`'s separate cache, but worth a "1 shot couldn't be recovered" toast if it ever shows up in real-user reports.
+
+## Test coverage (engineering-side, complete)
+
+Recorded for context — the test suite covers the launch-critical paths:
+
+- [x] **`EventStoreTests`** (20 cases) — load/refresh/filter/mutation surface
+- [x] **`EventStoreTimingTests`** (6 cases) — 2s join glow + 3s post-upload reconciliation via scheduler injection (PR #25)
+- [x] **`EventTests`** (11 cases) — state machine + isRevealReady boundaries
+- [x] **`JoinLinkParserTests`** (16 cases) — Universal Link / momento:// scheme / raw code parsing
+- [x] **`HomeRouterTests`** (12 cases) — tap routing + intent helpers + dismissals
+- [x] **CI on every PR** via `.github/workflows/tests.yml` against macos-15
+
+Not yet covered (deliberately deferred — no launch-blocker value):
+- Snapshot tests on EventHeroView (would need `swift-snapshot-testing` SPM dep; brittle on iOS version bumps)
+- View-layer integration tests
+- OfflineSyncManager unit tests (would need FileManager + storage protocols carved out — bigger refactor)
 
 ---
 
