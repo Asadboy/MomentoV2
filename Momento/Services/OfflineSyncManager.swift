@@ -48,6 +48,11 @@ class OfflineSyncManager: ObservableObject {
     @Published var queue: [QueuedPhoto] = []
     @Published var isUploading = false
     @Published var activeUploads = 0
+    /// Number of queue entries dropped at the last `loadQueue` because their
+    /// local file was missing. Surfaced once at cold launch via a dismissible
+    /// banner so users know a shot was lost rather than just silently gone.
+    /// Reset to 0 when acknowledged.
+    @Published var staleEntriesAtLaunch: Int = 0
     
     private let supabaseManager = SupabaseManager.shared
     private let filmFilter = BethanReynoldsFilter()  // Film filter
@@ -412,10 +417,16 @@ class OfflineSyncManager: ObservableObject {
                 return exists
             }
             
-            if validQueue.count != loadedQueue.count {
-                debugLog("🧹 Cleaned up \(loadedQueue.count - validQueue.count) stale queue entries")
+            let dropped = loadedQueue.count - validQueue.count
+            if dropped > 0 {
+                debugLog("🧹 Cleaned up \(dropped) stale queue entries")
+                staleEntriesAtLaunch = dropped
+                AnalyticsManager.shared.trackError(
+                    kind: "stale_queue_entries_dropped",
+                    context: ["count": dropped]
+                )
             }
-            
+
             queue = validQueue
             saveQueue() // Save the cleaned queue
         } catch {
@@ -491,7 +502,14 @@ class OfflineSyncManager: ObservableObject {
     var completedCount: Int {
         queue.filter { $0.status == .completed }.count
     }
-    
+
+    /// Dismiss the stale-entries banner. Called from the banner's close
+    /// button — the count is informational and never reappears for the
+    /// same launch.
+    func acknowledgeStaleEntries() {
+        staleEntriesAtLaunch = 0
+    }
+
     /// Clear the entire upload queue (for debugging/testing)
     func clearQueue() {
         debugLog("🗑️ Clearing entire upload queue (\(queue.count) items)")

@@ -42,6 +42,9 @@ struct ContentView: View {
                     UploadFailureBanner(sync: sync)
                         .animation(.easeInOut(duration: 0.25), value: sync.failedCount)
 
+                    StaleQueueBanner(sync: sync)
+                        .animation(.easeInOut(duration: 0.25), value: sync.staleEntriesAtLaunch)
+
                     if store.isLoading {
                         Spacer()
                         ProgressView("Loading your events...")
