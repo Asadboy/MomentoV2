@@ -26,9 +26,7 @@ struct SignInView: View {
 
                 // Logo + tagline
                 VStack(spacing: 12) {
-                    Text("10shots")
-                        .font(.custom("RalewayDots-Regular", size: 72))
-                        .foregroundColor(.white)
+                    BrandWordmark(size: 56)
 
                     Text("Your shared disposable camera")
                         .font(.system(size: 15, weight: .regular))

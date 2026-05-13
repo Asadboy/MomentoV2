@@ -31,9 +31,7 @@ struct AuthenticationRootView: View {
                         Color.black.ignoresSafeArea()
 
                         VStack(spacing: 24) {
-                            Text("10shots")
-                                .font(.custom("RalewayDots-Regular", size: 48))
-                                .foregroundColor(.white)
+                            BrandWordmark(size: 40)
 
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))

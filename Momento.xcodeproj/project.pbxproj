@@ -15,6 +15,7 @@
 		B1SNC0102F78000000000003 /* SentryConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1SNC0102F78000000000002 /* SentryConfig.swift */; };
 		B1SNR0102F78000000000005 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1SNR0102F78000000000004 /* CrashReporter.swift */; };
 		C3BB00012F300000000A0001 /* InviteContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BB00022F300000000A0002 /* InviteContentView.swift */; };
+		B1BWM0102F79000000000001 /* BrandWordmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1BWM0102F79000000000000 /* BrandWordmark.swift */; };
 		C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */; };
 		C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30859072F2E4D7400E11B8C /* InviteCardView.swift */; };
 		C30B8D012F51000000000001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30B8D002F51000000000001 /* OnboardingView.swift */; };
@@ -117,6 +118,7 @@
 		B1SNC0102F78000000000002 /* SentryConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryConfig.swift; sourceTree = "<group>"; };
 		B1SNR0102F78000000000004 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		C3BB00022F300000000A0002 /* InviteContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteContentView.swift; sourceTree = "<group>"; };
+		B1BWM0102F79000000000000 /* BrandWordmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandWordmark.swift; sourceTree = "<group>"; };
 		C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardRenderer.swift; sourceTree = "<group>"; };
 		C30859072F2E4D7400E11B8C /* InviteCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCardView.swift; sourceTree = "<group>"; };
 		C30B8D002F51000000000001 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -346,6 +348,7 @@
 				C3THEME002F3C000000000001 /* AppTheme.swift */,
 				C3C5709F2F26579F00A8024C /* EventPreviewModal.swift */,
 				C3BB00022F300000000A0002 /* InviteContentView.swift */,
+				B1BWM0102F79000000000000 /* BrandWordmark.swift */,
 				C30859022F2E4D7400E11B8C /* InviteCardRenderer.swift */,
 				C30859072F2E4D7400E11B8C /* InviteCardView.swift */,
 				C3C5709E2F26579F00A8024C /* VerificationCodeInput.swift */,
@@ -636,6 +639,7 @@
 				C3CMPR002F6C000000000002 /* PastEventCard.swift in Sources */,
 				C3EVPR002F6B000000000002 /* EventsScreenPreview.swift in Sources */,
 				C3BB00012F300000000A0001 /* InviteContentView.swift in Sources */,
+				B1BWM0102F79000000000001 /* BrandWordmark.swift in Sources */,
 				C30859082F2E4D7400E11B8C /* InviteCardRenderer.swift in Sources */,
 				C308590D2F2E4D7400E11B8C /* InviteCardView.swift in Sources */,
 				C34889122EB7C6F5003094CB /* ContentView.swift in Sources */,

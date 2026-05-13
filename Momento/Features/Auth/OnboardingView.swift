@@ -117,9 +117,7 @@ struct OnboardingScreen1: View {
                             .animation(.easeOut(duration: 0.4), value: dotsFaded)
                     }
 
-                    Text("10shots")
-                        .font(.custom("RalewayDots-Regular", size: 56))
-                        .foregroundColor(.white)
+                    BrandWordmark(size: 48)
                         .opacity(logoVisible ? 1 : 0)
                         .animation(.easeIn(duration: 0.5), value: logoVisible)
                 }
