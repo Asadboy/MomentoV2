@@ -239,14 +239,7 @@ struct EventHeroView: View {
 
     private func memberRow(_ member: MemberWithShots) -> some View {
         HStack(spacing: 16) {
-            Circle()
-                .fill(avatarColor(for: member.userId))
-                .frame(width: avatarSize, height: avatarSize)
-                .overlay(
-                    Text(String(member.name.prefix(1)).uppercased())
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                )
+            memberAvatar(member)
                 .accessibilityHidden(true)  // covered by the row-level label
 
             Spacer(minLength: 0)
@@ -267,6 +260,35 @@ struct EventHeroView: View {
         .padding(.vertical, 14)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(member.name), \(member.shotsTaken) of \(totalShots) shots taken")
+    }
+
+    @ViewBuilder
+    private func memberAvatar(_ member: MemberWithShots) -> some View {
+        if let raw = member.avatarUrl, !raw.isEmpty, let url = URL(string: raw) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                default:
+                    avatarInitial(for: member)
+                }
+            }
+            .frame(width: avatarSize, height: avatarSize)
+            .clipShape(Circle())
+        } else {
+            avatarInitial(for: member)
+        }
+    }
+
+    private func avatarInitial(for member: MemberWithShots) -> some View {
+        Circle()
+            .fill(avatarColor(for: member.userId))
+            .frame(width: avatarSize, height: avatarSize)
+            .overlay(
+                Text(String(member.name.prefix(1)).uppercased())
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+            )
     }
 
     private var inviteRow: some View {
@@ -401,10 +423,13 @@ private struct HeroDot: View {
 #Preview("Live — mid game · 4 friends") {
     let now = Date()
     let members = [
-        MemberWithShots(userId: "me", displayName: "Asad", avatarUrl: nil, shotsTaken: 7),
-        MemberWithShots(userId: "2", displayName: "Joe", avatarUrl: nil, shotsTaken: 3),
+        MemberWithShots(userId: "me", displayName: "Asad",
+                        avatarUrl: "https://i.pravatar.cc/200?img=12", shotsTaken: 7),
+        MemberWithShots(userId: "2", displayName: "Joe",
+                        avatarUrl: "https://i.pravatar.cc/200?img=33", shotsTaken: 3),
         MemberWithShots(userId: "3", displayName: "Sarah", avatarUrl: nil, shotsTaken: 2),
-        MemberWithShots(userId: "4", displayName: "Marc", avatarUrl: nil, shotsTaken: 9)
+        MemberWithShots(userId: "4", displayName: "Marc",
+                        avatarUrl: "https://i.pravatar.cc/200?img=68", shotsTaken: 9)
     ]
     return ZStack {
         Color.black.ignoresSafeArea()
