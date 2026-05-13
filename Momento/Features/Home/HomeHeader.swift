@@ -13,9 +13,7 @@ struct HomeHeader: View {
 
     var body: some View {
         HStack {
-            Text("10shots")
-                .font(.custom("RalewayDots-Regular", size: 32))
-                .foregroundColor(.white)
+            BrandWordmark(size: 22, compact: true)
 
             Spacer()
 

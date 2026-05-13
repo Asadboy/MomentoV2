@@ -39,9 +39,7 @@ struct OnboardingActionView: View {
                 Spacer()
 
                 VStack(spacing: 8) {
-                    Text("10shots")
-                        .font(.custom("RalewayDots-Regular", size: 36))
-                        .foregroundColor(.white)
+                    BrandWordmark(size: 32)
                         .opacity(appeared ? 1 : 0)
                         .animation(.easeIn(duration: 0.5).delay(0.2), value: appeared)
 
