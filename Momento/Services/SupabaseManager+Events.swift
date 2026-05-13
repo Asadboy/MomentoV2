@@ -99,10 +99,20 @@ extension SupabaseManager {
             joinedAt: Date()
         )
 
-        try await client
-            .from("event_members")
-            .insert(member)
-            .execute()
+        do {
+            try await client
+                .from("event_members")
+                .insert(member)
+                .execute()
+        } catch {
+            // The pre-check above closes the common case, but the trigger
+            // is the only thing that closes the TOCTOU window between two
+            // simultaneous joins. Translate its SQLSTATE so the surfaced
+            // message stays "This event is full" rather than a raw Postgres
+            // error.
+            if isMemberLimitError(error) { throw SupabaseError.eventFull }
+            throw error
+        }
 
         AnalyticsManager.stampJoin(eventId: event.id.uuidString)
         AnalyticsManager.shared.track(.eventJoined, properties: [

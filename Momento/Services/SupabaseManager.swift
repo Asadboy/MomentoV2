@@ -39,12 +39,22 @@ enum SupabaseError: LocalizedError {
 /// Lives at module scope so OfflineSyncManager / CameraView can branch
 /// on it without each one importing PostgrestError directly.
 func isPhotoLimitError(_ error: Error) -> Bool {
-    // Supabase wraps Postgres errors as PostgrestError with the SQLSTATE
-    // in `code`. We rely on the code (string match) rather than the
-    // message because the message can be localised by Postgres.
+    hasSQLState(error, "P0010")
+}
+
+/// True if the error came from the server-side member-limit trigger
+/// (`enforce_member_limit_per_event` raises SQLSTATE 'P0011').
+func isMemberLimitError(_ error: Error) -> Bool {
+    hasSQLState(error, "P0011")
+}
+
+/// Supabase wraps Postgres errors as PostgrestError with the SQLSTATE
+/// in `code`. We rely on the code (string match) rather than the
+/// message because the message can be localised by Postgres.
+private func hasSQLState(_ error: Error, _ state: String) -> Bool {
     let mirror = Mirror(reflecting: error)
     for child in mirror.children where child.label == "code" {
-        if let code = child.value as? String, code == "P0010" { return true }
+        if let code = child.value as? String, code == state { return true }
     }
     return false
 }
