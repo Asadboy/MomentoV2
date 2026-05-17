@@ -12,7 +12,8 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 - [x] **Real privacy policy URL** — `SignInView.swift` now links `https://10shots.app/privacy`. Live page verified (substantive ~1.5k-word policy: Apple/Google sign-in, PostHog, Sentry, account deletion, EU infra).
 - [x] **Real terms of service URL** — `SignInView.swift` now links `https://10shots.app/terms`. Live page verified (~950 words). Section 11 governing law set to **England and Wales** (live, verified 2026-05-17). No outstanding site-side edits.
 - [x] **App icon** — aperture mark (10 white dots in a ring on solid black), 1024×1024 RGB, no alpha. Shipped in PR #50; eyeballed on device.
-- [ ] **App Store screenshots** — capture set covering create, live event with shot counter, reveal, gallery
+- [ ] **App Store screenshots** — capture set covering create, live event with shot counter, reveal, gallery.
+  **First-pass set produced** (6 slides, 1320×2868, RGB/no-alpha, Apple-valid) in `Docs/launch/screenshots/` via the `app-store-screenshots` skill + a gitignored Next.js generator (`screenshots-generator/`, regen with `npm run dev` then Export All; copy/narrative in `Docs/launch/SCREENSHOT_COPY.md`). Slide 1 uses a **real** sign-in capture; slides 2–5 use faithful but **representative** recreations of the lobby/camera/reveal/join UI. **Before submission: replace the 4 representative slides with real device captures** of a seeded live event (simulator can't auth/seed; camera needs a physical device).
 - [ ] **App Store listing copy** — name, subtitle, keywords, description, category. **Draft ready at `Docs/launch/APP_STORE_COPY.md` — review + edit before pasting into App Store Connect.**
 - [ ] **App review notes** — explain camera permission, photo storage, why 10 shots. **Draft ready at `Docs/launch/APP_REVIEW_NOTES.md`.**
 - [ ] **Submit to App Store Connect**

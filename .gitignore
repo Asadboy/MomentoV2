@@ -62,3 +62,7 @@ fastlane/README.md
 
 # Git worktrees
 .worktrees/
+screenshots-generator/
+.agents/
+screenshots-generator-assets/
+skills-lock.json
