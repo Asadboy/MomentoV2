@@ -47,6 +47,14 @@ struct EventHeroView: View {
         eventState == .revealed && isRevealReady && !userHasCompletedReveal
     }
 
+    /// The avatar + 10-dot rows are a *live shot-progress* affordance. On a
+    /// revealed ("tap to reveal") card the dots convey nothing, and rendering
+    /// them only after async member hydration makes the card jump from compact
+    /// to tall. Keep revealed cards compact and stable from first paint.
+    private var showsMemberRoster: Bool {
+        eventState != .revealed
+    }
+
     /// Current user pinned at the top; everyone else keeps their original
     /// order. No other visual distinction — just position.
     private var orderedMembers: [MemberWithShots] {
@@ -101,6 +109,12 @@ struct EventHeroView: View {
         .padding(.top, 24)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity)
+        // The roster lands asynchronously (Supabase member fetch). Without
+        // this, the card snaps from compact to tall the instant `members`
+        // flips []→populated. Scoping the animation to `members.count` eases
+        // the height change (and slides neighbours) instead of jumping, and
+        // does NOT fire for the per-second `now` tick.
+        .animation(.easeInOut(duration: 0.35), value: members.count)
         .background(
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(cardFill)
@@ -220,16 +234,19 @@ struct EventHeroView: View {
 
     private var roster: some View {
         VStack(spacing: 0) {
-            ForEach(orderedMembers) { member in
-                memberRow(member)
-                if member.id != orderedMembers.last?.id {
-                    Divider().background(Color.white.opacity(0.05))
+            if showsMemberRoster {
+                ForEach(orderedMembers) { member in
+                    memberRow(member)
+                    if member.id != orderedMembers.last?.id {
+                        Divider().background(Color.white.opacity(0.05))
+                    }
                 }
+                .transition(.opacity)
             }
 
             // Hide invite once revealed (matches existing EventCard behavior).
             if eventState != .revealed || !userHasCompletedReveal {
-                if !orderedMembers.isEmpty {
+                if showsMemberRoster && !orderedMembers.isEmpty {
                     Divider().background(Color.white.opacity(0.05))
                 }
                 inviteRow
