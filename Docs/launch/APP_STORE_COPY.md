@@ -1,6 +1,9 @@
-# App Store Connect — Listing Copy (draft)
+# App Store Connect — Listing Copy (paste-ready)
 
-> Drafts of every text field in the App Store Connect listing. These are starting points written from VISION.md framing — please edit liberally before submission. Character limits are noted next to each field. Anything in `[brackets]` is a placeholder to fill in.
+> Final copy for every App Store Connect text field. Paste the fenced blocks
+> as-is. The only judgement calls left are the App Store Connect
+> questionnaires (Categorisation section) — those are answered in ASC, not
+> here.
 
 ---
 
@@ -15,24 +18,11 @@
 
 ## Subtitle (30 chars max)
 
-Pick one:
-
 ```
 10 photos each. Reveal later.
 ```
-*30 chars — leads with the mechanic.*
-
-```
-Disposable camera, together.
-```
-*28 chars — leads with the feel.*
-
-```
-A disposable camera game.
-```
-*25 chars — leads with the genre.*
-
-**Recommended:** the first one. It explains the product in five words.
+*29 chars — leads with the mechanic. (Alternates if you want to swap later:
+"Disposable camera, together." / "A disposable camera game.")*
 
 ---
 
@@ -41,9 +31,7 @@ A disposable camera game.
 ```
 Everyone gets 10 shots. No previews, no retakes. Photos unlock tomorrow. Made for parties, trips, and weekends with the people who matter.
 ```
-*138 chars.*
-
-Use this field to swap in seasonal angles later (e.g. "Festival season — 10 shots a day, revealed Monday morning").
+*138 chars. Swap seasonal angles here later without re-review.*
 
 ---
 
@@ -86,7 +74,7 @@ Every shot you take counts because you only get ten. The photos that come back t
 Try it on the next night that matters.
 ```
 
-*~1,500 chars including section breaks — well within the limit, with room to grow.*
+*~1,500 chars including section breaks — well within the limit.*
 
 ---
 
@@ -95,18 +83,12 @@ Try it on the next night that matters.
 ```
 disposable,camera,photos,friends,group,party,reveal,event,share,memories,roll,polaroid,social,fun
 ```
-*100 chars. Lowercase, no spaces between (Apple strips spaces anyway and counts them).*
-
-Notes on keyword choice:
-- `disposable camera` is the genre we want to own
-- `polaroid` because users search for the analogue feel
-- `reveal` is the differentiator
-- Avoided `instagram`, `bereal`, etc. — Apple flags brand names
-- Avoided `drinking`, `shots` (alcohol-adjacent) per VISION.md
+*100 chars. Lowercase, no spaces (Apple counts spaces, so omit them). Avoids
+brand names (instagram/bereal) and alcohol-adjacent terms per VISION.md.*
 
 ---
 
-## What's New (4000 chars — release notes for each version)
+## What's New (release notes)
 
 ### Version 1.0
 
@@ -117,77 +99,71 @@ This is the first release. Everyone gets 10 shots, the lobby shows the roll fill
 
 If you have a moment coming up that matters — a birthday, a weekend away, a Christmas dinner — try it then. That's exactly what it's made for.
 
-Bug reports and feature requests welcome: [contact email TBD].
+Bug reports and feature requests welcome: asad.amjid@gmail.com
 ```
 
 ---
 
 ## Categorisation
 
-| Field | Recommended |
+| Field | Value |
 |---|---|
 | **Primary Category** | Photo & Video |
 | **Secondary Category** | Social Networking |
-| **Age Rating** | 12+ (Infrequent/Mild Mature/Suggestive Themes — to leave room; user-generated content needs at least this) |
-| **Content Rights** | "Does not contain, show, or access third-party content" — **double check** before submission, depends on whether reveal music / fonts are licensed |
 | **Made for Kids** | No |
-
-**Age rating note:** Apple requires user-generated content apps to be rated at least 17+ in some interpretations, but most photo-sharing apps land at 12+. Check the questionnaire honestly — if you say "moderation in place," you can usually stay at 12+.
+| **Age Rating** | Answer the ASC questionnaire honestly — most photo-sharing UGC apps land at **12+** when moderation is in place (per-photo flag + self-delete). Don't pre-select; let the questionnaire compute it. |
+| **Content Rights** | ASC asks whether the app contains/accesses third-party content. 10shots only shows user-generated photos, so the answer is normally "does not contain third-party content" — but confirm any bundled fonts/audio in the reveal flow are licensed before answering. |
+| **Export Compliance** | The app uses only standard HTTPS/TLS. In ASC this is the "exempt" path (standard encryption) — answer accordingly; no ERN needed. |
 
 ---
 
 ## Support URL
 
 ```
-[TBD — needs hosted page or a "support" email link]
+https://10shots.app/support
 ```
-
-Cheap option: a one-page Notion or Squarespace site at `10shots.app/support` once the domain is bought.
-
----
+*Live (FAQ + contact). Verified.*
 
 ## Marketing URL (optional)
 
 ```
-[TBD — same as Support URL or the main 10shots.app landing]
+https://10shots.app
 ```
+*Live one-pager.*
 
 ---
 
 ## Localisations
 
-Launch in **English (US)** only. Add other locales post-launch based on where users come from organically.
+Launch in **English (U.S.)** only. Add locales post-launch based on where
+users actually come from.
 
 ---
 
-## Screenshots (separate task — needs device)
+## Screenshots (in progress — needs device)
 
-The required iPhone screenshot sizes per Apple's current spec: **6.7" display** (iPhone 14 Pro Max / 15 Pro Max / 16 Pro Max / 17 Pro Max equivalent) — minimum 3, recommended 5–10.
+Required size: **6.7"/6.9" display** (iPhone 15/16/17 Pro Max class) —
+minimum 3, recommended 5–6. Suggested set + captions:
 
-Recommended capture order:
-1. **Empty hero** — "Start your first event" landing (clean, sells the brand)
-2. **Lobby with full roster** — the EventHeroView with mid-game dots (the visual signature)
-3. **Camera mid-shot** — the act of taking a shot with the shutter polish
-4. **Reveal stack** — first reveal moment with a polaroid
-5. **Past events** — the done-pile aggregate likes
-
-Each can carry a single bold caption overlay if desired. Suggested captions:
-- "Everyone gets 10."
-- "Watch the roll fill up."
-- "Shoot first, look later."
-- "Reveal together."
-- "Keep the moments worth keeping."
+1. **Empty hero** — "Start your first event." → *Everyone gets 10.*
+2. **Lobby with roster** — EventHeroView mid-game dots → *Watch the roll fill up.*
+3. **Camera mid-shot** — shutter polish → *Shoot first, look later.*
+4. **Reveal stack** — first reveal moment → *Reveal together.*
+5. **Past events** — done-pile likes → *Keep the moments worth keeping.*
 
 ---
 
-## Things still missing before submission
+## Pre-submission status
 
-- [ ] Sentry DSN pasted into `Secrets.xcconfig` (so launch builds report crashes)
-- [ ] Privacy policy URL — needs hosting (placeholder is `yourmomento.app/privacy` in SignInView)
-- [ ] Terms of service URL — same situation
-- [ ] App icon — final 1024×1024 plus all required sizes
-- [ ] Screenshots — capture on device per list above
-- [ ] Support URL / contact email
-- [ ] Submit
+Done: ✅ onboarding · ✅ in-app account deletion · ✅ Sentry (device-verified) ·
+✅ privacy URL (`10shots.app/privacy`) · ✅ terms URL (`10shots.app/terms`) ·
+✅ app icon · ✅ this listing copy · ✅ App Review notes
+(`APP_REVIEW_NOTES.md`) · ✅ Support/Marketing URLs.
 
-See `Docs/launch/APP_REVIEW_NOTES.md` for what to write in the App Review Information panel.
+Remaining before you can hit Submit:
+- [ ] **Screenshots** — capturing now (set above)
+- [ ] **Demo Apple ID** in ASC Sign-In Information — *mandatory*, see `APP_REVIEW_NOTES.md` → Required actions
+- [ ] **Enable leaked-password protection** (Supabase → Auth toggle)
+- [ ] **Submit to App Store Connect**
+
+See `APP_REVIEW_NOTES.md` for the reviewer note and the demo-account setup.

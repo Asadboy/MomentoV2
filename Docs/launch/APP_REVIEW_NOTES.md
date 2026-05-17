@@ -1,6 +1,26 @@
-# App Review Notes (draft)
+# App Review Notes — paste-ready
 
-> The "App Review Information" panel in App Store Connect lets you write a free-form note for the Apple reviewer. A good note shortens the review and reduces the odds of a rejection on a misunderstanding. This is the draft to paste in.
+> The "App Review Information" panel in App Store Connect takes a free-form
+> note for the reviewer. The block below is final copy — paste it as-is.
+> **Two things must be done in App Store Connect before/at submission** — see
+> "Required actions" first.
+
+---
+
+## Required actions before submission (not optional)
+
+1. **Demo Apple ID is mandatory.** The app only accepts Sign in with Apple and
+   Sign in with Google — there is no email/password path, so the reviewer
+   cannot sign in without credentials. Create a dedicated Apple ID, sign into
+   10shots once on a device with it (complete onboarding, display name
+   "App Review"), then enter it in **App Store Connect → App Review
+   Information → Sign-In Information** (tick *Sign-in required*; Username =
+   the demo Apple ID email; Password = its password; Notes = "Tap 'Continue
+   with Apple' and use these credentials."). Refresh demo content before each
+   submission so the reveal flow has something to show.
+2. **Answer the questionnaires honestly in App Store Connect** (not in this
+   doc): Age Rating, Content Rights, and Export Compliance. Guidance is in
+   `APP_STORE_COPY.md` → Categorisation.
 
 ---
 
@@ -9,77 +29,82 @@
 ```
 Thanks for reviewing 10shots.
 
-10shots is a disposable-camera-style photo app for small friend groups. The mechanic: every member of an event gets exactly 10 photos during the event window; nobody can see the photos until the event ends and a 24-hour reveal window unlocks. There is no public feed, no global directory of events, no follower system. Each event is a private, code-joined group.
+10shots is a disposable-camera-style photo app for small friend groups. The mechanic: every member of an event gets exactly 10 photos during the event window; nobody can see any photos until the event ends and the reveal window unlocks. There is no public feed, no global directory of events, and no follower system. Every event is a private, code-joined group.
+
+— HOW TO SIGN IN —
+
+10shots supports Sign in with Apple and Sign in with Google only. There is no email/password path. Please use the demo Apple ID provided in the Sign-In Information section: on the sign-in screen, tap "Continue with Apple" and enter those credentials. You are also welcome to use your own Apple ID — there is no allow-list. If you need a Google test account instead, reply on this thread and we will provide one.
 
 — HOW TO TEST —
 
-You can fully test the app without any special credentials:
-
-1. Sign in with Apple, Google, or email/password (the app accepts any valid email for sign-up).
-2. From the home screen, tap "Create an event."
-3. Give it a name, then pick a start time within the next few minutes for fastest testing. The end time is 12 hours after start; the reveal time is 24 hours after start.
-4. Once "live," tap the event card to open the camera. Take up to 10 photos.
-5. To test the reveal flow without waiting 24 hours, you can create a second event with a release time a few minutes after the end time.
-
-If you'd prefer a pre-populated demo account, please reply on this thread and we'll provide credentials.
+1. Sign in with the demo Apple ID (Sign-In Information section).
+2. Complete onboarding by entering a display name (a profile photo is optional).
+3. From the home screen, tap "Create an event."
+4. Name it and pick a start time a few minutes out for fastest testing. End time is 12 hours after start; reveal is 24 hours after start.
+5. When the event goes live, tap the event card to open the camera and take up to 10 photos.
+6. To see the reveal without waiting, create a second event whose reveal time is a few minutes after its end time.
 
 — DATA & PRIVACY —
 
-• Photos are stored in our Supabase project (EU region, eu-west-1).
-• User accounts are managed by Supabase Auth. We do not collect names beyond a chosen username.
-• We use PostHog for product analytics (no PII beyond an internal user ID, no IDFA, no advertising tracking).
-• We use Sentry for crash reporting (anonymous device info, no PII).
-• Photos taken within an event are visible only to other members of that event. There is no global gallery and no public sharing surface inside the app — users can share specific photos out via the system share sheet if they choose.
+• Photos and account data are stored in our Supabase project in the EU (Ireland, eu-west-1).
+• Accounts are created via Sign in with Apple or Google. We store a user-chosen display name (shown to other members of an event) and an optional profile photo. Apple's Hide My Email relay is supported.
+• PostHog is used for product analytics, tied to an internal user ID only — no IDFA, no advertising tracking, no cross-app tracking.
+• Sentry is used for crash reporting (anonymous device/OS info, no photo content).
+• Photos in an event are visible only to the other members of that event. There is no global gallery or public sharing surface in the app; users may share a specific photo out via the system share sheet.
 
-The Camera and Photo Library permissions are required because the app's core function is taking and (optionally) saving photos.
+Camera and Photo Library permissions are required because taking and (optionally) saving photos is the app's core function.
 
-— ACCOUNT REQUIREMENT (Apple Guideline 5.1.1(v)) —
+— ACCOUNT REQUIREMENT (Guideline 5.1.1(v)) —
 
-An account is required because each photo must be attributable to a specific person within an event for the "10 shots per person" mechanic to work, and because the reveal window depends on identifying who has revealed which event. We offer Sign in with Apple alongside Google and email.
+An account is required because each photo must be attributable to a specific person within an event for the "10 shots per person" mechanic and the shared reveal to work. Account deletion is available in-app at Profile → Delete Account → confirm; it permanently removes the user's profile, their photos, events they created, their memberships, and their auth record.
 
 — NO PURCHASES, NO ADS —
 
-This version contains no in-app purchases, no subscriptions, and no advertising.
+This version has no in-app purchases, no subscriptions, and no advertising.
 
 — CONTACT —
 
-Reviewer questions: [your email here]
-Production support: [support email or URL once live]
+Reviewer questions: asad.amjid@gmail.com
+Production support: asad.amjid@gmail.com / https://10shots.app/support
 ```
 
-*Approximately 2,400 characters. App Store Connect allows up to 4,000.*
+*≈2,500 characters. App Store Connect allows 4,000.*
 
 ---
 
-## Demo account (if reviewers ask)
+## Pre-seeding the demo account (recommended)
 
-If you want to provide a pre-seeded demo account so the reviewer doesn't have to create an event with a near-future start time:
+Because the reveal is the core payoff, give the reviewer something to reveal:
 
-1. Sign up a dedicated `appstore-reviewer@10shots.app` account
-2. Pre-create one event with a wide live window (e.g., starts immediately, ends in 7 days, reveal 8 days from now)
-3. Take 3–4 demo shots so the reveal flow has content
-4. Put the credentials in the "Sign-in Information" section of App Store Connect (Apple stores these privately)
-
-This is optional — most photo apps don't bother and rely on the "test in real time" path above. Worth doing if your first submission gets rejected for "couldn't verify the reveal flow."
+1. On a device signed into the demo Apple ID (display name "App Review"),
+   create one event with a wide window — starts now, ends in ~7 days, reveal
+   ~8 days out — and take 3–4 shots in it.
+2. Optionally create a second event whose reveal time has already passed so
+   the post-reveal gallery is viewable immediately.
+3. Refresh this content before every resubmission.
 
 ---
 
 ## Things Apple commonly trips on for apps like this
 
-| Concern | Mitigation |
+| Concern | Status / mitigation |
 |---|---|
-| **5.1.1 — Sign in with Apple** | We offer it as a primary option alongside Google + email. ✓ |
-| **5.1.1(v) — Account deletion** | **NOT YET WIRED.** Apple requires in-app account deletion for apps that allow account creation. Currently the user can sign out but not delete. **Add before submission** — a "Delete my account" option in ProfileView that calls a Supabase RPC to soft-delete the user and their events. |
-| **1.2 — UGC moderation** | We have a per-photo "flag" mechanism (`flagPhoto`) and the user can delete their own photos. Document this in the response if reviewer asks. |
-| **5.1.2 — Data minimisation** | We only request Camera + Photo Library and only use them for app function. No location, contacts, microphone, etc. |
-| **2.5.13 — Sign-in for cosmetic features** | We require sign-in for the core function (events). Not a cosmetic feature. Should pass. |
+| **5.1.1 — Sign in with Apple** | Offered as a primary option alongside Sign in with Google. No email/password path. ✓ |
+| **5.1.1(v) — Account deletion** | Shipped: Profile → Delete Account → confirm; calls the `delete_my_account()` SECURITY DEFINER RPC that atomically removes photos, events created, memberships, profile, and the `auth.users` row. ✓ |
+| **1.2 — UGC moderation** | Per-photo flag mechanism (`flagPhoto`) plus self-delete of own photos. Mention if asked. |
+| **5.1.2 — Data minimisation** | Only Camera + Photo Library requested, used solely for app function. No location, contacts, microphone. ✓ |
+| **2.5.13 — Sign-in for cosmetic features** | Sign-in gates the core function (events), not a cosmetic feature. ✓ |
 
-**Most likely rejection cause if submitted today:** missing in-app account deletion (5.1.1(v)). Wire that before submitting — it's a half-day of work that prevents a guaranteed rejection.
+**Most likely rejection cause if submitted today:** the demo Apple ID in the
+Sign-In Information panel being missing or not working. Verify it signs in
+cleanly on a fresh device before submitting — with SIWA/Google-only auth, a
+broken demo credential is a guaranteed rejection.
 
 ---
 
 ## After submission
 
-Apple's typical review SLA is 24–48 hours for first-time submissions, sometimes longer for new accounts or apps with UGC. Set a Slack reminder for 72 hours; if no decision by then, check the Resolution Center for messages.
-
-If rejected, replies usually unblock in 12–24 hours. Don't argue — fix the specific concern and resubmit, even if you disagree.
+Apple's typical first-review SLA is 24–48 hours (longer for new accounts or
+UGC apps). If no decision in 72 hours, check the Resolution Center. If
+rejected, fix the specific concern and resubmit — don't argue, even if you
+disagree; replies usually unblock in 12–24 hours.
