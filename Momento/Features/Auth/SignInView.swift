@@ -95,7 +95,7 @@ struct SignInView: View {
                         .foregroundColor(.white.opacity(0.25))
 
                     HStack(spacing: 4) {
-                        Link("Terms of Service", destination: URL(string: "https://yourmomento.app/terms")!)
+                        Link("Terms of Service", destination: URL(string: "https://10shots.app/terms")!)
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.white.opacity(0.4))
 
@@ -103,7 +103,7 @@ struct SignInView: View {
                             .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.25))
 
-                        Link("Privacy Policy", destination: URL(string: "https://yourmomento.app/privacy")!)
+                        Link("Privacy Policy", destination: URL(string: "https://10shots.app/privacy")!)
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.white.opacity(0.4))
                     }
