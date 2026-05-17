@@ -15,7 +15,36 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 - [x] **App Store screenshots** — final 5-screenshot set (Cover, Lobby, Camera, Reveal, Create) in `Docs/launch/screenshots/`, all **1320×2868, RGB, no alpha** (Apple 6.9″-valid). Real app UI with real content; designed externally, source masters in `~/Pictures/10ShotsScreenshots` (3960×8604), processed here = downscale to 1320×2868 + flatten alpha onto black. Copy documented in `Docs/launch/SCREENSHOT_COPY.md`. The `app-store-screenshots` skill + `screenshots-generator/` (gitignored) remain for future regen if needed.
 - [ ] **App Store listing copy** — name, subtitle, keywords, description, category. **Draft ready at `Docs/launch/APP_STORE_COPY.md` — review + edit before pasting into App Store Connect.**
 - [ ] **App review notes** — explain camera permission, photo storage, why 10 shots. **Draft ready at `Docs/launch/APP_REVIEW_NOTES.md`.**
-- [ ] **Submit to App Store Connect**
+- [ ] **Submit to App Store Connect** — App Privacy section already published
+  in ASC; reuse-and-rename done (app record `10shots`, bundle
+  `com.asad.Momento`, status "Prepare for Submission"). Remaining (do at home):
+  - [ ] **Investigate the build.** `1.0.0 (49)` was uploaded via Xcode
+    Organizer and reported *"Upload completed with warnings"* — only a benign
+    **Sentry.framework dSYM** warning (NOT a failure, NOT a submission
+    blocker). Confirm `1.0.0 (49)` finished processing under **ASC →
+    TestFlight** and is selectable on the version page. If a *real*
+    archive/build failure shows, capture the exact Xcode error text — most
+    likely an Associated Domains provisioning-profile refresh needed (clean +
+    re-archive) since that capability was just enabled.
+  - [ ] **Demo Apple ID** (mandatory — SIWA/Google-only auth = #1 rejection
+    cause). Fresh Apple ID (Gmail `+review` alias is fine) → sign into 10shots
+    on device, display name `App Review`, pre-seed an event + a few shots +
+    (optional) a past-reveal event per `Docs/launch/APP_REVIEW_NOTES.md` →
+    "Pre-seeding". Enter creds in **ASC → App Review → Sign-In Information** and
+    paste the App Review Notes block. Verify sign-in works on a fresh install
+    before submitting.
+  - [ ] **Fill metadata** — paste Description / Subtitle / Promotional Text /
+    Keywords / Support + Marketing URLs from `Docs/launch/APP_STORE_COPY.md`
+    (finalised, paste-ready).
+  - [ ] **Upload screenshots** — `Docs/launch/screenshots/01…05` to the
+    **iPhone 6.9″** slot, in order.
+  - [ ] **Questionnaires** — Age Rating (answer honestly, let ASC compute),
+    Content Rights (no third-party content), Export Compliance (standard
+    encryption → **exempt**). Guidance in `APP_STORE_COPY.md` → Categorisation.
+  - [ ] **Pricing and Availability** → Free, all territories.
+  - [ ] **Enable leaked-password protection** (Supabase → Auth toggle) — also
+    listed under "Supabase / backend"; do before submitting.
+  - [ ] **Attach build `1.0.0 (49)` → Add for Review → Submit.**
 
 ## Pending external dependency
 
