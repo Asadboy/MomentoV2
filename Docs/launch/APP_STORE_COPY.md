@@ -135,6 +135,40 @@ https://10shots.app
 
 ---
 
+## App Privacy (ASC → App Privacy — required to submit)
+
+Derived from the codebase: Supabase auth (Apple/Google), PostHog analytics,
+Sentry crash reporting, user photos + chosen display name + optional avatar.
+
+**Does this app collect data?** → **Yes.**
+
+**Tracking:** **No** — declare *"Data is not used to track you."* No IDFA,
+no ad networks, no data shared with data brokers, no cross-app tracking.
+(PostHog/Sentry are service providers keyed to an internal user ID only.)
+
+Add each data type below. For every one: **Linked to the user's identity = Yes**
+(everything is tied to the account), **Used for tracking = No**.
+
+| ASC category | Data type | Purposes to tick |
+|---|---|---|
+| Contact Info | **Email Address** (from Sign in with Apple/Google; Hide-My-Email relay supported) | App Functionality |
+| Contact Info | **Name** (user-chosen display name, shown to event members) | App Functionality |
+| User Content | **Photos or Videos** (the shots) | App Functionality |
+| User Content | **Other User Content** (optional profile photo) | App Functionality |
+| Identifiers | **User ID** (internal account id; also PostHog/Sentry id) | App Functionality, Analytics |
+| Usage Data | **Product Interaction** (PostHog events) | Analytics |
+| Diagnostics | **Crash Data** (Sentry) | App Functionality |
+| Diagnostics | **Performance Data** (Sentry) | App Functionality |
+
+Not collected (do **not** add): Location, Contacts, Health, Financial info,
+Browsing history, Search history, Sensitive info, Microphone, Purchases
+(no IAP), Advertising data.
+
+*Must match `https://10shots.app/privacy` — it already discloses Apple/Google
+sign-in, PostHog, Sentry, photos, display name, account deletion, EU storage.*
+
+---
+
 ## Localisations
 
 Launch in **English (U.S.)** only. Add locales post-launch based on where
