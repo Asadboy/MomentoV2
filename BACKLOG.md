@@ -10,7 +10,7 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 - [x] **In-app account deletion (Apple Guideline 5.1.1(v))** — `Delete Account` button in `ProfileView` below Sign Out, with a confirmation dialog. Implementation: client batch-deletes the user's Supabase Storage objects (their own photos + photos in events they created), then calls the `delete_my_account()` SECURITY DEFINER RPC which atomically removes `photo_likes`, the user's own `photos`, `events` they created (cascades to event_members + photos in those events), remaining `event_members`, `profiles`, and finally `auth.users`. Migration: `20260511180000_delete_my_account_rpc.sql`.
 - [x] **Create Sentry project + paste DSN into `Secrets.xcconfig`** — Sentry project `10shots/apple-ios` (region `de.sentry.io`) created, real DSN in `Secrets.xcconfig` (gitignored, `https:/$()/` xcconfig escaping), wired through `Info.plist` → `SentryConfiguration` → `CrashReporter.start()`. **Verified end-to-end on device 2026-05-17** via a temporary launch-arg-gated test event (issue `APPLE-IOS-1` received with user attribution; temp code reverted, never merged).
 - [x] **Real privacy policy URL** — `SignInView.swift` now links `https://10shots.app/privacy`. Live page verified (substantive ~1.5k-word policy: Apple/Google sign-in, PostHog, Sentry, account deletion, EU infra).
-- [x] **Real terms of service URL** — `SignInView.swift` now links `https://10shots.app/terms`. Live page verified (~950 words). ⚠️ Site-side follow-up (other repo): Section 11 still reads `[your country / jurisdiction — replace before launch]`.
+- [x] **Real terms of service URL** — `SignInView.swift` now links `https://10shots.app/terms`. Live page verified (~950 words). Section 11 governing law set to **England and Wales** (live, verified 2026-05-17). No outstanding site-side edits.
 - [x] **App icon** — aperture mark (10 white dots in a ring on solid black), 1024×1024 RGB, no alpha. Shipped in PR #50; eyeballed on device.
 - [ ] **App Store screenshots** — capture set covering create, live event with shot counter, reveal, gallery
 - [ ] **App Store listing copy** — name, subtitle, keywords, description, category. **Draft ready at `Docs/launch/APP_STORE_COPY.md` — review + edit before pasting into App Store Connect.**
@@ -19,9 +19,9 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 ## Pending external dependency
 
-- [ ] **Buy `10shots.app` domain**
-- [ ] **Host `apple-app-site-association`** at `https://10shots.app/.well-known/apple-app-site-association` (required for Universal Links to validate)
-- [ ] **Activate `10shots.app/join/<code>`** — `InviteContentView.swift:30` already emits `https://10shots.app/join/<code>` for both QR + share text. Link resolves to nothing until the domain + AASA are live; no app-side change needed.
+- [x] **Buy `10shots.app` domain** — registered on Vercel (2026-05-17). Matches the codebase domain exactly; no app-side rename needed.
+- [x] **Host `apple-app-site-association`** — authored + deployed in the standalone `10shots-website` repo; live and serving `200 application/json` at `https://www.10shots.app/.well-known/apple-app-site-association` (App ID `8X5TV69524.com.asad.Momento`, paths `/join/*`). Residual (NOT an App Store blocker): the apex `10shots.app` currently 307-redirects to `www`; a one-time Vercel dashboard flip (make apex primary) is needed for Apple to validate at the apex for Universal Links.
+- [x] **Activate `10shots.app/join/<code>`** — `InviteContentView.swift:30` emits `https://10shots.app/join/<code>`; the site's `/join/<code>` fallback page is live and returns 200. Full in-app interception activates once the apex-primary Vercel flip above lands; no app-side change needed.
 - [x] **Universal Link / deep link** for `10shots.app/join/<code>` — entitlement (`applinks:10shots.app`), `onContinueUserActivity` handler in `MomentoApp.swift`, shared `JoinLinkParser`, and `initialCode` plumbing through `JoinEventSheet` are all in place. Will activate once the domain + AASA are live.
 
 ## Supabase / backend
