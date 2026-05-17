@@ -9,8 +9,8 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 - [x] **Onboarding redesign + username decision** — shipped in PR #27 (`feat: replace usernames with display name + optional avatar`). `UsernameSelectionView` deleted, combined display-name + optional-photo onboarding screen in place, avatar hash now keyed off `userId.uuidString`. The `username` column is kept nullable on `profiles` and `photos` for legacy rows only (migration `20260512150000_drop_username_requirement.sql`).
 - [x] **In-app account deletion (Apple Guideline 5.1.1(v))** — `Delete Account` button in `ProfileView` below Sign Out, with a confirmation dialog. Implementation: client batch-deletes the user's Supabase Storage objects (their own photos + photos in events they created), then calls the `delete_my_account()` SECURITY DEFINER RPC which atomically removes `photo_likes`, the user's own `photos`, `events` they created (cascades to event_members + photos in those events), remaining `event_members`, `profiles`, and finally `auth.users`. Migration: `20260511180000_delete_my_account_rpc.sql`.
 - [x] **Create Sentry project + paste DSN into `Secrets.xcconfig`** — Sentry project `10shots` created (EU/`de` ingest). DSN pasted into `Secrets.xcconfig` (gitignored) with the `https:/$()/` xcconfig escaping. `Secrets.example.xcconfig` template added (was missing). `CrashReporter.start()` now initialises on real builds; verify `✅ CrashReporter: Sentry started` in device logs.
-- [ ] **Real privacy policy URL** — replace `https://yourmomento.app/privacy` placeholder in `Momento/Features/Auth/SignInView.swift`
-- [ ] **Real terms of service URL** — replace `https://yourmomento.app/terms` placeholder in `SignInView.swift`
+- [x] **Real privacy policy URL** — `SignInView.swift` now links `https://10shots.app/privacy`. Page authored in the standalone **`10shots-website`** repo (`privacy.html`), accurate to actual data practices: SIWA/Google, Supabase EU, PostHog, Sentry, in-app deletion. Live once that repo is deployed to Vercel.
+- [x] **Real terms of service URL** — `SignInView.swift` now links `https://10shots.app/terms`. Page authored in the standalone **`10shots-website`** repo (`terms.html`). **One required edit before launch: fill the §11 governing-law jurisdiction placeholder.** Live on Vercel deploy.
 - [x] **App icon** — aperture mark (10 white dots in a ring on solid black), 1024×1024 RGB, no alpha. Shipped in PR #50; eyeballed on device.
 - [ ] **App Store screenshots** — capture set covering create, live event with shot counter, reveal, gallery
 - [ ] **App Store listing copy** — name, subtitle, keywords, description, category. **Draft ready at `Docs/launch/APP_STORE_COPY.md` — review + edit before pasting into App Store Connect.**
@@ -19,9 +19,9 @@ Active, launch-blocking work only. Anything aspirational lives in `VISION.md`.
 
 ## Pending external dependency
 
-- [ ] **Buy `10shots.app` domain**
-- [ ] **Host `apple-app-site-association`** at `https://10shots.app/.well-known/apple-app-site-association` (required for Universal Links to validate)
-- [ ] **Activate `10shots.app/join/<code>`** — `InviteContentView.swift:30` already emits `https://10shots.app/join/<code>` for both QR + share text. Link resolves to nothing until the domain + AASA are live; no app-side change needed.
+- [x] **Buy `10shots.app` domain** — registered on Vercel (2026-05-17). Matches the codebase domain exactly; no app-side rename needed.
+- [ ] **Host `apple-app-site-association`** at `https://10shots.app/.well-known/apple-app-site-association` (required for Universal Links to validate) — **file authored** in the standalone **`10shots-website`** repo at `.well-known/apple-app-site-association` (App ID `8X5TV69524.com.asad.Momento`, paths `/join/*`); `vercel.json` sets the JSON content-type. Pending Vercel deploy + domain attach (steps in that repo's README).
+- [ ] **Activate `10shots.app/join/<code>`** — `InviteContentView.swift:30` already emits `https://10shots.app/join/<code>`; `join.html` in the standalone **`10shots-website`** repo is the browser fallback (shows the code + App Store CTA). Activates automatically once that site is deployed and the AASA file is live; no app-side change needed.
 - [x] **Universal Link / deep link** for `10shots.app/join/<code>` — entitlement (`applinks:10shots.app`), `onContinueUserActivity` handler in `MomentoApp.swift`, shared `JoinLinkParser`, and `initialCode` plumbing through `JoinEventSheet` are all in place. Will activate once the domain + AASA are live.
 
 ## Supabase / backend

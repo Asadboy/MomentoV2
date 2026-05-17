@@ -139,10 +139,10 @@ Bug reports and feature requests welcome: [contact email TBD].
 ## Support URL
 
 ```
-[TBD — needs hosted page or a "support" email link]
+https://10shots.app/support
 ```
 
-Cheap option: a one-page Notion or Squarespace site at `10shots.app/support` once the domain is bought.
+Page authored at `support.html` in the standalone **`10shots-website`** repo (contact email + FAQ). Live once that site is deployed to Vercel.
 
 ---
 
@@ -183,11 +183,11 @@ Each can carry a single bold caption overlay if desired. Suggested captions:
 ## Things still missing before submission
 
 - [ ] Sentry DSN pasted into `Secrets.xcconfig` (so launch builds report crashes)
-- [ ] Privacy policy URL — needs hosting (placeholder is `yourmomento.app/privacy` in SignInView)
-- [ ] Terms of service URL — same situation
+- [x] Privacy policy URL — `https://10shots.app/privacy`, authored in the standalone `10shots-website` repo, linked from SignInView. Pending Vercel deploy.
+- [x] Terms of service URL — `https://10shots.app/terms`, authored in the standalone `10shots-website` repo, linked from SignInView. Pending Vercel deploy (fill governing-law placeholder first).
 - [ ] App icon — final 1024×1024 plus all required sizes
 - [ ] Screenshots — capture on device per list above
-- [ ] Support URL / contact email
+- [x] Support URL — `https://10shots.app/support` (authored in the standalone `10shots-website` repo; pending Vercel deploy + `support@10shots.app` email forwarding)
 - [ ] Submit
 
 See `Docs/launch/APP_REVIEW_NOTES.md` for what to write in the App Review Information panel.
