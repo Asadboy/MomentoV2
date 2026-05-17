@@ -109,6 +109,12 @@ struct EventHeroView: View {
         .padding(.top, 24)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity)
+        // The roster lands asynchronously (Supabase member fetch). Without
+        // this, the card snaps from compact to tall the instant `members`
+        // flips []→populated. Scoping the animation to `members.count` eases
+        // the height change (and slides neighbours) instead of jumping, and
+        // does NOT fire for the per-second `now` tick.
+        .animation(.easeInOut(duration: 0.35), value: members.count)
         .background(
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(cardFill)
@@ -235,6 +241,7 @@ struct EventHeroView: View {
                         Divider().background(Color.white.opacity(0.05))
                     }
                 }
+                .transition(.opacity)
             }
 
             // Hide invite once revealed (matches existing EventCard behavior).
