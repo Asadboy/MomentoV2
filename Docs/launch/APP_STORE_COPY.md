@@ -60,7 +60,7 @@ Like the ones you love. Save your favourites. Share them outside the app if you 
 • Weekend trips and city breaks
 • Festivals and camping
 • Family Christmas
-• Pre-drinks and dinners with friends
+• Nights out and dinners with friends
 • Anywhere a group is going to make a memory together
 
 — WHAT IT'S NOT —
@@ -81,10 +81,12 @@ Try it on the next night that matters.
 ## Keywords (100 chars max, comma-separated)
 
 ```
-disposable,camera,photos,friends,group,party,reveal,event,share,memories,roll,polaroid,social,fun
+disposable,camera,photos,friends,group,party,reveal,event,share,memories,roll,trips,social,fun
 ```
-*100 chars. Lowercase, no spaces (Apple counts spaces, so omit them). Avoids
-brand names (instagram/bereal) and alcohol-adjacent terms per VISION.md.*
+*94 chars. Lowercase, no spaces (Apple counts spaces, so omit them). Avoids
+brand names (instagram/bereal/polaroid) and alcohol-adjacent terms per
+VISION.md — `polaroid` removed (registered trademark; Apple rejects 3rd-party
+marks in metadata), replaced with `trips`.*
 
 ---
 
@@ -140,16 +142,19 @@ users actually come from.
 
 ---
 
-## Screenshots (in progress — needs device)
+## Screenshots ✅ DONE
 
-Required size: **6.7"/6.9" display** (iPhone 15/16/17 Pro Max class) —
-minimum 3, recommended 5–6. Suggested set + captions:
+Final 5-screenshot set committed at `Docs/launch/screenshots/`
+(`01-cover` … `05-create`), all **1320×2868, RGB, no alpha** — valid for the
+App Store Connect **6.9″ (iPhone 6.9″ Display)** slot. Upload these in order:
 
-1. **Empty hero** — "Start your first event." → *Everyone gets 10.*
-2. **Lobby with roster** — EventHeroView mid-game dots → *Watch the roll fill up.*
-3. **Camera mid-shot** — shutter polish → *Shoot first, look later.*
-4. **Reveal stack** — first reveal moment → *Reveal together.*
-5. **Past events** — done-pile likes → *Keep the moments worth keeping.*
+1. `01-cover` — 10Shots / *Your shared disposable camera*
+2. `02-lobby` — *Everyone gets 10 shots.*
+3. `03-camera` — *No previews. No retakes.*
+4. `04-reveal` — *The whole roll. Together.*
+5. `05-create` — *Start a roll for any night.*
+
+Copy/narrative detail in `SCREENSHOT_COPY.md`.
 
 ---
 
@@ -161,9 +166,10 @@ Done: ✅ onboarding · ✅ in-app account deletion · ✅ Sentry (device-verifi
 (`APP_REVIEW_NOTES.md`) · ✅ Support/Marketing URLs.
 
 Remaining before you can hit Submit:
-- [ ] **Screenshots** — capturing now (set above)
+- [x] **Screenshots** — final set in `Docs/launch/screenshots/`
 - [ ] **Demo Apple ID** in ASC Sign-In Information — *mandatory*, see `APP_REVIEW_NOTES.md` → Required actions
 - [ ] **Enable leaked-password protection** (Supabase → Auth toggle)
+- [ ] **Upload build 1.0.0 (49)** via Xcode Organizer → select it in ASC
 - [ ] **Submit to App Store Connect**
 
 See `APP_REVIEW_NOTES.md` for the reviewer note and the demo-account setup.
