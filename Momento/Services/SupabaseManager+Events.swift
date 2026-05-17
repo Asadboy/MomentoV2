@@ -38,7 +38,7 @@ extension SupabaseManager {
             releaseAt: releaseAt,
             isDeleted: false,
             createdAt: Date(),
-            memberLimit: 10
+            memberLimit: 0 // 0 = unlimited (no member cap at launch)
         )
 
         try await client
@@ -87,10 +87,14 @@ extension SupabaseManager {
             return event
         }
 
-        let currentCount = try await getEventMemberCount(eventId: event.id)
-        if currentCount >= event.memberLimit {
-            debugLog("ℹ️ Event is full (\(currentCount)/\(event.memberLimit))")
-            throw SupabaseError.eventFull
+        // memberLimit == 0 means unlimited (the launch default). A positive
+        // limit is only ever written by future monetisation tiers.
+        if event.memberLimit > 0 {
+            let currentCount = try await getEventMemberCount(eventId: event.id)
+            if currentCount >= event.memberLimit {
+                debugLog("ℹ️ Event is full (\(currentCount)/\(event.memberLimit))")
+                throw SupabaseError.eventFull
+            }
         }
 
         let member = EventMember(
