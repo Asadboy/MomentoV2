@@ -242,6 +242,20 @@ extension SupabaseManager {
 
         debugLog("🚩 Photo reported")
     }
+
+    /// True if a photos row already exists for this client upload id.
+    /// Used to distinguish "genuinely over the limit" from "this shot
+    /// already uploaded and is being retried" so the latter isn't
+    /// falsely reported as a failure.
+    func photoExists(clientUploadId: UUID) async throws -> Bool {
+        let count = try await client
+            .from("photos")
+            .select("id", head: true, count: .exact)
+            .eq("client_upload_id", value: clientUploadId.uuidString)
+            .execute()
+            .count ?? 0
+        return count > 0
+    }
 }
 
 // MARK: - Helpers

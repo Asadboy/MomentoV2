@@ -228,6 +228,40 @@ class OfflineSyncManager: ObservableObject {
                     userId: userId
                 )
                 if count >= PhotoLimitConfig.defaultPhotoLimit {
+                    // Distinguish a genuine over-limit from a retry of a shot
+                    // that already uploaded (kill/double-fire). The latter
+                    // must not be reported as a failure or have its local
+                    // file destroyed. Three-way:
+                    //   exists == true  -> already uploaded: mark completed
+                    //   exists == false -> genuine over-limit: fail + delete
+                    //   exists == nil   -> check errored: retryable, keep file
+                    let existsResult = try? await supabaseManager.photoExists(clientUploadId: photo.id)
+                    if existsResult == true {
+                        debugLog("✅ Photo \(photo.id.uuidString.prefix(8)) already uploaded — marking complete (idempotent retry)")
+                        await MainActor.run {
+                            if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
+                                queue[idx].status = .completed
+                                saveQueue()
+                            }
+                        }
+                        try? FileManager.default.removeItem(at: photo.localFileURL)
+                        return
+                    }
+                    if existsResult == nil {
+                        // Couldn't verify whether this shot already uploaded
+                        // (network/transient). Do NOT delete the file and do
+                        // NOT cap retries — let it retry; the server trigger
+                        // fix + upsert-ignore will no-op a true duplicate.
+                        debugLog("⚠️ Could not verify upload for \(photo.id.uuidString.prefix(8)) at limit — will retry")
+                        await MainActor.run {
+                            if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
+                                queue[idx].status = .failed
+                                queue[idx].errorMessage = "Couldn’t verify upload — will retry"
+                                saveQueue()
+                            }
+                        }
+                        return
+                    }
                     debugLog("📷 Photo limit reached for event \(photo.eventId.uuidString.prefix(8)), dropping queued photo")
                     await MainActor.run {
                         if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
