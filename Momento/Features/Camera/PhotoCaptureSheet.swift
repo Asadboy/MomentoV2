@@ -152,6 +152,10 @@ struct PhotoCaptureSheet: View {
         .background(Color.black.ignoresSafeArea())
     }
 
+    private var cameraAuthStatus: AVAuthorizationStatus {
+        AVCaptureDevice.authorizationStatus(for: .video)
+    }
+
     private var permissionView: some View {
         VStack(spacing: 24) {
             Image(systemName: "camera.fill")
@@ -169,8 +173,10 @@ struct PhotoCaptureSheet: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            if AVCaptureDevice.authorizationStatus(for: .video) == .denied
-                || AVCaptureDevice.authorizationStatus(for: .video) == .restricted {
+            // Read camera authorization imperatively here is safe: this branch is
+            // only reached when hasPermission == false, and the view re-evaluates
+            // whenever hasPermission or scenePhase changes.
+            if cameraAuthStatus == .denied || cameraAuthStatus == .restricted {
                 Button("Open Settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         UIApplication.shared.open(url)
