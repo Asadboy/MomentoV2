@@ -64,6 +64,7 @@ extension SupabaseManager {
             .from("photos")
             .select("id, storage_path, captured_at, captured_by, username")
             .eq("event_id", value: eventId.uuidString)
+            .is("hidden_at", value: nil)
             .order("captured_at", ascending: true)
             .execute()
             .value
@@ -124,6 +125,7 @@ extension SupabaseManager {
             .from("photos")
             .select("id")
             .eq("event_id", value: eventId.uuidString)
+            .is("hidden_at", value: nil)
             .execute()
             .value
 

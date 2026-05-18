@@ -82,6 +82,7 @@ extension SupabaseManager {
             .from("photos")
             .select()
             .eq("event_id", value: eventId.uuidString)
+            .is("hidden_at", value: nil)
             .order("captured_at", ascending: false)
             .execute()
             .value
@@ -161,6 +162,7 @@ extension SupabaseManager {
             .from("photos")
             .select()
             .eq("event_id", value: uuid.uuidString)
+            .is("hidden_at", value: nil)
             .order("captured_at", ascending: true)
             .range(from: offset, to: offset + limit)
             .execute()
@@ -219,6 +221,22 @@ extension SupabaseManager {
             .execute()
 
         debugLog("✅ Photo flagged")
+    }
+
+    /// Files a content report for a photo. `reporter_id` defaults to
+    /// auth.uid() server-side; an AFTER INSERT trigger hides the photo
+    /// for everyone on the first report (Apple Guideline 1.2).
+    func reportPhoto(id: UUID, reason: String?) async throws {
+        struct ReportInsert: Encodable {
+            let photo_id: String
+            let reason: String?
+        }
+        try await client
+            .from("photo_reports")
+            .insert(ReportInsert(photo_id: id.uuidString, reason: reason))
+            .execute()
+
+        debugLog("🚩 Photo reported")
     }
 }
 
