@@ -54,6 +54,10 @@ Thanks for reviewing 10shots.
 
 Camera and Photo Library permissions are required because taking and (optionally) saving photos is the app's core function.
 
+— CONTENT & MODERATION (Guideline 1.2) —
+
+10shots is a closed-group app: there is no public feed and no event discovery. An event is private and joinable only via a code or invite link the creator shares directly, so photos are confined to a small, self-selected group. Every photo has an in-app Report action (long-press a shot). Reporting a photo immediately hides it from all members pending review and flags it to us for action; the reporter never sees that photo again, including after a reinstall. Users can also delete their own photos at any time. Our Terms (https://10shots.app/terms) prohibit unlawful, infringing, or objectionable content and abusive behaviour with zero tolerance, and let us remove content and suspend or terminate accounts at our discretion.
+
 — ACCOUNT REQUIREMENT (Guideline 5.1.1(v)) —
 
 An account is required because each photo must be attributable to a specific person within an event for the "10 shots per person" mechanic and the shared reveal to work. Account deletion is available in-app at Profile → Delete Account → confirm; it permanently removes the user's profile, their photos, events they created, their memberships, and their auth record.
@@ -68,7 +72,7 @@ Reviewer questions: asad.amjid@gmail.com
 Production support: asad.amjid@gmail.com / https://10shots.app/support
 ```
 
-*≈2,500 characters. App Store Connect allows 4,000.*
+*≈3,700 characters. App Store Connect allows 4,000.*
 
 ---
 
@@ -91,7 +95,7 @@ Because the reveal is the core payoff, give the reviewer something to reveal:
 |---|---|
 | **5.1.1 — Sign in with Apple** | Offered as a primary option alongside Sign in with Google. No email/password path. ✓ |
 | **5.1.1(v) — Account deletion** | Shipped: Profile → Delete Account → confirm; calls the `delete_my_account()` SECURITY DEFINER RPC that atomically removes photos, events created, memberships, profile, and the `auth.users` row. ✓ |
-| **1.2 — UGC moderation** | Per-photo flag mechanism (`flagPhoto`) plus self-delete of own photos. Mention if asked. |
+| **1.2 — UGC moderation** | Closed-group invite model (no public feed/discovery). Every photo has an in-app Report action that immediately hides the photo for everyone on report and flags it for operator review (PostHog `photo_reported`); users can also self-delete. Terms prohibit objectionable content with zero tolerance and grant content-removal/termination rights. Explained proactively in the notes above. ✓ |
 | **5.1.2 — Data minimisation** | Only Camera + Photo Library requested, used solely for app function. No location, contacts, microphone. ✓ |
 | **2.5.13 — Sign-in for cosmetic features** | Sign-in gates the core function (events), not a cosmetic feature. ✓ |
 
