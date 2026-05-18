@@ -1,9 +1,16 @@
 name: Deploy to TestFlight
 
 on:
-  push:
-    branches:
-      - main
+  # PAUSED until App Store launch (2026-05).
+  # The auto-on-push trigger was disabled so every merge to `main` does not
+  # ship a new TestFlight build and email the internal beta testers. The
+  # workflow can still be run on-demand from the Actions tab via
+  # workflow_dispatch (use this to cut the final launch build).
+  # TO RESUME after launch: un-comment the push block below.
+  #
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 jobs:
