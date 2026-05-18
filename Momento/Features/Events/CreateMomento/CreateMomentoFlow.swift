@@ -135,9 +135,11 @@ struct CreateMomentoFlow: View {
                 let event = Event(fromSupabase: eventModel)
 
                 AnalyticsManager.stampJoin(eventId: event.id)
+                // Deliberately omit event.name — it is user-typed free text
+                // and PostHog analytics is tied to an internal ID only (see
+                // App Privacy label / App Review notes). event_id is enough.
                 AnalyticsManager.shared.track(.eventCreated, properties: [
                     "event_id": event.id,
-                    "event_name": event.name,
                     "member_limit": event.memberLimit,
                     "live_window_minutes": Int(event.endsAt.timeIntervalSince(event.startsAt) / 60),
                     "reveal_delay_minutes": Int(event.releaseAt.timeIntervalSince(event.endsAt) / 60)
