@@ -23,7 +23,7 @@ extension SupabaseManager {
     /// Upload a photo: storage object first, then the photos row. The row
     /// denormalises the photographer's display name into `captured_by` so
     /// the reveal flow doesn't have to join `profiles`.
-    func uploadPhoto(image: Data, eventId: UUID, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
+    func uploadPhoto(image: Data, eventId: UUID, clientUploadId: UUID? = nil, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
             debugLog("❌ [uploadPhoto] User not authenticated")
             throw SupabaseError.userNotAuthenticated
@@ -38,7 +38,9 @@ extension SupabaseManager {
             debugLog("⚠️ Could not fetch display name, using 'Unknown'")
         }
 
-        let photoId = UUID()
+        // Stable across retries when a clientUploadId is supplied so the
+        // storage path and row id don't change between attempts.
+        let photoId = clientUploadId ?? UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
 
         debugLog("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(capturedBy)...")
@@ -50,7 +52,7 @@ extension SupabaseManager {
                 data: image,
                 options: FileOptions(
                     contentType: "image/jpeg",
-                    upsert: false
+                    upsert: true
                 )
             )
 
@@ -65,12 +67,13 @@ extension SupabaseManager {
             width: width,
             height: height,
             uploadStatus: "uploaded",
-            isFlagged: false
+            isFlagged: false,
+            clientUploadId: clientUploadId
         )
 
         try await client
             .from("photos")
-            .insert(photo)
+            .upsert(photo, onConflict: "client_upload_id", ignoreDuplicates: true)
             .execute()
 
         return photo
@@ -82,6 +85,7 @@ extension SupabaseManager {
             .from("photos")
             .select()
             .eq("event_id", value: eventId.uuidString)
+            .is("hidden_at", value: nil)
             .order("captured_at", ascending: false)
             .execute()
             .value
@@ -111,6 +115,7 @@ extension SupabaseManager {
             .from("photos")
             .select()
             .eq("event_id", value: uuid.uuidString)
+            .is("hidden_at", value: nil)
             .order("captured_at", ascending: true)
             .execute()
             .value
@@ -161,6 +166,7 @@ extension SupabaseManager {
             .from("photos")
             .select()
             .eq("event_id", value: uuid.uuidString)
+            .is("hidden_at", value: nil)
             .order("captured_at", ascending: true)
             .range(from: offset, to: offset + limit)
             .execute()
@@ -219,6 +225,36 @@ extension SupabaseManager {
             .execute()
 
         debugLog("✅ Photo flagged")
+    }
+
+    /// Files a content report for a photo. `reporter_id` defaults to
+    /// auth.uid() server-side; an AFTER INSERT trigger hides the photo
+    /// for everyone on the first report (Apple Guideline 1.2).
+    func reportPhoto(id: UUID, reason: String?) async throws {
+        struct ReportInsert: Encodable {
+            let photo_id: String
+            let reason: String?
+        }
+        try await client
+            .from("photo_reports")
+            .insert(ReportInsert(photo_id: id.uuidString, reason: reason))
+            .execute()
+
+        debugLog("🚩 Photo reported")
+    }
+
+    /// True if a photos row already exists for this client upload id.
+    /// Used to distinguish "genuinely over the limit" from "this shot
+    /// already uploaded and is being retried" so the latter isn't
+    /// falsely reported as a failure.
+    func photoExists(clientUploadId: UUID) async throws -> Bool {
+        let count = try await client
+            .from("photos")
+            .select("id", head: true, count: .exact)
+            .eq("client_upload_id", value: clientUploadId.uuidString)
+            .execute()
+            .count ?? 0
+        return count > 0
     }
 }
 

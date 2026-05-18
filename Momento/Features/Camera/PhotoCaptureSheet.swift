@@ -8,6 +8,7 @@
 //  This sheet presents the camera interface for taking photos at events.
 //  Photos are stored in-memory for UI-only purposes (no database yet).
 
+import AVFoundation
 import SwiftUI
 import UIKit
 
@@ -22,6 +23,7 @@ struct PhotoCaptureSheet: View {
     /// never fall back to a fresh full count on failure -- a flaky
     /// network would silently grant the user another 10 shots.
     @State private var loadState: LoadState = .loading
+    @Environment(\.scenePhase) private var scenePhase
 
     enum LoadState {
         case loading
@@ -86,6 +88,11 @@ struct PhotoCaptureSheet: View {
         .task {
             await fetchRemainingCount()
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                cameraController.checkPermission()
+            }
+        }
     }
 
     // MARK: - Subviews
@@ -145,6 +152,10 @@ struct PhotoCaptureSheet: View {
         .background(Color.black.ignoresSafeArea())
     }
 
+    private var cameraAuthStatus: AVAuthorizationStatus {
+        AVCaptureDevice.authorizationStatus(for: .video)
+    }
+
     private var permissionView: some View {
         VStack(spacing: 24) {
             Image(systemName: "camera.fill")
@@ -162,11 +173,30 @@ struct PhotoCaptureSheet: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            Button("Request Permission") {
-                cameraController.requestPermission()
+            // Read camera authorization imperatively here is safe: this branch is
+            // only reached when hasPermission == false, and the view re-evaluates
+            // whenever hasPermission or scenePhase changes.
+            if cameraAuthStatus == .denied || cameraAuthStatus == .restricted {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.white)
+
+                Text("Camera access is off. Enable it in Settings, then return here.")
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            } else {
+                Button("Request Permission") {
+                    cameraController.requestPermission()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.white)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.white)
 
             Button("Cancel") {
                 isPresented = false

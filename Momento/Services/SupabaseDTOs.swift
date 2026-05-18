@@ -95,6 +95,10 @@ struct PhotoModel: Codable, Identifiable {
     var height: Int?
     var uploadStatus: String
     var isFlagged: Bool
+    /// Client-generated idempotency key. Optional so legacy rows (no
+    /// `client_upload_id`) still decode. The partial unique index
+    /// `photos_client_upload_id_key` makes upserts on this column idempotent.
+    let clientUploadId: UUID?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -108,6 +112,7 @@ struct PhotoModel: Codable, Identifiable {
         case height
         case uploadStatus = "upload_status"
         case isFlagged = "is_flagged"
+        case clientUploadId = "client_upload_id"
     }
 }
 
