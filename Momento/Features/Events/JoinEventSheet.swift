@@ -9,6 +9,7 @@
 
 import SwiftUI
 import AVFoundation
+import UIKit
 
 /// Sheet for joining events - mutually exclusive scan/code modes
 struct JoinEventSheet: View {
@@ -22,6 +23,8 @@ struct JoinEventSheet: View {
 
     @StateObject private var supabaseManager = SupabaseManager.shared
     @StateObject private var qrScanner = QRCodeScanner()
+
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var enteredCode: String = ""
     @State private var isJoining = false
@@ -48,6 +51,10 @@ struct JoinEventSheet: View {
 
     private var codeProgress: CGFloat {
         CGFloat(enteredCode.count) / 6.0
+    }
+
+    private var cameraAuthStatus: AVAuthorizationStatus {
+        AVCaptureDevice.authorizationStatus(for: .video)
     }
 
     // MARK: - Body
@@ -104,6 +111,21 @@ struct JoinEventSheet: View {
                     qrScanner.stopScanning()
                 }
             }
+            .onChange(of: scenePhase) { _, newPhase in
+                // Recovery after returning from Settings with camera enabled.
+                // checkPermission() only flips hasPermission on .authorized; it
+                // does NOT start the capture session, and QRCodeScannerView only
+                // wires up an existing session — so without an explicit
+                // startScanning() the scanner stays blank. startScanning()
+                // self-guards on hasPermission and on captureSession == nil, so
+                // calling it here is safe (no double-start, no-op if denied).
+                if newPhase == .active {
+                    qrScanner.checkPermission()
+                    if qrScanner.hasPermission && mode == .scan {
+                        qrScanner.startScanning()
+                    }
+                }
+            }
             .overlay {
                 if showPreview, let event = previewEvent {
                     previewOverlay(event: event)
@@ -149,6 +171,18 @@ struct JoinEventSheet: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
+
+                if let error = errorMessage {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.circle")
+                            .font(.system(size: 12))
+                        Text(error)
+                            .font(.system(size: 13))
+                    }
+                    .foregroundColor(.red.opacity(0.8))
+                    .padding(.top, 12)
+                    .padding(.horizontal, 24)
+                }
 
                 Spacer()
 
@@ -261,16 +295,40 @@ struct JoinEventSheet: View {
                     .foregroundColor(.gray)
             }
 
-            Button {
-                qrScanner.requestPermission()
-            } label: {
-                Text("Enable Camera")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 12)
-                    .background(Color.green)
-                    .cornerRadius(12)
+            // Reading camera authorization imperatively here is safe: this view is
+            // only shown when qrScanner.hasPermission == false, and it re-evaluates
+            // whenever hasPermission or scenePhase changes.
+            if cameraAuthStatus == .denied || cameraAuthStatus == .restricted {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text("Open Settings")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 12)
+                        .background(Color.green)
+                        .cornerRadius(12)
+                }
+                Text("Camera access is off. Enable it in Settings, then return here.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            } else {
+                Button {
+                    qrScanner.requestPermission()
+                } label: {
+                    Text("Enable Camera")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 12)
+                        .background(Color.green)
+                        .cornerRadius(12)
+                }
             }
 
             Spacer()
