@@ -149,6 +149,7 @@ extension SupabaseManager {
             .from("photos")
             .select("id")
             .eq("event_id", value: eventId.uuidString)
+            .is("hidden_at", value: nil)
             .execute()
             .value
 
