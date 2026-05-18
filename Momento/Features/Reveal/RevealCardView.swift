@@ -21,6 +21,8 @@ struct RevealCardView: View {
     @State private var showButtons = false
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
+    @State private var showReportConfirm = false
+    @State private var isReported = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -100,10 +102,54 @@ struct RevealCardView: View {
 
     private var photoView: some View {
         Group {
-            if let image = loadedImage {
+            if isReported {
+                Rectangle()
+                    .fill(Color(white: 0.12))
+                    .overlay {
+                        VStack(spacing: 10) {
+                            Image(systemName: "flag.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(.white.opacity(0.6))
+                            Text("Reported")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white)
+                            Text("This photo is hidden and under review.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 60)
+                    }
+            } else if let image = loadedImage {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            showReportConfirm = true
+                        } label: {
+                            Label("Report photo", systemImage: "flag")
+                        }
+                    }
+                    .confirmationDialog(
+                        "Report this photo?",
+                        isPresented: $showReportConfirm,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Report", role: .destructive) {
+                            Task {
+                                try? await SupabaseManager.shared.reportPhoto(
+                                    id: UUID(uuidString: photo.id) ?? UUID(),
+                                    reason: nil
+                                )
+                                await MainActor.run { isReported = true }
+                            }
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("It will be hidden from everyone and reviewed. This can't be undone.")
+                    }
             } else if isLoadingImage {
                 Rectangle()
                     .fill(Color(white: 0.15))
