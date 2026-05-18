@@ -86,6 +86,14 @@ Models/
 3. For anything async, mark the class or method `@MainActor` (EventStore is `@MainActor`).
 4. Time-coupled behaviour (the 2-second join glow, the 3-second post-upload reconciliation) is not yet testable cleanly — would need a scheduler injection. Skip for now.
 
+## Branching & worktrees
+
+**Every new task starts in a fresh, isolated git worktree branched off an up-to-date `main` — not via `git checkout -b` on whatever branch is currently checked out.**
+
+Use the superpowers **`using-git-worktrees`** skill (prefer the harness's native worktree tool over manual `git worktree add`), and **`finishing-a-development-branch`** to land the PR and clean up.
+
+Why this is mandatory here: this repo frequently has multiple launch tasks in flight with uncommitted working-tree changes and feature branches that are ahead of `main`. Branching off the current branch in that state silently drags unrelated commits and dirty files into the new branch, which then requires a rebase + force-push to untangle (a destructive op that gets blocked). A worktree off `main` makes both failure modes structurally impossible: the parent is clean `main`, and unrelated working-tree edits stay in the other directory. Never `git checkout -b` from a dirty or ahead-of-`main` branch as a shortcut.
+
 ## Build & Compile Verification
 
 - **`xcodebuild build` against the iOS simulator is allowed and encouraged** after non-trivial Swift changes — catch errors before the developer's next device build. Filter output aggressively (`grep -E "error:|BUILD"`) to avoid burning context on the verbose default output.
