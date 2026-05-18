@@ -23,7 +23,7 @@ extension SupabaseManager {
     /// Upload a photo: storage object first, then the photos row. The row
     /// denormalises the photographer's display name into `captured_by` so
     /// the reveal flow doesn't have to join `profiles`.
-    func uploadPhoto(image: Data, eventId: UUID, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
+    func uploadPhoto(image: Data, eventId: UUID, clientUploadId: UUID? = nil, width: Int? = nil, height: Int? = nil) async throws -> PhotoModel {
         guard let userId = currentUser?.id else {
             debugLog("❌ [uploadPhoto] User not authenticated")
             throw SupabaseError.userNotAuthenticated
@@ -38,7 +38,9 @@ extension SupabaseManager {
             debugLog("⚠️ Could not fetch display name, using 'Unknown'")
         }
 
-        let photoId = UUID()
+        // Stable across retries when a clientUploadId is supplied so the
+        // storage path and row id don't change between attempts.
+        let photoId = clientUploadId ?? UUID()
         let fileName = "\(eventId.uuidString)/\(photoId.uuidString).jpg"
 
         debugLog("📤 Uploading \(image.count / 1024)KB to \(eventId.uuidString.prefix(8)) by \(capturedBy)...")
@@ -50,7 +52,7 @@ extension SupabaseManager {
                 data: image,
                 options: FileOptions(
                     contentType: "image/jpeg",
-                    upsert: false
+                    upsert: true
                 )
             )
 
@@ -65,12 +67,13 @@ extension SupabaseManager {
             width: width,
             height: height,
             uploadStatus: "uploaded",
-            isFlagged: false
+            isFlagged: false,
+            clientUploadId: clientUploadId
         )
 
         try await client
             .from("photos")
-            .insert(photo)
+            .upsert(photo, onConflict: "client_upload_id", ignoreDuplicates: true)
             .execute()
 
         return photo

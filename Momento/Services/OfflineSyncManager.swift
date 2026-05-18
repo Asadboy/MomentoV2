@@ -180,17 +180,27 @@ class OfflineSyncManager: ObservableObject {
         cleanupCompletedUploads()
     }
     
+    /// Atomically transitions a queued photo pending/failed -> uploading.
+    /// Runs on the MainActor, which is the single serialization domain for
+    /// all queue mutations, so a photo can be claimed for upload exactly
+    /// once even when the immediate detached upload, processQueue, and
+    /// retryFailedUploads race. Returns false if the photo is gone, already
+    /// uploading/completed, or out of retries.
+    @MainActor
+    private func claimForUpload(_ photoId: UUID) -> Bool {
+        guard let idx = queue.firstIndex(where: { $0.id == photoId }) else { return false }
+        let status = queue[idx].status
+        guard status == .pending || status == .failed else { return false }
+        guard queue[idx].retryCount < maxRetries else { return false }
+        queue[idx].status = .uploading
+        queue[idx].lastAttemptAt = Date()
+        activeUploads += 1
+        saveQueue()
+        return true
+    }
+
     /// Upload a specific queued photo
     private func uploadQueuedPhoto(_ photo: QueuedPhoto) async {
-        guard let index = queue.firstIndex(where: { $0.id == photo.id }) else {
-            return
-        }
-        
-        // Skip if already uploading or completed
-        if queue[index].status == .uploading || queue[index].status == .completed {
-            return
-        }
-        
         // Check retry limit
         if photo.retryCount >= maxRetries {
             await MainActor.run {
@@ -234,16 +244,13 @@ class OfflineSyncManager: ObservableObject {
             }
         }
 
-        // Update status to uploading
-        await MainActor.run {
-            if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
-                queue[idx].status = .uploading
-                queue[idx].lastAttemptAt = Date()
-                activeUploads += 1
-                saveQueue()
-            }
+        // Atomically claim this photo for upload. Exactly one caller wins.
+        let claimed = await claimForUpload(photo.id)
+        guard claimed else {
+            debugLog("⏭️ Upload skipped — already claimed/ineligible: \(photo.id.uuidString.prefix(8))")
+            return
         }
-        
+
         do {
             // Load already-compressed image data directly
             guard let imageData = try? Data(contentsOf: photo.localFileURL) else {
@@ -251,7 +258,7 @@ class OfflineSyncManager: ObservableObject {
             }
             
             // Upload to Supabase (already compressed, don't re-compress)
-            _ = try await supabaseManager.uploadPhoto(image: imageData, eventId: photo.eventId)
+            _ = try await supabaseManager.uploadPhoto(image: imageData, eventId: photo.eventId, clientUploadId: photo.id)
             
             // Mark as completed
             await MainActor.run {
