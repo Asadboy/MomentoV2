@@ -152,13 +152,13 @@ Add each data type below. For every one: **Linked to the user's identity = Yes**
 | ASC category | Data type | Purposes to tick |
 |---|---|---|
 | Contact Info | **Email Address** (from Sign in with Apple/Google; Hide-My-Email relay supported) | App Functionality |
-| Contact Info | **Name** (user-chosen display name, shown to event members) | App Functionality |
 | User Content | **Photos or Videos** (the shots) | App Functionality |
 | User Content | **Other User Content** (optional profile photo) | App Functionality |
-| Identifiers | **User ID** (internal account id; also PostHog/Sentry id) | App Functionality, Analytics |
-| Usage Data | **Product Interaction** (PostHog events) | Analytics |
+| Identifiers | **User ID** (internal account UUID + user-chosen display name / screen name, shown to event members; both also sent to PostHog/Sentry as the identity) | App Functionality, Analytics |
+| Usage Data | **Product Interaction** (PostHog events — anonymous IDs/counts only, no user-typed free text) | Analytics |
 | Diagnostics | **Crash Data** (Sentry) | App Functionality |
 | Diagnostics | **Performance Data** (Sentry) | App Functionality |
+| Diagnostics | **Other Diagnostic Data** (PostHog `error_surfaced` — error kind/type + message truncated to 200 chars) | App Functionality, Analytics |
 
 Not collected (do **not** add): Location, Contacts, Health, Financial info,
 Browsing history, Search history, Sensitive info, Microphone, Purchases
