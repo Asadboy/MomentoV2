@@ -70,16 +70,16 @@ auto-hide-after-threshold + best-effort email notification. **No user-to-user bl
   left as-is (out of scope to rip out) but `reportPhoto` does not depend on them.
 - **`AFTER INSERT` trigger on `photo_reports`:** count distinct `reporter_id` for the
   `photo_id`; if `>= threshold` set `photos.hidden_at = now()` (idempotent — only set if
-  currently null). Threshold default **2**, as a SQL constant/comment so it is trivially
-  tunable. This makes objectionable content self-remove within seconds → satisfies 1.2(c)
-  without a human in the loop. SECURITY DEFINER, `search_path = ''`, fully-qualified, matching
-  the project's established hardening pattern.
-- **Email notification (best-effort, decoupled):** a Supabase Database Webhook on
-  `photo_reports` INSERT → Edge Function that sends an email to the operator. This is
-  **decoupled from and non-blocking for** the auto-hide trigger — email-infra failure must
-  never prevent the compliance-critical auto-hide. If no transactional-email path is available
-  at implementation time, ship the auto-hide + a `photo_reported` PostHog event and defer the
-  email to v1.1 (see Open Dependencies).
+  currently null). Threshold default **1** (a single report hides the photo for everyone,
+  pending operator review — appropriate for small private events), as a SQL constant/comment
+  so it is trivially tunable. This makes objectionable content self-remove within seconds →
+  satisfies 1.2(c) without a human in the loop. SECURITY DEFINER, `search_path = ''`,
+  fully-qualified, matching the project's established hardening pattern.
+- **Email notification — DEFERRED to v1.1.** v1.0 ships the auto-hide trigger plus a
+  `photo_reported` PostHog event for operator visibility. The Supabase Database Webhook →
+  Edge Function email notification is explicitly out of scope for this build (operator will
+  set up a transactional-email provider post-submission). The auto-hide is the
+  compliance-critical leg and is independent of email, so deferral carries no 1.2 risk.
 
 ### Client
 
@@ -118,8 +118,8 @@ auto-hide-after-threshold + best-effort email notification. **No user-to-user bl
    the closed-group invite model and that every photo has an in-app Report action which
    auto-hides content on report and notifies the operator.
 
-3. Provide a transactional-email path (Resend / Postmark / SMTP API key) for the Edge Function,
-   or accept the v1.1 deferral of the email leg.
+3. Post-v1.0: stand up a transactional-email provider (Resend / Postmark / SMTP) and add the
+   Database Webhook → Edge Function email notification (deferred from this build).
 
 ---
 
