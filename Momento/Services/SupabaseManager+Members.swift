@@ -67,6 +67,20 @@ extension SupabaseManager {
         var memberShots = results
         debugLog("[MembersWithShots] Event \(eventId.uuidString.prefix(8)): \(members.count) members, \(memberShots.count) with profiles")
 
+        // A member whose profile fetch fails is dropped from the roster, which
+        // looks identical to "friend never joined" on the lobby. Make that
+        // visible in PostHog instead of silent.
+        if memberShots.count < members.count {
+            AnalyticsManager.shared.trackError(
+                kind: "lobby_member_profile_missing",
+                context: [
+                    "event_id": eventId.uuidString,
+                    "members": members.count,
+                    "with_profiles": memberShots.count
+                ]
+            )
+        }
+
         memberShots.sort { a, b in
             if a.userId == currentUserId.uuidString { return true }
             if b.userId == currentUserId.uuidString { return false }
