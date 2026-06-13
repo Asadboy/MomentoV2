@@ -140,6 +140,9 @@ final class EventStore: ObservableObject {
                     h.localPhotos = prev.localPhotos
                     h.userPhotoCount = prev.userPhotoCount
                     h.userHasCompletedReveal = prev.userHasCompletedReveal
+                    // Carry the last-known roster so a failed re-hydration
+                    // degrades to stale dots instead of an empty lobby.
+                    h.members = prev.members
                 }
                 if RevealStateManager.shared.hasCompletedReveal(for: event.id) {
                     h.userHasCompletedReveal = true
@@ -245,7 +248,7 @@ final class EventStore: ObservableObject {
     }
 
     private func hydrateMembers(loaded: [Event]) async {
-        let results = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
+        let results = await withTaskGroup(of: (String, [MemberWithShots]?).self) { group in
             for event in loaded {
                 // Skip revealed-and-completed events; they don't need fresh member dots.
                 let h = hydratedEvents.first { $0.id == event.id }
@@ -253,16 +256,35 @@ final class EventStore: ObservableObject {
                 guard !alreadyDone else { continue }
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let members = (try? await self.api.getEventMembersWithShots(eventId: eventUUID)) ?? []
-                    return (event.id, members)
+                    await self.fetchRoster(eventId: eventUUID, eventStringId: event.id)
                 }
             }
-            var out: [(String, [MemberWithShots])] = []
+            var out: [(String, [MemberWithShots]?)] = []
             for await r in group { out.append(r) }
             return out
         }
         for (id, members) in results {
+            guard let members else { continue } // fetch failed; keep last-known roster
             updateHydrated(id) { $0.members = members }
+        }
+    }
+
+    /// Fetch the lobby roster for one event. Returns nil on failure so callers
+    /// can keep the last-known roster instead of blanking the lobby — the bug
+    /// class behind the beta "lobby only shows me" report was invisible
+    /// precisely because these errors were swallowed, so they now also fire
+    /// trackError for PostHog visibility.
+    private func fetchRoster(eventId: UUID, eventStringId: String) async -> (String, [MemberWithShots]?) {
+        do {
+            return (eventStringId, try await api.getEventMembersWithShots(eventId: eventId))
+        } catch {
+            debugLog("Roster fetch failed for \(eventStringId): \(error)")
+            AnalyticsManager.shared.trackError(
+                kind: "lobby_roster_fetch_failed",
+                error: error,
+                context: ["event_id": eventStringId]
+            )
+            return (eventStringId, nil)
         }
     }
 
@@ -310,19 +332,19 @@ final class EventStore: ObservableObject {
             }
         }
 
-        let memberResults = await withTaskGroup(of: (String, [MemberWithShots]).self) { group in
+        let memberResults = await withTaskGroup(of: (String, [MemberWithShots]?).self) { group in
             for event in snapshot where event.currentState() == .live || event.currentState() == .upcoming {
                 guard let eventUUID = UUID(uuidString: event.id) else { continue }
                 group.addTask {
-                    let members = (try? await self.api.getEventMembersWithShots(eventId: eventUUID)) ?? []
-                    return (event.id, members)
+                    await self.fetchRoster(eventId: eventUUID, eventStringId: event.id)
                 }
             }
-            var out: [(String, [MemberWithShots])] = []
+            var out: [(String, [MemberWithShots]?)] = []
             for await r in group { out.append(r) }
             return out
         }
         for (id, members) in memberResults {
+            guard let members else { continue } // fetch failed; keep last-known roster
             updateHydrated(id) { $0.members = members }
         }
     }

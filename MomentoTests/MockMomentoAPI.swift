@@ -32,6 +32,7 @@ final class MockMomentoAPI: MomentoAPI {
     var totalLikeCounts: [UUID: Int] = [:]
 
     var membersWithShots: [UUID: [MemberWithShots]] = [:]
+    var membersWithShotsError: Error?
 
     // MARK: - Call tracking
 
@@ -72,6 +73,7 @@ final class MockMomentoAPI: MomentoAPI {
 
     func getEventMembersWithShots(eventId: UUID) async throws -> [MemberWithShots] {
         getEventMembersWithShotsCallCount += 1
+        if let e = membersWithShotsError { throw e }
         return membersWithShots[eventId] ?? []
     }
 

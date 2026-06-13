@@ -326,6 +326,53 @@ final class EventStoreTests: XCTestCase {
         XCTAssertNil(store.errorMessage)
     }
 
+    // MARK: - Lobby roster error resilience
+
+    private func loadOneLiveEventWithRoster(now: Date) async -> UUID {
+        let id = UUID()
+        api.myEvents = [
+            .test(
+                id: id,
+                startsAt: now.addingTimeInterval(-3600),
+                endsAt: now.addingTimeInterval(3600),
+                releaseAt: now.addingTimeInterval(7200)
+            )
+        ]
+        api.membersWithShots = [
+            id: [MemberWithShots(userId: "u1", displayName: "Asad", avatarUrl: nil, shotsTaken: 3)]
+        ]
+        await store.loadEvents()
+        return id
+    }
+
+    func test_refreshTick_rosterFetchFailure_keepsPreviousMembers() async {
+        let now = Date()
+        _ = await loadOneLiveEventWithRoster(now: now)
+        XCTAssertEqual(store.hydratedEvents.first?.members.count, 1)
+
+        api.membersWithShotsError = NSError(domain: "test.network", code: 1)
+        await store.refreshTick(at: now)
+
+        XCTAssertEqual(
+            store.hydratedEvents.first?.members.count, 1,
+            "a transient roster fetch failure must not blank the lobby"
+        )
+    }
+
+    func test_loadEvents_rosterFetchFailure_keepsPreviousMembers() async {
+        let now = Date()
+        _ = await loadOneLiveEventWithRoster(now: now)
+        XCTAssertEqual(store.hydratedEvents.first?.members.count, 1)
+
+        api.membersWithShotsError = NSError(domain: "test.network", code: 1)
+        await store.loadEvents()
+
+        XCTAssertEqual(
+            store.hydratedEvents.first?.members.count, 1,
+            "a roster fetch failure during reload must not blank the lobby"
+        )
+    }
+
     // MARK: - currentUserId proxy
 
     func test_currentUserId_proxiesFromAPI() {
