@@ -103,7 +103,7 @@ Why this is mandatory here: this repo frequently has multiple launch tasks in fl
 ## Backend (Supabase)
 
 - Project: **Momento** (`thnbjfcmawwaxvihggjm`, eu-west-1)
-- Schema in `Supabase/migrations/`. The `events` table columns are: `id, name, creator_id, join_code, release_at, created_at, starts_at, ends_at, is_deleted, member_limit`.
+- Schema in `Supabase/migrations/`. As of 2026-06-13 this is a **single baseline** (`20260613000000_baseline_schema.sql`) reconstructed from live prod; the 26 historical files are in `Supabase/_migrations_archive/` (out of the CLI's path, do not move back). New schema changes go in **new** files after the baseline, applied via the Supabase MCP (`apply_migration`) — never edit the baseline. The `events` table columns are: `id, name, creator_id, join_code, release_at, created_at, starts_at, ends_at, is_deleted, member_limit`.
 - `member_count` / `photo_count` are **not** columns — they're hydrated client-side via `getEventMemberCount` / `getEventPhotoCount` and stored on the `Event` struct only.
 - When changing the schema, prefer creating a new file under `Supabase/migrations/` and apply it via the Supabase MCP (`apply_migration`).
 - RLS gotcha: cross-table subqueries in policies can deadlock when chained (events ↔ event_members). See `20260511150000_drop_cross_table_cap_from_rls.sql` for the history. Prefer SECURITY DEFINER functions or BEFORE INSERT triggers for cap enforcement.
