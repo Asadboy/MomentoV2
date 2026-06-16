@@ -110,29 +110,32 @@ extension SupabaseManager {
 
     // MARK: - Avatar upload
 
-    /// Upload a JPEG avatar for the current user. Path is fixed at
-    /// `<userId>/avatar.jpg` so replacements overwrite in place; the
-    /// returned URL embeds the profile's `updated_at` as a cache-buster.
+    /// Upload a JPEG avatar for the current user. Each upload goes to a fresh
+    /// `<userId>/<uuid>.jpg` path and the new public URL is written to
+    /// `profiles.avatar_url`.
     @discardableResult
     func uploadAvatar(jpegData: Data) async throws -> String {
         guard let userId = currentUser?.id else {
             throw SupabaseError.userNotAuthenticated
         }
 
-        // PostgreSQL's auth.uid()::text returns the UUID in lowercase,
-        // but Swift's UUID.uuidString returns uppercase. The avatars
-        // bucket RLS policies compare them as strings, so an uppercase
-        // path makes every upload fail RLS silently. Lowercase to match.
-        let path = "\(userId.uuidString.lowercased())/avatar.jpg"
+        // PostgreSQL's auth.uid()::text returns the UUID in lowercase, but
+        // Swift's UUID.uuidString is uppercase. The avatars RLS policies
+        // compare the folder segment to auth.uid() as strings, so the folder
+        // must be the lowercased user id to match.
+        let folder = userId.uuidString.lowercased()
 
-        // First-time upload uses INSERT; if the user already has an
-        // avatar, remove it first then re-upload. This avoids upsert's
-        // separate code path on the storage server, which appears to
-        // hit an RLS check we couldn't reproduce as either authenticated
-        // OR anon roles in direct SQL.
-        _ = try? await client.storage
-            .from("avatars")
-            .remove(paths: [path])
+        // Use a UNIQUE filename per upload rather than a fixed
+        // `<userId>/avatar.jpg`. Overwriting in place on the avatars bucket —
+        // via upsert OR remove-then-insert — trips a storage-server row-level
+        // security check that we (and the original authors) could not resolve
+        // even with the owner/folder matching the policies. The symptom was
+        // users getting stuck on "resource already exists" or "new row violates
+        // row-level security policy" and being unable to change their photo. A
+        // brand-new path is a plain INSERT, which `avatars_owner_insert` allows
+        // (it's how the very first avatar uploads), so it always succeeds. The
+        // changing URL also self-busts any image cache.
+        let path = "\(folder)/\(UUID().uuidString.lowercased()).jpg"
 
         _ = try await client.storage
             .from("avatars")
@@ -144,9 +147,6 @@ extension SupabaseManager {
 
         let publicURL = try client.storage.from("avatars").getPublicURL(path: path).absoluteString
 
-        // Touch updated_at so any cached URL gets invalidated. The
-        // `update_profiles_updated_at` trigger handles this server-side
-        // on any UPDATE, so writing avatar_url is enough.
         struct AvatarUpdate: Encodable { let avatar_url: String }
         try await client
             .from("profiles")
@@ -154,8 +154,27 @@ extension SupabaseManager {
             .eq("id", value: userId.uuidString)
             .execute()
 
+        // Best-effort cleanup of the user's previous avatar object(s) so the
+        // bucket doesn't accumulate orphans. Non-fatal: the new avatar is
+        // already live, and the remove can legitimately fail (the same bucket
+        // RLS quirk) without affecting the user.
+        Task { [weak self] in
+            await self?.pruneOldAvatars(folder: folder, keep: path)
+        }
+
         debugLog("✅ Avatar uploaded")
         return publicURL
+    }
+
+    /// Best-effort removal of every object in the user's avatar folder except
+    /// the one just uploaded. Silently tolerates failures.
+    private func pruneOldAvatars(folder: String, keep: String) async {
+        guard let files = try? await client.storage.from("avatars").list(path: folder) else { return }
+        let stale = files
+            .map { "\(folder)/\($0.name)" }
+            .filter { $0 != keep }
+        guard !stale.isEmpty else { return }
+        _ = try? await client.storage.from("avatars").remove(paths: stale)
     }
 
     /// Remove the current user's avatar.
