@@ -259,24 +259,40 @@ struct EventHeroView: View {
             memberAvatar(member)
                 .accessibilityHidden(true)  // covered by the row-level label
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
 
-            HStack(spacing: dotSpacing) {
-                ForEach(0..<totalShots, id: \.self) { idx in
-                    HeroDot(
-                        isFilled: idx < member.shotsTaken,
-                        isMostRecent: idx == member.shotsTaken - 1,
-                        isLive: eventState == .live,
-                        isRevealReady: isRevealCTA,
-                        size: dotSize
-                    )
-                    .accessibilityHidden(true)  // ditto — aggregate label
-                }
+            // The 10 dots are fixed-size circles, so at full size (22pt) the
+            // avatar + row can be wider than the card's content area on
+            // narrower phones (iPhone 15 Pro / SE). When that happens the card
+            // is forced past its 16pt side margins and *stays* there (the dots
+            // can't compress). ViewThatFits keeps the dots full-size where
+            // there's room and steps them down only as needed, so the card
+            // always stays within its margins on every device width.
+            ViewThatFits(in: .horizontal) {
+                dotsRow(member, size: dotSize, spacing: dotSpacing)
+                dotsRow(member, size: 19, spacing: 7)
+                dotsRow(member, size: 16, spacing: 6)
+                dotsRow(member, size: 13, spacing: 5)
             }
+            .accessibilityHidden(true)  // aggregate label on the row
         }
         .padding(.vertical, 14)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(member.name), \(member.shotsTaken) of \(totalShots) shots taken")
+    }
+
+    private func dotsRow(_ member: MemberWithShots, size: CGFloat, spacing: CGFloat) -> some View {
+        HStack(spacing: spacing) {
+            ForEach(0..<totalShots, id: \.self) { idx in
+                HeroDot(
+                    isFilled: idx < member.shotsTaken,
+                    isMostRecent: idx == member.shotsTaken - 1,
+                    isLive: eventState == .live,
+                    isRevealReady: isRevealCTA,
+                    size: size
+                )
+            }
+        }
     }
 
     @ViewBuilder
