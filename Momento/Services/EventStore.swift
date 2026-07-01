@@ -196,7 +196,9 @@ final class EventStore: ObservableObject {
                     let p = (try? await self.api.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
                     var u: Int? = nil
                     if let uid = currentUserId, event.currentState() == .live {
-                        u = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: uid)) ?? 0
+                        // nil on failure (not 0): a thrown fetch must keep the
+                        // optimistic count, not zero the user's dots offline.
+                        u = try? await self.api.getPhotoCount(eventId: eventUUID, userId: uid)
                     }
                     return (event.id, m, p, u)
                 }
@@ -318,7 +320,8 @@ final class EventStore: ObservableObject {
                     let p = (try? await self.api.getEventPhotoCount(eventId: eventUUID)) ?? event.photoCount
                     var u: Int? = nil
                     if let uid = currentUserId, event.currentState() == .live {
-                        u = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: uid)) ?? 0
+                        // nil on failure (not 0) — see hydrateActive.
+                        u = try? await self.api.getPhotoCount(eventId: eventUUID, userId: uid)
                     }
                     return (event.id, m, p, u)
                 }
@@ -465,7 +468,10 @@ final class EventStore: ObservableObject {
                 guard let self else { return }
                 await self.scheduler.sleep(seconds: 3.0)
                 guard let userId = self.api.currentUserId else { return }
-                let realCount = (try? await self.api.getPhotoCount(eventId: eventUUID, userId: userId)) ?? 0
+                // If the fetch fails (offline capture), skip reconciliation —
+                // overwriting with 0 would wipe the optimistic dots for shots
+                // that are safely queued.
+                guard let realCount = try? await self.api.getPhotoCount(eventId: eventUUID, userId: userId) else { return }
                 await MainActor.run {
                     self.updateHydrated(event.id) { h in
                         h.userPhotoCount = realCount
@@ -483,6 +489,12 @@ final class EventStore: ObservableObject {
             }
         } catch {
             debugLog("❌ Failed to save photo: \(error)")
+            AnalyticsManager.shared.trackError(
+                kind: "photo_save_failed",
+                error: error,
+                context: ["event_id": event.id]
+            )
+            errorMessage = "Couldn't save that shot. Free up some storage and try again."
         }
     }
 }

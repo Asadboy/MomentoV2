@@ -22,22 +22,72 @@ enum UploadStatus: String, Codable {
 struct QueuedPhoto: Codable, Identifiable {
     let id: UUID
     let eventId: UUID
-    let localFileURL: URL
+    /// File name inside the manager's queue directory. Stored relative, not
+    /// as an absolute URL — iOS changes the app container UUID on every app
+    /// update, so a persisted absolute path goes stale (and used to drop the
+    /// entire queue as "stale entries" after any update).
+    let fileName: String
     var status: UploadStatus
     var retryCount: Int
     let queuedAt: Date
     var lastAttemptAt: Date?
     var errorMessage: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case eventId = "event_id"
-        case localFileURL = "local_file_url"
+        case fileName = "file_name"
+        case legacyLocalFileURL = "local_file_url"
         case status
         case retryCount = "retry_count"
         case queuedAt = "queued_at"
         case lastAttemptAt = "last_attempt_at"
         case errorMessage = "error_message"
+    }
+
+    init(id: UUID, eventId: UUID, fileName: String, status: UploadStatus,
+         retryCount: Int, queuedAt: Date, lastAttemptAt: Date? = nil,
+         errorMessage: String? = nil) {
+        self.id = id
+        self.eventId = eventId
+        self.fileName = fileName
+        self.status = status
+        self.retryCount = retryCount
+        self.queuedAt = queuedAt
+        self.lastAttemptAt = lastAttemptAt
+        self.errorMessage = errorMessage
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        eventId = try c.decode(UUID.self, forKey: .eventId)
+        if let name = try c.decodeIfPresent(String.self, forKey: .fileName) {
+            fileName = name
+        } else {
+            // Legacy rows persisted an absolute URL. The file itself survives
+            // app updates (iOS migrates Documents); only the container prefix
+            // changes — so the file name is still valid.
+            let legacyURL = try c.decode(URL.self, forKey: .legacyLocalFileURL)
+            fileName = legacyURL.lastPathComponent
+        }
+        status = try c.decode(UploadStatus.self, forKey: .status)
+        retryCount = try c.decode(Int.self, forKey: .retryCount)
+        queuedAt = try c.decode(Date.self, forKey: .queuedAt)
+        lastAttemptAt = try c.decodeIfPresent(Date.self, forKey: .lastAttemptAt)
+        errorMessage = try c.decodeIfPresent(String.self, forKey: .errorMessage)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(eventId, forKey: .eventId)
+        try c.encode(fileName, forKey: .fileName)
+        try c.encode(status, forKey: .status)
+        try c.encode(retryCount, forKey: .retryCount)
+        try c.encode(queuedAt, forKey: .queuedAt)
+        try c.encodeIfPresent(lastAttemptAt, forKey: .lastAttemptAt)
+        try c.encodeIfPresent(errorMessage, forKey: .errorMessage)
     }
 }
 
@@ -101,6 +151,11 @@ class OfflineSyncManager: ObservableObject {
         return mutableDir
     }
 
+    /// Resolve a queued photo's file against the *current* container path.
+    func localFileURL(for photo: QueuedPhoto) -> URL? {
+        queueDirectory?.appendingPathComponent(photo.fileName)
+    }
+
     private init() {
         loadQueue()
         setupNetworkMonitoring()
@@ -113,11 +168,11 @@ class OfflineSyncManager: ObservableObject {
         // Save image to local storage (compressed & resized)
         let photoId = UUID()
         let fileURL = try saveImageToLocal(image, photoId: photoId)
-        
+
         let queuedPhoto = QueuedPhoto(
             id: photoId,
             eventId: eventId,
-            localFileURL: fileURL,
+            fileName: fileURL.lastPathComponent,
             status: .pending,
             retryCount: 0,
             queuedAt: Date()
@@ -244,7 +299,7 @@ class OfflineSyncManager: ObservableObject {
                                 saveQueue()
                             }
                         }
-                        try? FileManager.default.removeItem(at: photo.localFileURL)
+                        removeLocalFile(for: photo)
                         return
                     }
                     if existsResult == nil {
@@ -263,14 +318,7 @@ class OfflineSyncManager: ObservableObject {
                         return
                     }
                     debugLog("📷 Photo limit reached for event \(photo.eventId.uuidString.prefix(8)), dropping queued photo")
-                    await MainActor.run {
-                        if let idx = queue.firstIndex(where: { $0.id == photo.id }) {
-                            queue[idx].status = .failed
-                            queue[idx].errorMessage = "Photo limit reached — this photo was not uploaded"
-                            saveQueue()
-                        }
-                    }
-                    try? FileManager.default.removeItem(at: photo.localFileURL)
+                    await removeTerminalEntry(photo, reason: "over_limit_precheck")
                     return
                 }
             } catch {
@@ -287,7 +335,8 @@ class OfflineSyncManager: ObservableObject {
 
         do {
             // Load already-compressed image data directly
-            guard let imageData = try? Data(contentsOf: photo.localFileURL) else {
+            guard let fileURL = localFileURL(for: photo),
+                  let imageData = try? Data(contentsOf: fileURL) else {
                 throw NSError(domain: "OfflineSyncManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to load image"])
             }
             
@@ -304,39 +353,55 @@ class OfflineSyncManager: ObservableObject {
             }
             
             // Delete local file
-            try? FileManager.default.removeItem(at: photo.localFileURL)
-            
+            removeLocalFile(for: photo)
+
             debugLog("✅ Photo \(photo.id.uuidString.prefix(8)) uploaded!")
-            
+
         } catch {
             let isLimit = isPhotoLimitError(error)
+            if isLimit {
+                // Terminal — the server will never accept this photo, so a
+                // lingering .failed row would only make the failure banner's
+                // Retry loop forever (retryFailedUploads resets retryCount).
+                await MainActor.run { activeUploads = max(0, activeUploads - 1) }
+                await removeTerminalEntry(photo, reason: "over_limit_server")
+                debugLog("❌ Upload rejected: server-side photo limit reached")
+                return
+            }
             await MainActor.run {
                 if let updatedIndex = queue.firstIndex(where: { $0.id == photo.id }) {
                     queue[updatedIndex].status = .failed
-                    if isLimit {
-                        // Terminal failure — retrying won't help, and we
-                        // want the user-facing message to be honest about
-                        // why. Cap retryCount so auto-retry skips this row.
-                        queue[updatedIndex].retryCount = maxRetries
-                        queue[updatedIndex].errorMessage = "Photo limit reached — this shot was not uploaded"
-                    } else {
-                        queue[updatedIndex].retryCount += 1
-                        queue[updatedIndex].errorMessage = error.localizedDescription
-                    }
+                    queue[updatedIndex].retryCount += 1
+                    queue[updatedIndex].errorMessage = error.localizedDescription
                     activeUploads = max(0, activeUploads - 1)
                     saveQueue()
                 }
             }
-
-            if isLimit {
-                // No point keeping the bytes around — server will never
-                // accept them. Mirrors the pre-upload limit-check path.
-                try? FileManager.default.removeItem(at: photo.localFileURL)
-                debugLog("❌ Upload rejected: server-side photo limit reached")
-            } else {
-                debugLog("❌ Upload failed: \(error.localizedDescription)")
-            }
+            debugLog("❌ Upload failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Drop a queue entry the server will never accept (10-shot cap). Keeping
+    /// it as .failed made the failure banner permanent: Retry resurrected the
+    /// row, the pre-check failed it again, forever. Tracked so over-limit
+    /// drops stay visible in PostHog.
+    @MainActor
+    private func removeTerminalEntry(_ photo: QueuedPhoto, reason: String) {
+        removeLocalFile(for: photo)
+        queue.removeAll { $0.id == photo.id }
+        saveQueue()
+        AnalyticsManager.shared.trackError(
+            kind: "shot_dropped_over_limit",
+            context: [
+                "event_id": photo.eventId.uuidString,
+                "reason": reason
+            ]
+        )
+    }
+
+    private func removeLocalFile(for photo: QueuedPhoto) {
+        guard let url = localFileURL(for: photo) else { return }
+        try? FileManager.default.removeItem(at: url)
     }
 
     /// Remove completed uploads from queue
@@ -449,9 +514,13 @@ class OfflineSyncManager: ObservableObject {
                 loadedQueue[index].status = .pending
             }
             
-            // Remove items where local file no longer exists (stale queue entries)
+            // Remove items where local file no longer exists (stale queue
+            // entries). Resolved against the *current* queue directory —
+            // never a persisted absolute path, which goes stale on every
+            // app update.
             let validQueue = loadedQueue.filter { photo in
-                let exists = FileManager.default.fileExists(atPath: photo.localFileURL.path)
+                guard let url = localFileURL(for: photo) else { return false }
+                let exists = FileManager.default.fileExists(atPath: url.path)
                 if !exists {
                     debugLog("🗑️ Removing stale queue entry (file missing): \(photo.id)")
                 }
