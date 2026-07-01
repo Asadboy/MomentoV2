@@ -16,6 +16,7 @@ class FeedRevealViewModel: ObservableObject {
     @Published var revealedStates: [String: Bool] = [:]
     @Published var likedStates: [String: Bool] = [:]
     @Published var isLoading = true
+    @Published var loadFailed = false
     @Published var isLoadingMore = false
     @Published var visiblePhotoIndex: Int = 0
 
@@ -50,6 +51,8 @@ class FeedRevealViewModel: ObservableObject {
     /// Load initial batch of photos with pagination
     func loadPhotos(eventId: String) async {
         currentEventId = eventId
+        isLoading = true
+        loadFailed = false
         let supabaseManager = SupabaseManager.shared
 
         do {
@@ -96,6 +99,12 @@ class FeedRevealViewModel: ObservableObject {
             AnalyticsManager.shared.track(.revealStarted, properties: revealProps)
         } catch {
             debugLog("❌ Failed to load photos: \(error)")
+            AnalyticsManager.shared.trackError(
+                kind: "reveal_load_failed",
+                error: error,
+                context: ["event_id": eventId]
+            )
+            loadFailed = true
             isLoading = false
         }
     }
@@ -202,6 +211,8 @@ struct FeedRevealView: View {
 
             if viewModel.isLoading {
                 loadingView
+            } else if viewModel.loadFailed {
+                errorView
             } else if viewModel.photos.isEmpty {
                 emptyView
             } else {
@@ -220,6 +231,28 @@ struct FeedRevealView: View {
                 case .complete:
                     completeScreen
                         .transition(.opacity)
+                }
+            }
+
+            // This is a fullScreenCover with no swipe-down dismiss, so every
+            // non-content state needs an explicit way out — a hung request or
+            // a failed load must never strand the user on a black screen.
+            if viewModel.isLoading || viewModel.loadFailed || viewModel.photos.isEmpty {
+                VStack {
+                    HStack {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white.opacity(0.5))
+                                .frame(width: 32, height: 32)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    Spacer()
                 }
             }
         }
@@ -257,6 +290,32 @@ struct FeedRevealView: View {
             Text("No shots to reveal")
                 .font(.title2)
                 .foregroundColor(.white)
+        }
+    }
+
+    private var errorView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.system(size: 48))
+                .foregroundColor(.white.opacity(0.5))
+            Text("Couldn't load your shots")
+                .font(.title2)
+                .foregroundColor(.white)
+            Text("Check your connection and try again.")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+
+            Button {
+                Task { await viewModel.loadPhotos(eventId: event.id) }
+            } label: {
+                Text("Try Again")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.black)
+                    .frame(width: 180, height: 56)
+                    .background(Color.white)
+                    .cornerRadius(28)
+            }
+            .padding(.top, 12)
         }
     }
 

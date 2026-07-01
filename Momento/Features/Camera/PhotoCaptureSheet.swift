@@ -75,6 +75,15 @@ struct PhotoCaptureSheet: View {
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
+
+                        // Without a dismiss path the card sits over the
+                        // shutter area (and swallows taps) for the rest of
+                        // the session once any transient error fires.
+                        Button("Dismiss") {
+                            cameraController.errorMessage = nil
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
                     }
                     .padding()
                     .background(

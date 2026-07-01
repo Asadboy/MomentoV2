@@ -349,6 +349,11 @@ struct CameraView: View {
         // thumbnail's target dot, *then* decrement, *then* possibly lock.
         let isLastShot = photosRemaining == 1
         nextDotTargetIndex = photoLimit - photosRemaining
+        // Clear any stale error first: the rollback below listens via
+        // onChange(of: errorMessage), which never fires if a second failure
+        // produces the *same* message — leaving isCapturing stuck true and
+        // the shutter dead for the rest of the session.
+        cameraController.errorMessage = nil
         isCapturing = true
         withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
             photosRemaining -= 1
@@ -745,7 +750,17 @@ class CameraController: NSObject, ObservableObject {
     func capturePhoto() {
         guard let photoOutput = photoOutput,
               let session = captureSession,
-              session.isRunning else { return }
+              session.isRunning else {
+            // Fail loudly: a silent return here leaves the caller's shot
+            // reservation un-rolled-back (dead shutter + a falsely filled
+            // dot). Happens when the session is interrupted (phone call,
+            // Control Center camera) — isSessionRunning isn't updated on
+            // interruption, so the button can still be tapped.
+            DispatchQueue.main.async {
+                self.errorMessage = "Camera isn't ready — try again in a moment"
+            }
+            return
+        }
 
         let settings = AVCapturePhotoSettings()
         if photoOutput.supportedFlashModes.contains(.on) && isFlashOn {
