@@ -25,6 +25,11 @@ struct ContentView: View {
 
     @State private var now: Date = .now
 
+    /// fullScreenCover removes the presenting view, so `.task`/`.onAppear`
+    /// re-fire on every cover dismissal. Both launch effects must be one-shot
+    /// or the post-onboarding create action re-presents forever.
+    @State private var didRunLaunchEffects = false
+
     private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     /// Fires every 10s; the store decides whether to actually refresh based on
@@ -70,12 +75,14 @@ struct ContentView: View {
             .toolbar(.hidden, for: .navigationBar)
             .onReceive(timer) { now = $0 }
             .task {
+                guard !didRunLaunchEffects else { return }
+                didRunLaunchEffects = true
                 AnalyticsManager.shared.track(.appOpened, properties: [
                     "has_active_event": store.hydratedEvents.contains { $0.event.currentState(at: now) == .live }
                 ])
+                handleInitialAction()
                 await store.loadEvents()
             }
-            .onAppear(perform: handleInitialAction)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 Task {
                     try? await Task.sleep(nanoseconds: 500_000_000)

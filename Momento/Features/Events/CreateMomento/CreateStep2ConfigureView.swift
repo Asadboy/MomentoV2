@@ -62,7 +62,9 @@ struct CreateStep2ConfigureView: View {
 
                     // Date picker — clean inline style
                     VStack(spacing: 0) {
-                        DatePicker("", selection: $startsAt, displayedComponents: [.date, .hourAndMinute])
+                        // Floor at now: a past start can produce an event that
+                        // is born already ended and reveal-ready with 0 shots.
+                        DatePicker("", selection: $startsAt, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.wheel)
                             .labelsHidden()
                             .colorScheme(.dark)
