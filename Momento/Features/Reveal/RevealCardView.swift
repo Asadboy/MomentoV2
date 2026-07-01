@@ -90,7 +90,14 @@ struct RevealCardView: View {
                 showButtons = false
             }
         }
-        .onDisappear { }
+        .onDisappear {
+            // LazyVStack retains @State for every card that has appeared, so
+            // holding the decoded UIImage (~7MB at 1200px) here accumulates
+            // across the whole reveal — a 50-shot event approaches 400MB and
+            // an OOM kill. Release it; `.task` re-fetches from
+            // ImageCacheManager when the card scrolls back on screen.
+            loadedImage = nil
+        }
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
                 PhotoShareSheet(image: image, eventId: eventId)

@@ -10,12 +10,14 @@ import Supabase
 
 extension SupabaseManager {
 
-    /// Number of photos uploaded to an event.
+    /// Number of photos uploaded to an event. Excludes hidden (reported)
+    /// photos so the count matches what the gallery/reveal actually renders.
     func getEventPhotoCount(eventId: UUID) async throws -> Int {
         try await client
             .from("photos")
             .select("*", head: true, count: .exact)
             .eq("event_id", value: eventId.uuidString)
+            .is("hidden_at", value: nil)
             .execute()
             .count ?? 0
     }
@@ -94,6 +96,10 @@ extension SupabaseManager {
     }
 
     /// Number of photos a specific user has taken in a specific event.
+    /// Deliberately COUNTS hidden (reported) photos: this feeds the 10-shot
+    /// cap and the lobby dots, and a hidden photo still consumed a shot —
+    /// the server-side limit trigger counts all rows, so filtering here
+    /// would let the client believe a shot remains that the server rejects.
     func getPhotoCount(eventId: UUID, userId: UUID) async throws -> Int {
         try await client
             .from("photos")
