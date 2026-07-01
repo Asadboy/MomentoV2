@@ -167,10 +167,12 @@ extension SupabaseManager {
     }
 
     /// Best-effort removal of every object in the user's avatar folder except
-    /// the one just uploaded. Silently tolerates failures.
-    private func pruneOldAvatars(folder: String, keep: String) async {
+    /// the one just uploaded (pass nil to wipe the folder). Avatars live at
+    /// random paths (see uploadAvatar), so removal must always go through a
+    /// list — a fixed "<uid>/avatar.jpg" path matches nothing.
+    private func pruneOldAvatars(folder: String, keep: String?) async {
         guard let files = try? await client.storage.from("avatars").list(path: folder) else { return }
-        let stale = files
+        let stale: [String] = files
             .map { "\(folder)/\($0.name)" }
             .filter { $0 != keep }
         guard !stale.isEmpty else { return }
@@ -183,8 +185,7 @@ extension SupabaseManager {
             throw SupabaseError.userNotAuthenticated
         }
 
-        let path = "\(userId.uuidString.lowercased())/avatar.jpg"
-        _ = try? await client.storage.from("avatars").remove(paths: [path])
+        await pruneOldAvatars(folder: userId.uuidString.lowercased(), keep: nil)
 
         struct AvatarClear: Encodable { let avatar_url: String? }
         try await client
@@ -253,10 +254,11 @@ extension SupabaseManager {
             }
         }
 
-        // Avatar — best-effort, the RPC also cascades via the profile delete.
-        _ = try? await client.storage
-            .from("avatars")
-            .remove(paths: ["\(userId.uuidString.lowercased())/avatar.jpg"])
+        // Avatar — best-effort wipe of the whole folder. Avatars are stored
+        // at random paths, and the object serves from a public URL, so a
+        // missed delete would leave the user's face up after account
+        // deletion (5.1.1(v) / GDPR adjacent).
+        await pruneOldAvatars(folder: userId.uuidString.lowercased(), keep: nil)
 
         try await client.rpc("delete_my_account").execute()
 
