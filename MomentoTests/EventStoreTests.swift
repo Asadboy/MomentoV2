@@ -179,6 +179,52 @@ final class EventStoreTests: XCTestCase {
         // here. A scheduler injection would let us test that path.
     }
 
+    func test_joinedEvent_alreadyOnScreen_doesNotDuplicate() async {
+        // joinEvent succeeds for existing members, so re-scanning the QR of an
+        // event already on the home screen routes back through joinedEvent.
+        let id = UUID()
+        api.myEvents = [.test(
+            id: id,
+            startsAt: Date().addingTimeInterval(-60),
+            endsAt: Date().addingTimeInterval(3600),
+            releaseAt: Date().addingTimeInterval(7200)
+        )]
+        await store.loadEvents()
+
+        let rejoined = Event(id: id.uuidString,
+                             name: "Rejoined",
+                             startsAt: Date().addingTimeInterval(-60),
+                             endsAt: Date().addingTimeInterval(3600),
+                             releaseAt: Date().addingTimeInterval(7200))
+        store.joinedEvent(rejoined)
+
+        XCTAssertEqual(store.hydratedEvents.count, 1, "Re-joining must not append a duplicate HydratedEvent")
+        XCTAssertEqual(store.newlyJoinedEventId, rejoined.id, "The glow should still fire on re-join")
+    }
+
+    func test_loadEvents_survivesDuplicateHydratedEvents() async {
+        // If duplicates ever sneak into hydratedEvents, the next load must
+        // dedupe (previously Dictionary(uniqueKeysWithValues:) trapped here).
+        let id = UUID()
+        let event = Event(id: id.uuidString,
+                          name: "Dup",
+                          startsAt: Date().addingTimeInterval(-60),
+                          endsAt: Date().addingTimeInterval(3600),
+                          releaseAt: Date().addingTimeInterval(7200))
+        store.appendCreatedEvent(event)
+        store.appendCreatedEvent(event)
+        api.myEvents = [.test(
+            id: id,
+            startsAt: Date().addingTimeInterval(-60),
+            endsAt: Date().addingTimeInterval(3600),
+            releaseAt: Date().addingTimeInterval(7200)
+        )]
+
+        await store.loadEvents()
+
+        XCTAssertEqual(store.hydratedEvents.count, 1, "Load should rebuild the list from server truth without crashing")
+    }
+
     func test_markRevealCompleted_setsHydratedFlag() async {
         let id = UUID()
         api.myEvents = [.test(

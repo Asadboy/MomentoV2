@@ -91,6 +91,7 @@
 		C3DBGL012F3A6B1200A1C2D3 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */; };
 		C3EVPR002F6B000000000002 /* EventsScreenPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */; };
 		C3FONT012F5A000000000001 /* RalewayDots-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3FONT002F5A000000000001 /* RalewayDots-Regular.ttf */; };
+		C3PRIV012F5A000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C3PRIV002F5A000000000001 /* PrivacyInfo.xcprivacy */; };
 		C3STACK032F0B000000000002 /* LikedGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3STACK042F0B000000000002 /* LikedGalleryView.swift */; };
 		C3THEME012F3C000000000001 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3THEME002F3C000000000001 /* AppTheme.swift */; };
 /* End PBXBuildFile section */
@@ -195,6 +196,7 @@
 		C3DBGL002F3A6B1200A1C2D3 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		C3EVPR002F6B000000000001 /* EventsScreenPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsScreenPreview.swift; sourceTree = "<group>"; };
 		C3FONT002F5A000000000001 /* RalewayDots-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RalewayDots-Regular.ttf"; sourceTree = "<group>"; };
+		C3PRIV002F5A000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		C3STACK042F0B000000000002 /* LikedGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikedGalleryView.swift; sourceTree = "<group>"; };
 		C3THEME002F3C000000000001 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -290,6 +292,7 @@
 				C3FONTGROUP001 /* Fonts */,
 				C34D444F2F0AA5B70019CA2C /* Assets.xcassets */,
 				C34A39682EDC96D90059FA89 /* Info.plist */,
+				C3PRIV002F5A000000000001 /* PrivacyInfo.xcprivacy */,
 				C34D444C2F0A80760019CA2C /* Momento.entitlements */,
 			);
 			path = Momento;
@@ -611,6 +614,7 @@
 			files = (
 				C34D44502F0AA5B70019CA2C /* Assets.xcassets in Resources */,
 				C3FONT012F5A000000000001 /* RalewayDots-Regular.ttf in Resources */,
+				C3PRIV012F5A000000000001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

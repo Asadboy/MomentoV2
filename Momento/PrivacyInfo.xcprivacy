@@ -66,7 +66,8 @@
 		<dict>
 			<!-- File timestamps: ImageCacheManager reads .creationDate on
 			     cached files to enforce the disk-size limit (LRU eviction).
-			     Reason 0A2A.1 = "Display file timestamps to the user." -->
+			     Reason C617.1 = "Access timestamps of files inside the app
+			     container." -->
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
