@@ -133,7 +133,11 @@ final class EventStore: ObservableObject {
             // Build fresh HydratedEvents, preserving any local-only fields
             // (localPhotos and optimistic userPhotoCount) from the previous
             // hydration if the same event still exists.
-            let previousById = Dictionary(uniqueKeysWithValues: hydratedEvents.map { ($0.id, $0) })
+            // uniquingKeysWith: hydratedEvents can briefly hold duplicates
+            // (e.g. re-joining an event already on screen); keeping the first
+            // beats trapping on Dictionary(uniqueKeysWithValues:).
+            let previousById = Dictionary(hydratedEvents.map { ($0.id, $0) },
+                                          uniquingKeysWith: { first, _ in first })
             let fresh: [HydratedEvent] = loaded.map { event in
                 var h = HydratedEvent(event: event)
                 if let prev = previousById[event.id] {
@@ -361,8 +365,12 @@ final class EventStore: ObservableObject {
     /// reminders, not just created ones.
     func joinedEvent(_ event: Event) {
         newlyJoinedEventId = event.id
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            hydratedEvents.append(HydratedEvent(event: event))
+        // joinEvent succeeds for existing members, so re-scanning the QR of
+        // an event already on screen lands here — glow, but don't duplicate.
+        if !hydratedEvents.contains(where: { $0.id == event.id }) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                hydratedEvents.append(HydratedEvent(event: event))
+            }
         }
         Task { [weak self] in
             guard let self else { return }
