@@ -429,4 +429,108 @@ final class EventStoreTests: XCTestCase {
         api.currentUserId = nil
         XCTAssertNil(store.currentUserId)
     }
+
+    // MARK: - Roll milestones (MilestoneTracker)
+
+    private func makeTracker(suite: String) -> (MilestoneTracker, UserDefaults) {
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        return (MilestoneTracker(defaults: defaults), defaults)
+    }
+
+    func test_milestone_firesOnCrossingHalf_onceOnly() {
+        let (tracker, defaults) = makeTracker(suite: "milestones-half")
+        defer { defaults.removePersistentDomain(forName: "milestones-half") }
+
+        // Baseline observation: below half — never fires.
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 5, total: 40))
+        // Crossing half (20/40) fires exactly once.
+        XCTAssertEqual(tracker.check(eventId: "e1", taken: 21, total: 40), .half)
+        // Re-polling at/above half never re-fires.
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 22, total: 40))
+    }
+
+    func test_milestone_baselineAlreadyPastHalf_neverFires() {
+        let (tracker, defaults) = makeTracker(suite: "milestones-baseline")
+        defer { defaults.removePersistentDomain(forName: "milestones-baseline") }
+
+        // Joining late into an event already past half: baseline only.
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 25, total: 40))
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 26, total: 40))
+        // But the un-crossed FULL threshold still fires later.
+        XCTAssertEqual(tracker.check(eventId: "e1", taken: 40, total: 40), .full)
+    }
+
+    func test_milestone_fullTakesPrecedenceWhenBothCrossedAtOnce() {
+        let (tracker, defaults) = makeTracker(suite: "milestones-both")
+        defer { defaults.removePersistentDomain(forName: "milestones-both") }
+
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 0, total: 20))
+        XCTAssertEqual(tracker.check(eventId: "e1", taken: 20, total: 20), .full)
+    }
+
+    func test_milestone_firedStatePersistsAcrossInstances() {
+        let suite = "milestones-persist"
+        let (tracker, defaults) = makeTracker(suite: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 5, total: 40))
+        XCTAssertEqual(tracker.check(eventId: "e1", taken: 20, total: 40), .half)
+
+        // "Relaunch": new tracker, same defaults. Baseline re-records, and
+        // a later crossing of the already-fired threshold stays silent.
+        let tracker2 = MilestoneTracker(defaults: defaults)
+        XCTAssertNil(tracker2.check(eventId: "e1", taken: 19, total: 40))
+        XCTAssertNil(tracker2.check(eventId: "e1", taken: 21, total: 40))
+    }
+
+    func test_milestone_isPerEvent() {
+        let (tracker, defaults) = makeTracker(suite: "milestones-perevent")
+        defer { defaults.removePersistentDomain(forName: "milestones-perevent") }
+
+        XCTAssertNil(tracker.check(eventId: "e1", taken: 0, total: 20))
+        XCTAssertNil(tracker.check(eventId: "e2", taken: 0, total: 20))
+        XCTAssertEqual(tracker.check(eventId: "e1", taken: 10, total: 20), .half)
+        XCTAssertEqual(tracker.check(eventId: "e2", taken: 10, total: 20), .half)
+    }
+
+    func test_store_firesMilestoneWhenRefreshCrossesHalf() async {
+        let suite = "milestones-store"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let now = Date()
+        let id = UUID()
+        api.myEvents = [.test(
+            id: id,
+            startsAt: now.addingTimeInterval(-3600),
+            endsAt: now.addingTimeInterval(3600),
+            releaseAt: now.addingTimeInterval(7200)
+        )]
+        api.membersWithShots[id] = [
+            MemberWithShots(userId: "a", displayName: "A", avatarUrl: nil, shotsTaken: 4),
+            MemberWithShots(userId: "b", displayName: "B", avatarUrl: nil, shotsTaken: 5)
+        ]
+        let store = EventStore(api: api, milestones: MilestoneTracker(defaults: defaults))
+
+        // Baseline: 9/20 — below half, records baseline, no fire.
+        await store.loadEvents()
+        XCTAssertNil(store.milestoneFire)
+
+        // Refresh crosses half (11/20).
+        api.membersWithShots[id] = [
+            MemberWithShots(userId: "a", displayName: "A", avatarUrl: nil, shotsTaken: 5),
+            MemberWithShots(userId: "b", displayName: "B", avatarUrl: nil, shotsTaken: 6)
+        ]
+        await store.refreshTick(at: now)
+
+        XCTAssertEqual(store.milestoneFire?.milestone, .half)
+        XCTAssertEqual(store.milestoneFire?.eventId, id.uuidString)
+
+        // Dismiss + further refresh: silent.
+        store.clearMilestoneFire()
+        await store.refreshTick(at: now)
+        XCTAssertNil(store.milestoneFire)
+    }
 }
