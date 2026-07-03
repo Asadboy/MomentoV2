@@ -35,7 +35,7 @@ struct ProfileSetupView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppBackground()
 
             VStack(spacing: 36) {
                 Spacer()

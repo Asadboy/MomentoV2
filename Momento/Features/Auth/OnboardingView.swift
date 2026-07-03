@@ -17,7 +17,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.Colors.bg.ignoresSafeArea()
 
             TabView(selection: $currentPage) {
                 OnboardingScreen1().tag(0)
@@ -81,7 +81,7 @@ struct OnboardingScreen1: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.Colors.bg.ignoresSafeArea()
 
             // Real photo background — very dark, blurred, just texture
             Image("ob_bg")
@@ -183,7 +183,7 @@ struct OnboardingScreen2: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.Colors.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -296,12 +296,12 @@ struct OnboardingScreen3: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.Colors.bg.ignoresSafeArea()
 
             RadialGradient(
                 colors: [
-                    Color(red: 0.5, green: 0.0, blue: 0.8).opacity(0.18),
-                    Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.06),
+                    AppTheme.Colors.accentDeep.opacity(0.18),
+                    AppTheme.Colors.accent.opacity(0.06),
                     .clear
                 ],
                 center: .center,

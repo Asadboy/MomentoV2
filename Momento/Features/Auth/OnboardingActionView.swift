@@ -19,13 +19,13 @@ struct OnboardingActionView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.Colors.bg.ignoresSafeArea()
 
             // Same glow orb as screen 3 — visual continuity
             RadialGradient(
                 colors: [
-                    Color(red: 0.5, green: 0.0, blue: 0.8).opacity(0.15),
-                    Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.05),
+                    AppTheme.Colors.accentDeep.opacity(0.15),
+                    AppTheme.Colors.accent.opacity(0.05),
                     .clear
                 ],
                 center: .center,

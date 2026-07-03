@@ -50,8 +50,8 @@ struct ActiveEventsSection: View {
             .overlay {
                 if store.newlyJoinedEventId == hydrated.id {
                     RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.green.opacity(0.6), lineWidth: 2)
-                        .shadow(color: Color.green.opacity(0.4), radius: 12)
+                        .stroke(AppTheme.Colors.accent.opacity(0.6), lineWidth: 2)
+                        .shadow(color: AppTheme.Colors.accent.opacity(0.4), radius: 12)
                 }
             }
             .animation(.easeInOut(duration: 0.3), value: store.newlyJoinedEventId)

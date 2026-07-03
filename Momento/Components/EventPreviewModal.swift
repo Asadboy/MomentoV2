@@ -97,8 +97,8 @@ struct EventPreviewModal: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 15)
-                .background(Color.green)
-                .foregroundColor(.white)
+                .background(AppTheme.Colors.accent)
+                .foregroundColor(AppTheme.Colors.buttonText)
                 .cornerRadius(14)
             }
             .disabled(isJoining)

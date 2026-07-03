@@ -53,22 +53,20 @@ struct EventCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(isRevealReady && !userHasCompletedReveal
-                    ? Color(red: 0.06, green: 0.08, blue: 0.14)
-                    : AppTheme.Colors.darkCardFill)
+                .fill(AppTheme.Colors.darkCardFill)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
                     isRevealReady && !userHasCompletedReveal
-                        ? Color.cyan.opacity(glowPulsing ? 0.8 : 0.3)
+                        ? AppTheme.Colors.accent.opacity(glowPulsing ? 0.8 : 0.3)
                         : AppTheme.Colors.darkCardBorder,
                     lineWidth: isRevealReady && !userHasCompletedReveal ? 1.5 : 1
                 )
         )
         .shadow(
             color: isRevealReady && !userHasCompletedReveal
-                ? Color.cyan.opacity(glowPulsing ? 0.3 : 0.1)
+                ? AppTheme.Colors.accent.opacity(glowPulsing ? 0.3 : 0.1)
                 : .clear,
             radius: glowPulsing ? 16 : 8
         )
@@ -143,7 +141,7 @@ struct EventCard: View {
         case .live:
             HStack(spacing: 6) {
                 Circle()
-                    .fill(Color.green)
+                    .fill(AppTheme.Colors.accent)
                     .frame(width: 8, height: 8)
                 Text("LIVE")
                     .font(.system(size: 12, weight: .bold))
@@ -151,7 +149,7 @@ struct EventCard: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(Capsule().fill(Color.green.opacity(0.2)))
+            .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.2)))
 
         case .upcoming:
             HStack(spacing: 5) {
@@ -184,10 +182,10 @@ struct EventCard: View {
                     Text("READY")
                         .font(.system(size: 12, weight: .bold))
                 }
-                .foregroundColor(.cyan)
+                .foregroundColor(AppTheme.Colors.accent)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(Capsule().fill(Color.cyan.opacity(0.15)))
+                .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.15)))
             } else {
                 HStack(spacing: 5) {
                     Image(systemName: "clock.fill")
@@ -195,10 +193,10 @@ struct EventCard: View {
                     Text("ENDED")
                         .font(.system(size: 12, weight: .bold))
                 }
-                .foregroundColor(.orange)
+                .foregroundColor(AppTheme.Colors.accent)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(Capsule().fill(Color.orange.opacity(0.15)))
+                .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.15)))
             }
         }
     }
@@ -226,11 +224,11 @@ struct EventCard: View {
             } else if isRevealReady {
                 Text("Tap to reveal")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.cyan.opacity(0.8))
+                    .foregroundColor(AppTheme.Colors.accent.opacity(0.8))
             } else {
                 Text("Reveals \(formatHumanizedTime(secondsUntil(event.releaseAt)))")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.orange.opacity(0.7))
+                    .foregroundColor(AppTheme.Colors.accent.opacity(0.7))
             }
         }
     }
@@ -298,7 +296,10 @@ struct EventCard: View {
 
     private func avatarColor(for seed: String) -> Color {
         let colors: [Color] = [
-            .blue, .purple, .pink, .orange, .green, .cyan, .indigo, .mint
+            AppTheme.Colors.accent, AppTheme.Colors.accentDeep,
+            AppTheme.Colors.dotLatestLight, AppTheme.Colors.dotCreamDark,
+            AppTheme.Colors.accent.opacity(0.75), AppTheme.Colors.accentDeep.opacity(0.75),
+            AppTheme.Colors.accent.opacity(0.5), AppTheme.Colors.accentDeep.opacity(0.5)
         ]
         let hash = seed.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         return colors[hash % colors.count].opacity(0.6)
@@ -352,10 +353,10 @@ struct EventCard: View {
                     Text("Reveal your 10shots")
                         .font(.system(size: 15, weight: .semibold))
                 }
-                .foregroundColor(.cyan)
+                .foregroundColor(AppTheme.Colors.accent)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(Capsule().fill(Color.cyan.opacity(0.15)))
+                .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.15)))
                 Spacer()
             }
         }

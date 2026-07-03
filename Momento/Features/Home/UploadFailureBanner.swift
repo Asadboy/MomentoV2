@@ -22,7 +22,7 @@ struct UploadFailureBanner: View {
                 HStack(spacing: 10) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppTheme.Colors.accent)
 
                     Text(failureCopy)
                         .font(.system(size: 14, weight: .medium))
@@ -36,17 +36,17 @@ struct UploadFailureBanner: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Capsule().fill(Color.orange.opacity(0.7)))
+                        .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.7)))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.orange.opacity(0.12))
+                        .fill(AppTheme.Colors.accent.opacity(0.12))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.orange.opacity(0.35), lineWidth: 1)
+                        .stroke(AppTheme.Colors.accent.opacity(0.35), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
