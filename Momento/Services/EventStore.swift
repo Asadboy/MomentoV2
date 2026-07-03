@@ -40,11 +40,21 @@ final class EventStore: ObservableObject {
     /// Error surface for the view to read and show as an alert.
     @Published var errorMessage: String? = nil
 
+    /// A just-crossed roll milestone to celebrate. The view shows a 1.5s
+    /// amber wash and calls clearMilestoneFire().
+    @Published var milestoneFire: MilestoneFire? = nil
+
+    struct MilestoneFire: Equatable {
+        let eventId: String
+        let milestone: RollMilestone
+    }
+
     // MARK: - Private
 
     private let api: MomentoAPI
     private let scheduler: Scheduler
     private let sync = OfflineSyncManager.shared
+    private let milestones: MilestoneTracker
     private var isRefreshing = false
 
     /// Tick counter for the 10s refresh timer. When nothing is live we run the
@@ -54,14 +64,17 @@ final class EventStore: ObservableObject {
 
     // MARK: - Init
 
-    /// Inject a `MomentoAPI` (the data backend) and a `Scheduler` (for
+    /// Inject a `MomentoAPI` (the data backend), a `Scheduler` (for
     /// time-coupled paths like the 2s join glow + 3s post-upload
-    /// reconciliation). Production callers rely on the defaults —
-    /// `SupabaseManager.shared` and `LiveScheduler`. Tests pass mocks.
+    /// reconciliation), and a `MilestoneTracker` (roll celebrations).
+    /// Production callers rely on the defaults — `SupabaseManager.shared`,
+    /// `LiveScheduler`, standard-defaults tracker. Tests pass mocks.
     init(api: MomentoAPI = SupabaseManager.shared,
-         scheduler: Scheduler = LiveScheduler()) {
+         scheduler: Scheduler = LiveScheduler(),
+         milestones: MilestoneTracker = MilestoneTracker()) {
         self.api = api
         self.scheduler = scheduler
+        self.milestones = milestones
     }
 
     // MARK: - Derived
@@ -169,6 +182,9 @@ final class EventStore: ObservableObject {
             await hydrateActive(loaded: loaded)
             await hydrateRevealed(loaded: loaded)
             await hydrateMembers(loaded: loaded)
+
+            // First hydration records milestone baselines; later refreshes fire.
+            checkMilestones()
 
             debugLog("✅ Loaded \(models.count) events")
         } catch {
@@ -363,6 +379,27 @@ final class EventStore: ObservableObject {
             guard let members else { continue } // fetch failed; keep last-known roster
             updateHydrated(id) { $0.members = members }
         }
+
+        checkMilestones()
+    }
+
+    // MARK: - Roll milestones
+
+    /// Run milestone detection over every live event's current roster.
+    /// Called after any refresh that may have moved shot counts.
+    private func checkMilestones(at now: Date = Date()) {
+        for h in hydratedEvents where h.event.currentState(at: now) == .live {
+            guard !h.members.isEmpty else { continue }
+            let taken = h.members.reduce(0) { $0 + $1.shotsTaken }
+            let total = h.members.count * 10
+            if let fired = milestones.check(eventId: h.id, taken: taken, total: total) {
+                milestoneFire = MilestoneFire(eventId: h.id, milestone: fired)
+            }
+        }
+    }
+
+    func clearMilestoneFire() {
+        milestoneFire = nil
     }
 
     // MARK: - Mutations

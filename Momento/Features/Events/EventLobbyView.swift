@@ -62,6 +62,11 @@ struct EventLobbyView: View {
         max(0, totalShotsPerMember - userPhotoCount)
     }
 
+    /// Live and under 30 minutes remaining — the lobby heats up.
+    private var isFinalStretch: Bool {
+        isLive && event.endsAt.timeIntervalSince(now) < 1800
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -108,18 +113,20 @@ struct EventLobbyView: View {
                     .fill(AppTheme.Colors.accent)
                     .frame(width: 7, height: 7)
                     .opacity(liveDotPulsing ? 1.0 : 0.35)
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-                            liveDotPulsing = true
-                        }
-                    }
+                    .onAppear { startLivePulse() }
+                    .onChange(of: isFinalStretch) { _, _ in startLivePulse() }
                 Text("LIVE")
                     .font(AppTheme.Fonts.label)
                     .tracking(2.5)
                     .foregroundColor(AppTheme.Colors.accent)
-                Text("— ENDS \(countdownCopy(to: event.endsAt))")
+                Text(isFinalStretch
+                     ? "— ENDS \(finalStretchClock(to: event.endsAt))"
+                     : "— ENDS \(countdownCopy(to: event.endsAt))")
                     .font(AppTheme.Fonts.mono(size: 11, weight: .semibold))
-                    .foregroundColor(AppTheme.Colors.textQuaternary)
+                    .foregroundColor(isFinalStretch
+                                     ? AppTheme.Colors.accent.opacity(0.9)
+                                     : AppTheme.Colors.textQuaternary)
+                    .contentTransition(.numericText())
             } else {
                 Text("UPCOMING")
                     .font(AppTheme.Fonts.label)
@@ -315,6 +322,22 @@ struct EventLobbyView: View {
     }
 
     // MARK: - Helpers
+
+    /// The LIVE dot breathes at 1.4s normally, 0.7s in the final stretch.
+    /// Restart from scratch when the phase flips so the new period sticks.
+    private func startLivePulse() {
+        liveDotPulsing = false
+        withAnimation(.easeInOut(duration: isFinalStretch ? 0.7 : 1.4)
+            .repeatForever(autoreverses: true)) {
+            liveDotPulsing = true
+        }
+    }
+
+    /// Per-second mono clock for the final stretch: "00:24:37".
+    private func finalStretchClock(to date: Date) -> String {
+        let s = max(0, Int(date.timeIntervalSince(now)))
+        return String(format: "%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60)
+    }
 
     /// Minute-precision mono countdown: "3H 24M", "42M", "1D 4H".
     private func countdownCopy(to date: Date) -> String {

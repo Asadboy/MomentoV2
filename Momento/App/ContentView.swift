@@ -39,7 +39,8 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppBackground()
+                AppBackground(vignetteOpacity: vignetteOpacity)
+                    .animation(.easeInOut(duration: 1.0), value: vignetteOpacity)
 
                 VStack(spacing: 0) {
                     HomeHeader(router: router)
@@ -62,7 +63,22 @@ struct ContentView: View {
                         homeScroll
                     }
                 }
+
+                if let fire = store.milestoneFire {
+                    MilestoneOverlay(milestone: fire.milestone)
+                        .transition(.opacity)
+                        .onAppear {
+                            UINotificationFeedbackGenerator().notificationOccurred(.success)
+                            Task {
+                                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                                withAnimation(.easeOut(duration: 0.4)) {
+                                    store.clearMilestoneFire()
+                                }
+                            }
+                        }
+                }
             }
+            .animation(.easeIn(duration: 0.25), value: store.milestoneFire)
             .toolbar(.hidden, for: .navigationBar)
             .onReceive(timer) { now = $0 }
             .task {
@@ -94,6 +110,16 @@ struct ContentView: View {
             }
             .modifier(HomePresentations(store: store, router: router))
         }
+    }
+
+    /// 0.09 normally; deepens to 0.18 when the lobby event is live with
+    /// under 30 minutes remaining (final stretch). Pure derivation from
+    /// endsAt − now; no stored state.
+    private var vignetteOpacity: Double {
+        guard let lobby = store.lobbyEvent(at: now),
+              lobby.event.currentState(at: now) == .live,
+              lobby.event.endsAt.timeIntervalSince(now) < 1800 else { return 0.09 }
+        return 0.18
     }
 
     /// First "page" is the full-viewport lobby (when a live/upcoming event
@@ -241,6 +267,35 @@ private struct HomePresentations: ViewModifier {
     /// liked-photo / completion changes that may have happened inside.
     private func handleCoverDismiss() {
         Task { await store.loadEvents() }
+    }
+}
+
+// MARK: - Milestone celebration
+
+/// Full-screen 1.5s amber wash + big type when the group crosses half or
+/// full roll. Purely decorative; dismissed by the timer in ContentView.
+private struct MilestoneOverlay: View {
+    let milestone: RollMilestone
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    AppTheme.Colors.accentDeep.opacity(0.92),
+                    AppTheme.Colors.accent.opacity(0.88)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            Text(milestone == .full ? "ROLL COMPLETE" : "HALF WAY\nTHROUGH THE ROLL")
+                .font(.system(size: 34, weight: .heavy))
+                .tracking(1)
+                .multilineTextAlignment(.center)
+                .foregroundColor(AppTheme.Colors.buttonText)
+        }
+        .allowsHitTesting(false)
     }
 }
 
