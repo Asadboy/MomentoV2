@@ -105,6 +105,15 @@ final class EventStore: ObservableObject {
             .sorted { $0.event.releaseAt > $1.event.releaseAt }
     }
 
+    /// The featured lobby event: the first live/upcoming active. Revealed
+    /// events never take the lobby — they render as compact cards.
+    func lobbyEvent(at now: Date) -> HydratedEvent? {
+        activeEvents(at: now).first {
+            let s = $0.event.currentState(at: now)
+            return s == .live || s == .upcoming
+        }
+    }
+
     // MARK: - Mutation helpers
 
     /// Find the HydratedEvent by id and mutate it in place. No-op if not found.

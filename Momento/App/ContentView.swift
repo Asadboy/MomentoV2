@@ -59,16 +59,7 @@ struct ContentView: View {
                     } else if store.hydratedEvents.isEmpty {
                         EmptyHomeView(router: router)
                     } else {
-                        ScrollView {
-                            LazyVStack(spacing: 16) {
-                                ActiveEventsSection(store: store, router: router, now: now)
-                                PastEventsSection(store: store, router: router, now: now)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 8)
-                            .padding(.bottom, 32)
-                        }
-                        .refreshable { await store.loadEvents() }
+                        homeScroll
                     }
                 }
             }
@@ -103,6 +94,42 @@ struct ContentView: View {
             }
             .modifier(HomePresentations(store: store, router: router))
         }
+    }
+
+    /// First "page" is the full-viewport lobby (when a live/upcoming event
+    /// exists); scrolling down reveals remaining active events and past
+    /// events. Without a lobby event, the classic sectioned list renders.
+    private var homeScroll: some View {
+        let lobby = store.lobbyEvent(at: now)
+        return ScrollView {
+            VStack(spacing: 0) {
+                if let lobby {
+                    EventLobbyView(
+                        event: lobby.event,
+                        now: now,
+                        members: lobby.members,
+                        currentUserId: store.currentUserId,
+                        userPhotoCount: lobby.userPhotoCount,
+                        hasPastEvents: !store.pastEvents(at: now).isEmpty,
+                        onShoot: { router.handleEventTap(lobby.event, now: now, store: store) },
+                        onInvite: { router.showInvite(lobby.event) }
+                    )
+                    .containerRelativeFrame(.vertical)
+                }
+
+                LazyVStack(spacing: 16) {
+                    ActiveEventsSection(
+                        store: store, router: router, now: now,
+                        excludedEventId: lobby?.id
+                    )
+                    PastEventsSection(store: store, router: router, now: now)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, lobby == nil ? 8 : 24)
+                .padding(.bottom, 32)
+            }
+        }
+        .refreshable { await store.loadEvents() }
     }
 
     private func handleInitialAction() {
