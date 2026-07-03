@@ -39,7 +39,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                AppBackground()
 
                 VStack(spacing: 0) {
                     HomeHeader(router: router)

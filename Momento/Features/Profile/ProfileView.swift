@@ -35,8 +35,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
-                    .ignoresSafeArea()
+                AppBackground()
 
                 if isLoading {
                     ProgressView()

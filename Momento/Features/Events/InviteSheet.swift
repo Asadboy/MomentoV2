@@ -34,7 +34,7 @@ struct InviteSheet: View {
 
                 Spacer()
             }
-            .background(Color.black.ignoresSafeArea())
+            .appBackground()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

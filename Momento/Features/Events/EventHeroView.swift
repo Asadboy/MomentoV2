@@ -81,7 +81,7 @@ struct EventHeroView: View {
     /// fills their dots. Reveal-ready gets a cool, slightly different base.
     private var cardFill: Color {
         if isRevealCTA {
-            return Color(red: 0.04, green: 0.06, blue: 0.10)
+            return AppTheme.Colors.darkCardFill
         }
         let p = Double(groupFillProgress)
         return Color(
@@ -93,7 +93,7 @@ struct EventHeroView: View {
 
     private var cardStroke: Color {
         if isRevealCTA {
-            return Color.cyan.opacity(glowPulsing ? 0.8 : 0.3)
+            return AppTheme.Colors.accent.opacity(glowPulsing ? 0.8 : 0.3)
         }
         return Color.white.opacity(0.10)
     }
@@ -125,7 +125,7 @@ struct EventHeroView: View {
                         lineWidth: isRevealCTA && glowPulsing ? 1.5 : 1)
         )
         .shadow(
-            color: isRevealCTA ? Color.cyan.opacity(glowPulsing ? 0.3 : 0.1) : .clear,
+            color: isRevealCTA ? AppTheme.Colors.accent.opacity(glowPulsing ? 0.3 : 0.1) : .clear,
             radius: glowPulsing ? 16 : 8
         )
         .contentShape(Rectangle())
@@ -166,7 +166,7 @@ struct EventHeroView: View {
         switch eventState {
         case .live:
             HStack(spacing: 6) {
-                Circle().fill(Color.green).frame(width: 7, height: 7)
+                Circle().fill(AppTheme.Colors.accent).frame(width: 7, height: 7)
                 Text("LIVE")
                     .font(.system(size: 12, weight: .bold))
                     .tracking(1.5)
@@ -174,7 +174,7 @@ struct EventHeroView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color.green.opacity(0.18)))
+            .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.18)))
 
         case .upcoming:
             HStack(spacing: 6) {
@@ -210,10 +210,10 @@ struct EventHeroView: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1.5)
                 }
-                .foregroundColor(.cyan)
+                .foregroundColor(AppTheme.Colors.accent)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)
-                .background(Capsule().fill(Color.cyan.opacity(0.15)))
+                .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.15)))
             } else {
                 HStack(spacing: 6) {
                     Image(systemName: "hourglass")
@@ -222,10 +222,10 @@ struct EventHeroView: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1.5)
                 }
-                .foregroundColor(.orange.opacity(0.85))
+                .foregroundColor(AppTheme.Colors.accent.opacity(0.85))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)
-                .background(Capsule().fill(Color.orange.opacity(0.12)))
+                .background(Capsule().fill(AppTheme.Colors.accent.opacity(0.12)))
             }
         }
     }
@@ -364,7 +364,12 @@ struct EventHeroView: View {
     }
 
     private func avatarColor(for seed: String) -> Color {
-        let colors: [Color] = [.blue, .purple, .pink, .orange, .green, .cyan, .indigo, .mint]
+        let colors: [Color] = [
+            AppTheme.Colors.accent, AppTheme.Colors.accentDeep,
+            AppTheme.Colors.dotLatestLight, AppTheme.Colors.dotCreamDark,
+            AppTheme.Colors.accent.opacity(0.75), AppTheme.Colors.accentDeep.opacity(0.75),
+            AppTheme.Colors.accent.opacity(0.5), AppTheme.Colors.accentDeep.opacity(0.5)
+        ]
         let hash = seed.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         return colors[hash % colors.count].opacity(0.7)
     }
@@ -408,7 +413,7 @@ private struct HeroDot: View {
 
     private var fillColor: Color {
         if !isFilled { return Color.white.opacity(0.08) }
-        if isRevealReady { return .cyan }
+        if isRevealReady { return AppTheme.Colors.accent }
         return .white
     }
 
@@ -423,7 +428,7 @@ private struct HeroDot: View {
             .overlay(Circle().stroke(strokeColor, lineWidth: 1))
             .scaleEffect(popScale * (isMostRecent && isFilled && isLive ? pulse : 1.0))
             .shadow(
-                color: isRevealReady && isFilled ? Color.cyan.opacity(0.45) : .clear,
+                color: isRevealReady && isFilled ? AppTheme.Colors.accent.opacity(0.45) : .clear,
                 radius: 6
             )
             .onChange(of: isFilled) { _, newValue in

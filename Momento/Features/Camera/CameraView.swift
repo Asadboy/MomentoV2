@@ -443,7 +443,7 @@ struct ShotDots: View {
         } else if isLocked {
             return .gray.opacity(0.4)
         } else if remaining <= 3 {
-            return .orange.opacity(0.35)
+            return AppTheme.Colors.accent.opacity(0.35)
         } else {
             return .white.opacity(0.25)
         }

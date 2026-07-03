@@ -28,7 +28,7 @@ struct AuthenticationRootView: View {
                 switch appState {
                 case .checkingAuth:
                     ZStack {
-                        Color.black.ignoresSafeArea()
+                        AppBackground()
 
                         VStack(spacing: 24) {
                             BrandWordmark(size: 40)

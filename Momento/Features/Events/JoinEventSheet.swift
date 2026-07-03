@@ -63,8 +63,7 @@ struct JoinEventSheet: View {
         NavigationStack {
             ZStack {
                 // Background
-                Color.black
-                    .ignoresSafeArea()
+                AppBackground()
 
                 VStack(spacing: 0) {
                     // Static subheader - one calm anchor
@@ -306,10 +305,10 @@ struct JoinEventSheet: View {
                 } label: {
                     Text("Open Settings")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppTheme.Colors.buttonText)
                         .padding(.horizontal, 28)
                         .padding(.vertical, 12)
-                        .background(Color.green)
+                        .background(AppTheme.Colors.accent)
                         .cornerRadius(12)
                 }
                 Text("Camera access is off. Enable it in Settings, then return here.")
@@ -323,10 +322,10 @@ struct JoinEventSheet: View {
                 } label: {
                     Text("Enable Camera")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppTheme.Colors.buttonText)
                         .padding(.horizontal, 28)
                         .padding(.vertical, 12)
-                        .background(Color.green)
+                        .background(AppTheme.Colors.accent)
                         .cornerRadius(12)
                 }
             }
@@ -440,17 +439,17 @@ struct JoinEventSheet: View {
                 ZStack {
                     if canJoin {
                         // Ready state - solid green
-                        Color.green
+                        AppTheme.Colors.accent
                     } else if hasCode {
                         // Partial state - progressive green
-                        Color.green.opacity(0.3 + (codeProgress * 0.3))
+                        AppTheme.Colors.accent.opacity(0.3 + (codeProgress * 0.3))
                     } else {
                         // Empty state - dormant
                         Color.white.opacity(0.06)
                     }
                 }
             )
-            .foregroundColor(hasCode ? .white : .white.opacity(0.3))
+            .foregroundColor(canJoin ? AppTheme.Colors.buttonText : (hasCode ? .white : .white.opacity(0.3)))
             .cornerRadius(16)
             .shadow(color: .clear, radius: 0)
             .scaleEffect(buttonPressed ? 0.98 : (canJoin ? 1.0 : 0.99))
@@ -509,10 +508,10 @@ struct JoinEventSheet: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.green.opacity(0.1))
+                        .fill(AppTheme.Colors.accent.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.green.opacity(0.2), lineWidth: 1)
+                                .stroke(AppTheme.Colors.accent.opacity(0.2), lineWidth: 1)
                         )
                 )
             }

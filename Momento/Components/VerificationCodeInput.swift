@@ -149,7 +149,7 @@ private struct CharacterBox: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.05, green: 0.05, blue: 0.1)
+        AppTheme.Colors.bg
             .ignoresSafeArea()
 
         VerificationCodeInput(code: .constant("HIJ"), maxLength: 6)

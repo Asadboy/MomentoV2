@@ -57,7 +57,7 @@ struct RevealCardView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(formatFilmDate(photo.capturedAt))
                             .font(.system(size: 14, weight: .medium, design: .monospaced))
-                            .foregroundColor(Color(red: 1.0, green: 0.42, blue: 0.21))
+                            .foregroundColor(AppTheme.Colors.accentDeep)
 
                         if let name = photo.photographerName {
                             Text("by \(name)")

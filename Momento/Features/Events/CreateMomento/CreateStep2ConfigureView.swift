@@ -17,7 +17,7 @@ struct CreateStep2ConfigureView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppBackground()
 
             VStack(spacing: 0) {
                 // Header

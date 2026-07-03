@@ -111,7 +111,7 @@ struct CreateStep1NameView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
-        .background(Color.black.ignoresSafeArea())
+        .appBackground()
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isNameFocused = true

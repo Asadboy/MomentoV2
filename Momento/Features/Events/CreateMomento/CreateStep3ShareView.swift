@@ -59,7 +59,7 @@ struct CreateStep3ShareView: View {
             }
             .padding(.bottom, 40)
         }
-        .background(Color.black.ignoresSafeArea())
+        .appBackground()
     }
 }
 
